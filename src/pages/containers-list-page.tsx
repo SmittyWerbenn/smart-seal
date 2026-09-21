@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/shared/data-table'
 import { Input, Select } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
+import { Badge } from '@/components/ui/badge'
 import { ContainerStatusBadge, MarkerStateBadge, RiskBadge } from '@/components/shared/status-badge'
 import { SealScanFlow } from '@/components/shared/seal-scan-flow'
 import { Card } from '@/components/ui/card'
@@ -23,6 +24,7 @@ export default function ContainersListPage() {
   const [query, setQuery] = useState(params.get('q') ?? '')
   const [status, setStatus] = useState('ALL')
   const [risk, setRisk] = useState('ALL')
+  const [sealType, setSealType] = useState<'ALL' | 'SMART' | 'BASIC' | 'NONE'>('ALL')
   const [scanOpen, setScanOpen] = useState(false)
 
   const scoped = useMemo(() => {
@@ -39,6 +41,9 @@ export default function ContainersListPage() {
       return false
     if (status !== 'ALL' && c.status !== status) return false
     if (risk !== 'ALL' && c.riskLevel !== risk) return false
+    if (sealType === 'SMART' && !c.eSealId) return false
+    if (sealType === 'BASIC' && !c.regularSealId) return false
+    if (sealType === 'NONE' && (c.eSealId || c.regularSealId)) return false
     return true
   })
 
@@ -55,6 +60,18 @@ export default function ContainersListPage() {
           </div>
         )
       },
+    },
+    {
+      key: 'sealType',
+      header: 'Seal Type',
+      render: (c) =>
+        c.eSealId ? (
+          <Badge variant="brand">Smart Seal</Badge>
+        ) : c.regularSealId ? (
+          <Badge variant="offline">Basic Seal</Badge>
+        ) : (
+          <Badge variant="neutral">Not Sealed</Badge>
+        ),
     },
     { key: 'route', header: 'Route', render: (c) => `${c.originCity} → ${c.destinationCity}` },
     { key: 'status', header: 'Status', render: (c) => <ContainerStatusBadge status={c.status} /> },
@@ -85,7 +102,15 @@ export default function ContainersListPage() {
               onClick={() =>
                 downloadCsv(
                   'seals.csv',
-                  filtered.map((c) => ({ sealId: sealIdFor(c) ?? '', container: c.number, status: c.status, origin: c.originCity, destination: c.destinationCity, risk: c.riskLevel })),
+                  filtered.map((c) => ({
+                    sealId: sealIdFor(c) ?? '',
+                    sealType: c.eSealId ? 'Smart Seal' : c.regularSealId ? 'Basic Seal' : 'Not Sealed',
+                    container: c.number,
+                    status: c.status,
+                    origin: c.originCity,
+                    destination: c.destinationCity,
+                    risk: c.riskLevel,
+                  })),
                 )
               }
             >
@@ -116,6 +141,12 @@ export default function ContainersListPage() {
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
           <Input placeholder="Search seal ID, container, city…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56" />
+          <Select value={sealType} onChange={(e) => setSealType(e.target.value as typeof sealType)} className="w-40">
+            <option value="ALL">All seal types</option>
+            <option value="SMART">Smart Seal</option>
+            <option value="BASIC">Basic Seal</option>
+            <option value="NONE">Not Sealed</option>
+          </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
             <option value="ALL">All statuses</option>
             {['CREATED', 'STUFFING', 'SEALED', 'IN_TRANSIT_ORIGIN', 'AT_ORIGIN_PORT', 'LOADED_ON_BOARD', 'OCEAN_TRANSIT', 'ARRIVED_DESTINATION_PORT', 'AT_DESTINATION', 'UNLOCKED', 'DELIVERED'].map((s) => (
