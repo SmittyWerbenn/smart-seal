@@ -19,7 +19,38 @@ export function barcodeFor(seed: string): string {
   return `${digits}${checkDigit}`
 }
 
-/** Relative bar widths (1–4) derived from the barcode digits, purely for a plausible-looking barcode graphic. */
-export function barcodePattern(code: string): number[] {
-  return code.split('').map((d) => 1 + (Number(d) % 4))
+function seededRandom(seed: number) {
+  let s = seed
+  return () => {
+    s = (s * 1103515245 + 12345) >>> 0
+    return s / 4294967296
+  }
+}
+
+/**
+ * Deterministic square (QR-like) module grid for a given code — visual only,
+ * not a scannable real QR code. Includes the three corner "finder" squares
+ * so it reads instantly as a QR code rather than a random checkerboard.
+ */
+export function qrPattern(code: string, size = 21): boolean[][] {
+  let hash = 0
+  for (let i = 0; i < code.length; i++) hash = (hash * 31 + code.charCodeAt(i)) >>> 0
+  const rand = seededRandom(hash || 1)
+
+  const grid: boolean[][] = Array.from({ length: size }, () => Array.from({ length: size }, () => rand() < 0.5))
+
+  const stampFinder = (top: number, left: number) => {
+    for (let r = 0; r < 7; r++) {
+      for (let c = 0; c < 7; c++) {
+        const border = r === 0 || r === 6 || c === 0 || c === 6
+        const core = r >= 2 && r <= 4 && c >= 2 && c <= 4
+        grid[top + r][left + c] = border || core
+      }
+    }
+  }
+  stampFinder(0, 0)
+  stampFinder(0, size - 7)
+  stampFinder(size - 7, 0)
+
+  return grid
 }
