@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Tabs } from '@/components/ui/tabs'
 import { ContainerStatusBadge, MarkerStateBadge, RiskBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/states'
-import { formatDateTime, sealIdFor, titleCase } from '@/lib/utils'
+import { formatDateTime, sealIdFor, securityModeLabel } from '@/lib/utils'
 import { OverviewTab } from '@/components/container/overview-tab'
 import { TrackingTab } from '@/components/container/tracking-tab'
 import { CargoTab } from '@/components/container/cargo-tab'
@@ -79,7 +79,7 @@ export default function ContainerDetailPage() {
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <div>
               <p className="text-xs text-slate-400">Security Mode</p>
-              <p className="font-medium text-navy-800">{titleCase(container.securityMode)}</p>
+              <p className="font-medium text-navy-800">{securityModeLabel(container.securityMode)}</p>
             </div>
             <div>
               <p className="text-xs text-slate-400">ETA</p>

@@ -5,7 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
-import { downloadCsv, titleCase } from '@/lib/utils'
+import { downloadCsv, securityModeLabel, titleCase } from '@/lib/utils'
 
 // Trimmed to the reports that actually matter for a seal-first ops team —
 // what devices are out there and their health, how seals are being used, and
@@ -35,7 +35,7 @@ export default function ReportsPage() {
           container: containers.find((c) => c.eSealId === d.id)?.number ?? '',
         }))
       case 'seal-usage':
-        return containers.map((c) => ({ container: c.number, securityMode: c.securityMode, eSeal: c.eSealId, boltSeal: c.boltSealId, regularSeal: c.regularSealId }))
+        return containers.map((c) => ({ container: c.number, sealType: securityModeLabel(c.securityMode), eSeal: c.eSealId, boltSeal: c.boltSealId, regularSeal: c.regularSealId }))
       case 'tamper-incident':
         return alerts.filter((a) => a.category === 'TAMPER').map((a) => ({ container: containers.find((c) => c.id === a.containerId)?.number, message: a.message, status: a.status, createdAt: a.createdAt }))
       case 'device-return':

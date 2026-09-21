@@ -7,7 +7,7 @@ import { RiskBadge } from '@/components/shared/status-badge'
 import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
 import { EmptyState } from '@/components/shared/states'
 import { useAuthStore } from '@/store/authStore'
-import { formatDateTime, titleCase } from '@/lib/utils'
+import { formatDateTime, securityModeLabel, titleCase } from '@/lib/utils'
 import { CargoFormModal } from './cargo-form-modal'
 import type { CargoLine, Container, ESealDevice } from '@/types'
 
@@ -46,7 +46,7 @@ export function OverviewTab({ container, device, cargo }: { container: Container
               label="Tracking Mode"
               value={container.trackingMode === 'AIS' ? 'AIS (Vessel)' : container.trackingMode === 'IOT_GPS' ? 'IoT GPS' : 'Not Trackable'}
             />
-            <Field label="Security Mode" value={titleCase(container.securityMode)} />
+            <Field label="Security Mode" value={securityModeLabel(container.securityMode)} />
             {container.securityMode === 'BASIC_SEAL' ? (
               <Field label="Basic Seal" value={container.regularSealId ?? '—'} />
             ) : (

@@ -11,6 +11,14 @@ export function sealIdFor(container: Pick<Container, 'eSealId' | 'regularSealId'
   return container.eSealId ?? container.regularSealId
 }
 
+// The app only surfaces two seal types to users — Smart Seal or Basic Seal.
+// SINGLE_SEAL and DUAL_SEAL (an extra bolt seal alongside the e-seal) are
+// both "Smart Seal" at this label; the Single/Dual distinction is an
+// internal detail, not something worth showing as its own security type.
+export function securityModeLabel(mode: Container['securityMode']): string {
+  return mode === 'BASIC_SEAL' ? 'Basic Seal' : 'Smart Seal'
+}
+
 export function formatDateTime(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })

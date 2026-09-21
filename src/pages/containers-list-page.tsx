@@ -14,7 +14,7 @@ import { Badge } from '@/components/ui/badge'
 import { ContainerStatusBadge, MarkerStateBadge, RiskBadge } from '@/components/shared/status-badge'
 import { SealScanFlow } from '@/components/shared/seal-scan-flow'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { cn, downloadCsv, formatDateTime, sealIdFor, titleCase } from '@/lib/utils'
+import { cn, downloadCsv, formatDateTime, sealIdFor, securityModeLabel, titleCase } from '@/lib/utils'
 import type { Container } from '@/types'
 
 // Matches dashboard KPI clicks that represent a group of statuses (e.g. "In
@@ -110,7 +110,7 @@ export default function ContainersListPage() {
     },
     { key: 'route', header: 'Route', render: (c) => `${c.originCity} → ${c.destinationCity}` },
     { key: 'status', header: 'Status', render: (c) => <ContainerStatusBadge status={c.status} /> },
-    { key: 'security', header: 'Security', render: (c) => titleCase(c.securityMode) },
+    { key: 'security', header: 'Security', render: (c) => securityModeLabel(c.securityMode) },
     {
       key: 'tracking',
       header: 'Tracking',

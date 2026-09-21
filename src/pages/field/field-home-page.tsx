@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ContainerStatusBadge } from '@/components/shared/status-badge'
 import { BatteryIndicator } from '@/components/shared/indicators'
 import { EmptyState } from '@/components/shared/states'
-import { titleCase } from '@/lib/utils'
+import { securityModeLabel } from '@/lib/utils'
 
 export default function FieldHomePage() {
   const containers = useDataStore((s) => s.containers)
@@ -37,7 +37,7 @@ export default function FieldHomePage() {
                 </div>
                 <p className="mt-1 text-sm text-slate-500">{c.originCity} → {c.destinationCity}</p>
                 <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
-                  <span>{titleCase(c.securityMode)}</span>
+                  <span>{securityModeLabel(c.securityMode)}</span>
                   {device && <BatteryIndicator value={device.battery} />}
                 </div>
                 {!c.isArmed ? (

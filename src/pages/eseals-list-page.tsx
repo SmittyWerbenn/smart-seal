@@ -121,7 +121,7 @@ export default function ESealsListPage() {
   return (
     <div className="pb-10">
       <PageHeader
-        title="Seal Devices"
+        title="Seal Inventory"
         description={`${filtered.length} of ${rows.length} seals (${rows.filter((r) => r.type === 'Smart').length} smart, ${rows.filter((r) => r.type === 'Basic').length} basic${basicSealStock.length ? `, ${basicSealStock.length} in stock` : ''})`}
         actions={
           <Button size="sm" variant="secondary" onClick={() => navigate('/eseals/generate')}>

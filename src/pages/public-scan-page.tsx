@@ -19,12 +19,21 @@ export default function PublicScanPage() {
   const [manualError, setManualError] = useState('')
   const [result, setResult] = useState<SealLookupResult>(null)
   const [notFound, setNotFound] = useState(false)
+  const [scanSampleCode, setScanSampleCode] = useState('')
 
-  const smartSampleCode = useMemo(() => containers.find((c) => c.eSealId)?.eSealId ?? 'ESEAL-000001', [containers])
-  const regularSampleCode = useMemo(() => containers.find((c) => c.regularSealId)?.regularSealId ?? 'SEAL-000001', [containers])
-  // A real scanner doesn't know in advance what kind of seal is in frame — pick
-  // whichever type this simulated scan happens to land on.
-  const [scanSampleCode, setScanSampleCode] = useState(smartSampleCode)
+  // Every currently-sealed container's seal code — not just the first one —
+  // so the simulated scan picks a genuinely random seal that's guaranteed to
+  // resolve to real data, instead of a hardcoded fallback that might not
+  // belong to any container.
+  const smartCodes = useMemo(() => containers.filter((c) => c.eSealId).map((c) => c.eSealId as string), [containers])
+  const regularCodes = useMemo(() => containers.filter((c) => c.regularSealId).map((c) => c.regularSealId as string), [containers])
+
+  const pickRandomSampleCode = (): string | null => {
+    const pools = [smartCodes, regularCodes].filter((pool) => pool.length > 0)
+    if (pools.length === 0) return null
+    const pool = pools[Math.floor(Math.random() * pools.length)]
+    return pool[Math.floor(Math.random() * pool.length)]
+  }
 
   const lookup = (code: string) => {
     const found = findContainerBySealCode(containers, code)
@@ -56,7 +65,9 @@ export default function PublicScanPage() {
               size="lg"
               className="w-full justify-start gap-3"
               onClick={() => {
-                setScanSampleCode(Math.random() < 0.5 ? smartSampleCode : regularSampleCode)
+                const code = pickRandomSampleCode()
+                if (!code) return
+                setScanSampleCode(code)
                 setScannerOpen(true)
               }}
             >

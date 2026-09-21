@@ -51,7 +51,7 @@ export default function GenerateBasicSealsPage() {
     <div className="pb-10">
       <div className="print:hidden">
         <button onClick={() => navigate('/eseals')} className="mb-1 ml-4 mt-4 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-navy-800 md:ml-6">
-          <ArrowLeft size={14} /> Back to Seal Devices
+          <ArrowLeft size={14} /> Back to Seal Inventory
         </button>
         <PageHeader
           title="Generate Basic Seal Barcodes"
@@ -81,7 +81,7 @@ export default function GenerateBasicSealsPage() {
                     <Printer size={14} /> Print
                   </Button>
                   <Button onClick={() => navigate('/eseals?type=Basic')}>
-                    View in Seal Devices <ArrowRight size={14} />
+                    View in Seal Inventory <ArrowRight size={14} />
                   </Button>
                 </>
               )}
@@ -95,7 +95,7 @@ export default function GenerateBasicSealsPage() {
       ) : (
         <div className="px-4 md:px-6">
           <p className="mb-3 text-xs text-slate-400 print:hidden">
-            {batch.length} barcodes generated ({batch[0].id} – {batch[batch.length - 1].id}) and added to Seal Devices as "In Stock". Export CSV for your
+            {batch.length} barcodes generated ({batch[0].id} – {batch[batch.length - 1].id}) and added to Seal Inventory as "In Stock". Export CSV for your
             inventory system, or Print to hand a printable sheet to your seal vendor.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3">

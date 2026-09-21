@@ -49,7 +49,7 @@ export default function ESealDetailPage() {
   }, [timeline, device])
 
   if (!device) {
-    return <EmptyState title="Device not found" action={{ label: 'Back to E-Seals', onClick: () => navigate('/eseals') }} />
+    return <EmptyState title="Device not found" action={{ label: 'Back to Seal Inventory', onClick: () => navigate('/eseals') }} />
   }
 
   return (
