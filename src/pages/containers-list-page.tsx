@@ -89,7 +89,7 @@ export default function ContainersListPage() {
   return (
     <div className="pb-10">
       <PageHeader
-        title="Seals"
+        title="Seal Monitoring"
         description={`${filtered.length} of ${scoped.length} seals`}
         actions={
           <>

@@ -23,10 +23,16 @@ export function SignalIndicator({ value, className }: { value: number; className
   )
 }
 
+export type DeviceHealth = 'HEALTHY' | 'WARNING' | 'CRITICAL'
+
+export function deviceHealthStatus(battery: number, signal: number, lastSeenMinutes: number): DeviceHealth {
+  if (battery < 15 || signal < 10 || lastSeenMinutes > 120) return 'CRITICAL'
+  if (battery < 35 || signal < 35 || lastSeenMinutes > 30) return 'WARNING'
+  return 'HEALTHY'
+}
+
 export function DeviceHealthPill({ battery, signal, lastSeenMinutes }: { battery: number; signal: number; lastSeenMinutes: number }) {
-  let health: 'HEALTHY' | 'WARNING' | 'CRITICAL' = 'HEALTHY'
-  if (battery < 15 || signal < 10 || lastSeenMinutes > 120) health = 'CRITICAL'
-  else if (battery < 35 || signal < 35 || lastSeenMinutes > 30) health = 'WARNING'
+  const health = deviceHealthStatus(battery, signal, lastSeenMinutes)
   const colorClass = health === 'CRITICAL' ? 'bg-critical-100 text-red-800' : health === 'WARNING' ? 'bg-warning-100 text-amber-800' : 'bg-success-100 text-green-800'
   return <span className={cn('rounded-full px-2 py-0.5 text-xs font-medium', colorClass)}>{health}</span>
 }

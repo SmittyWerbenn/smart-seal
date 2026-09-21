@@ -11,7 +11,6 @@ import {
   BatteryWarning,
   AlertOctagon,
   WifiOff,
-  Gauge,
   Maximize2,
   Tags,
   ScanLine,
@@ -26,8 +25,8 @@ import { PageHeader } from '@/components/shared/page-header'
 import { SeverityBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/states'
 import { TrackingMap } from '@/components/map/tracking-map'
-import { Progress } from '@/components/ui/progress'
-import { formatDateTime, sealIdFor, timeAgo, titleCase } from '@/lib/utils'
+import { BatteryIndicator, SignalIndicator, deviceHealthStatus, type DeviceHealth } from '@/components/shared/indicators'
+import { cn, formatDateTime, sealIdFor, timeAgo, titleCase } from '@/lib/utils'
 import type { ContainerStatus } from '@/types'
 
 const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string }[] = [
@@ -90,7 +89,24 @@ export default function DashboardPage() {
 
   const recentAlerts = [...alerts].slice(0, 6)
   const recentActivity = [...timeline].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8)
-  const activeVoyages = [...vessels].sort((a, b) => new Date(a.eta).getTime() - new Date(b.eta).getTime()).slice(0, 6)
+
+  const deviceHealthList = useMemo(() => {
+    const now = Date.now()
+    return devices.map((d) => {
+      const lastSeenMinutes = (now - new Date(d.lastSeen).getTime()) / 60000
+      return { device: d, health: deviceHealthStatus(d.battery, d.signal, lastSeenMinutes), lastSeenMinutes }
+    })
+  }, [devices])
+
+  const healthSummary = useMemo(() => {
+    const count = (h: DeviceHealth) => deviceHealthList.filter((d) => d.health === h).length
+    return { healthy: count('HEALTHY'), warning: count('WARNING'), critical: count('CRITICAL') }
+  }, [deviceHealthList])
+
+  const priorityDevices = useMemo(() => {
+    const rank: Record<DeviceHealth, number> = { CRITICAL: 0, WARNING: 1, HEALTHY: 2 }
+    return [...deviceHealthList].sort((a, b) => rank[a.health] - rank[b.health]).slice(0, 6)
+  }, [deviceHealthList])
 
   return (
     <div className="pb-10">
@@ -139,32 +155,59 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Active Voyages</CardTitle>
+            <CardTitle>Device Health</CardTitle>
+            <button
+              onClick={() => navigate('/containers')}
+              className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
+            >
+              View All Seals
+            </button>
           </CardHeader>
-          <CardContent className="max-h-80 space-y-3 overflow-y-auto">
-            {activeVoyages.length === 0 ? (
-              <EmptyState title="No vessels underway" />
-            ) : (
-              activeVoyages.map((v) => (
-                <button
-                  key={v.id}
-                  onClick={() => navigate(`/vessels/${v.id}`)}
-                  className="flex w-full flex-col gap-1.5 rounded-md border border-slate-100 p-2.5 text-left hover:bg-slate-50"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-navy-900">{v.name}</span>
-                    <span className="flex items-center gap-1 text-xs text-slate-500">
-                      <Gauge size={12} /> {v.speedKn} kn
+          <CardContent className="space-y-3">
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <div className="rounded-md bg-success-100 py-2">
+                <p className="text-lg font-semibold text-green-700">{healthSummary.healthy}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-green-700">Healthy</p>
+              </div>
+              <div className="rounded-md bg-warning-100 py-2">
+                <p className="text-lg font-semibold text-amber-700">{healthSummary.warning}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">Warning</p>
+              </div>
+              <div className="rounded-md bg-critical-100 py-2">
+                <p className="text-lg font-semibold text-red-700">{healthSummary.critical}</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-red-700">Critical</p>
+              </div>
+            </div>
+
+            <div className="max-h-56 space-y-2 overflow-y-auto">
+              {priorityDevices.length === 0 ? (
+                <EmptyState title="No devices yet" />
+              ) : (
+                priorityDevices.map(({ device, health }) => (
+                  <button
+                    key={device.id}
+                    onClick={() => navigate('/containers')}
+                    className="flex w-full items-center justify-between gap-2 rounded-md border border-slate-100 p-2.5 text-left hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-navy-900">{device.id}</p>
+                      <div className="mt-0.5 flex items-center gap-2">
+                        <BatteryIndicator value={device.battery} />
+                        <SignalIndicator value={device.signal} />
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                        health === 'CRITICAL' ? 'bg-critical-100 text-red-800' : health === 'WARNING' ? 'bg-warning-100 text-amber-800' : 'bg-success-100 text-green-800',
+                      )}
+                    >
+                      {health}
                     </span>
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {v.originPort} → {v.destinationPort}
-                  </span>
-                  <Progress value={v.routeProgress * 100} colorClassName="bg-brand-500" />
-                  <span className="text-[11px] text-slate-400">{v.containerIds.length} containers · ETA {formatDateTime(v.eta)}</span>
-                </button>
-              ))
-            )}
+                  </button>
+                ))
+              )}
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -193,7 +236,7 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Device Health</CardTitle>
+            <CardTitle>Device Status Breakdown</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             {deviceHealthData.length === 0 ? (
