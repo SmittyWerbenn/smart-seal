@@ -1,0 +1,128 @@
+import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Barcode as BarcodeIcon } from 'lucide-react'
+import { useDataStore } from '@/store/dataStore'
+import { PageHeader } from '@/components/shared/page-header'
+import { DataTable, type Column } from '@/components/shared/data-table'
+import { Card } from '@/components/ui/card'
+import { Input, Select } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
+import { DeviceStatusBadge } from '@/components/shared/status-badge'
+import { barcodeFor } from '@/lib/barcode'
+import { formatDateTime, titleCase } from '@/lib/utils'
+import type { DeviceStatus } from '@/types'
+
+interface SealRow {
+  id: string
+  type: 'Smart' | 'Basic'
+  barcode: string
+  containerId: string | null
+  containerNumber: string | null
+  battery: number | null
+  signal: number | null
+  deviceStatus: DeviceStatus | null
+  statusLabel: string
+  location: { lat: number; lng: number } | null
+  lastSeen: string | null
+  lifecycle: string
+}
+
+export default function ESealsListPage() {
+  const devices = useDataStore((s) => s.devices)
+  const containers = useDataStore((s) => s.containers)
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+  const [type, setType] = useState<'ALL' | 'Smart' | 'Basic'>('ALL')
+
+  const rows = useMemo<SealRow[]>(() => {
+    const smart: SealRow[] = devices.map((d) => {
+      const container = containers.find((c) => c.id === d.containerId)
+      return {
+        id: d.id,
+        type: 'Smart',
+        barcode: d.barcode,
+        containerId: container?.id ?? null,
+        containerNumber: container?.number ?? null,
+        battery: d.battery,
+        signal: d.signal,
+        deviceStatus: d.status,
+        statusLabel: titleCase(d.status),
+        location: d.location,
+        lastSeen: d.lastSeen,
+        lifecycle: titleCase(d.lifecycle),
+      }
+    })
+    const basic: SealRow[] = containers
+      .filter((c) => c.regularSealId)
+      .map((c) => ({
+        id: c.regularSealId as string,
+        type: 'Basic',
+        barcode: barcodeFor(c.regularSealId as string),
+        containerId: c.id,
+        containerNumber: c.number,
+        battery: null,
+        signal: null,
+        deviceStatus: null,
+        statusLabel: c.isUnlocked ? 'Unlocked' : 'Sealed',
+        location: c.currentLocation,
+        lastSeen: c.lastUpdate,
+        lifecycle: titleCase(c.status),
+      }))
+    return [...smart, ...basic]
+  }, [devices, containers])
+
+  const filtered = rows.filter((r) => {
+    if (type !== 'ALL' && r.type !== type) return false
+    return `${r.id} ${r.barcode} ${r.containerNumber ?? ''}`.toLowerCase().includes(query.toLowerCase())
+  })
+
+  const columns: Column<SealRow>[] = [
+    { key: 'id', header: 'Seal ID', render: (r) => <span className="font-medium text-navy-900">{r.id}</span> },
+    { key: 'type', header: 'Type', render: (r) => <Badge variant={r.type === 'Smart' ? 'brand' : 'offline'}>{r.type} Seal</Badge> },
+    { key: 'barcode', header: 'Barcode', render: (r) => <span className="font-mono text-xs text-slate-500">{r.barcode}</span> },
+    { key: 'container', header: 'Container', render: (r) => r.containerNumber ?? '—' },
+    { key: 'battery', header: 'Battery', render: (r) => (r.battery !== null ? <BatteryIndicator value={r.battery} /> : <span className="text-slate-300">—</span>) },
+    { key: 'signal', header: 'Signal', render: (r) => (r.signal !== null ? <SignalIndicator value={r.signal} /> : <span className="text-slate-300">—</span>) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (r) => (r.deviceStatus ? <DeviceStatusBadge status={r.deviceStatus} /> : <Badge variant="outline">{r.statusLabel}</Badge>),
+    },
+    { key: 'location', header: 'Location', render: (r) => (r.location ? `${r.location.lat.toFixed(2)}, ${r.location.lng.toFixed(2)}` : '—') },
+    { key: 'lastSeen', header: 'Last Seen', render: (r) => (r.lastSeen ? formatDateTime(r.lastSeen) : '—') },
+    { key: 'lifecycle', header: 'Lifecycle', render: (r) => r.lifecycle },
+  ]
+
+  return (
+    <div className="pb-10">
+      <PageHeader
+        title="Seal Devices"
+        description={`${filtered.length} of ${rows.length} seals (${rows.filter((r) => r.type === 'Smart').length} smart, ${rows.filter((r) => r.type === 'Basic').length} basic)`}
+        actions={
+          <Button size="sm" variant="secondary" onClick={() => navigate('/eseals/generate')}>
+            <BarcodeIcon size={14} /> Generate Basic Seal Barcodes
+          </Button>
+        }
+      />
+      <Card className="mx-4 mb-4 md:mx-6">
+        <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
+          <Input placeholder="Search seal ID, barcode, container…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64" />
+          <Select value={type} onChange={(e) => setType(e.target.value as 'ALL' | 'Smart' | 'Basic')} className="w-44">
+            <option value="ALL">All seal types</option>
+            <option value="Smart">Smart Seal</option>
+            <option value="Basic">Basic Seal</option>
+          </Select>
+        </div>
+        <DataTable
+          columns={columns}
+          rows={filtered}
+          rowKey={(r) => r.id}
+          onRowClick={(r) => (r.type === 'Smart' ? navigate(`/eseals/${r.id}`) : r.containerId && navigate(`/containers/${r.containerId}`))}
+          emptyTitle="No seals found"
+        />
+      </Card>
+    </div>
+  )
+}
