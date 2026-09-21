@@ -7,40 +7,39 @@ import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
 import { downloadCsv, titleCase } from '@/lib/utils'
 
+// Trimmed to the reports that actually matter for a seal-first ops team —
+// what devices are out there and their health, how seals are being used, and
+// security incidents — rather than every possible export.
 const REPORTS = [
-  { key: 'container-movement', name: 'Container Movement' },
-  { key: 'tamper-incident', name: 'Tamper Incident' },
-  { key: 'device-utilization', name: 'Device Utilization' },
-  { key: 'device-return', name: 'Device Return' },
-  { key: 'shipment-status', name: 'Shipment Status' },
-  { key: 'seal-usage', name: 'Seal Usage' },
-  { key: 'geofence-events', name: 'Geofence Events' },
-  { key: 'ais-tracking', name: 'AIS Tracking' },
+  { key: 'device-summary', name: 'Device Summary', description: 'Every Smart Seal device: battery, signal, status, lifecycle and current container.' },
+  { key: 'seal-usage', name: 'Seal Usage', description: 'Which containers are sealed, with which seal type, and which seal IDs are attached.' },
+  { key: 'tamper-incident', name: 'Tamper Incident', description: 'Tamper alerts raised on smart seal devices, with status.' },
+  { key: 'device-return', name: 'Device Return', description: 'Detached Smart Seal devices pending or completed return to warehouse.' },
 ]
 
 export default function ReportsPage() {
-  const { containers, devices, shipments, alerts, timeline, vessels } = useDataStore()
+  const { containers, devices, alerts } = useDataStore()
   const [dateFrom, setDateFrom] = useState('')
   const [status, setStatus] = useState('ALL')
 
   const buildRows = (key: string): Record<string, unknown>[] => {
     switch (key) {
-      case 'container-movement':
-        return timeline.map((e) => ({ container: containers.find((c) => c.id === e.containerId)?.number, event: e.type, actor: e.actor, timestamp: e.timestamp }))
+      case 'device-summary':
+        return devices.map((d) => ({
+          device: d.id,
+          status: d.status,
+          battery: d.battery,
+          signal: d.signal,
+          lifecycle: d.lifecycle,
+          firmware: d.firmware,
+          container: containers.find((c) => c.eSealId === d.id)?.number ?? '',
+        }))
+      case 'seal-usage':
+        return containers.map((c) => ({ container: c.number, securityMode: c.securityMode, eSeal: c.eSealId, boltSeal: c.boltSealId, regularSeal: c.regularSealId }))
       case 'tamper-incident':
         return alerts.filter((a) => a.category === 'TAMPER').map((a) => ({ container: containers.find((c) => c.id === a.containerId)?.number, message: a.message, status: a.status, createdAt: a.createdAt }))
-      case 'device-utilization':
-        return devices.map((d) => ({ device: d.id, lifecycle: d.lifecycle, battery: d.battery, signal: d.signal, container: containers.find((c) => c.eSealId === d.id)?.number ?? '' }))
       case 'device-return':
         return devices.filter((d) => d.returnStatus !== 'NOT_APPLICABLE').map((d) => ({ device: d.id, returnStatus: d.returnStatus, daysIdle: d.daysIdle }))
-      case 'shipment-status':
-        return shipments.map((s) => ({ booking: s.bookingNumber, shipper: s.shipper, consignee: s.consignee, status: s.status }))
-      case 'seal-usage':
-        return containers.map((c) => ({ container: c.number, securityMode: c.securityMode, eSeal: c.eSealId, boltSeal: c.boltSealId }))
-      case 'geofence-events':
-        return timeline.filter((e) => e.type.includes('GEOFENCE') || e.type.includes('GATE')).map((e) => ({ container: containers.find((c) => c.id === e.containerId)?.number, event: e.type, timestamp: e.timestamp }))
-      case 'ais-tracking':
-        return vessels.map((v) => ({ vessel: v.name, imo: v.imo, speed: v.speedKn, heading: v.heading, lastUpdate: v.lastAisUpdate }))
       default:
         return []
     }
@@ -57,20 +56,21 @@ export default function ReportsPage() {
           <option value="RESOLVED">Resolved</option>
         </Select>
       </Card>
-      <div className="grid grid-cols-1 gap-3 px-4 md:grid-cols-2 md:px-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 px-4 md:grid-cols-2 md:px-6">
         {REPORTS.map((r) => (
           <Card key={r.key}>
-            <CardContent className="flex items-center justify-between py-4">
-              <div className="flex items-center gap-3">
-                <span className="flex h-9 w-9 items-center justify-center rounded-md bg-brand-50 text-brand-600">
+            <CardContent className="flex items-start justify-between gap-3 py-4">
+              <div className="flex items-start gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-600">
                   <FileBarChart size={16} />
                 </span>
                 <div>
                   <p className="text-sm font-medium text-navy-900">{r.name}</p>
-                  <p className="text-xs text-slate-500">{buildRows(r.key).length} records</p>
+                  <p className="mt-0.5 text-xs text-slate-500">{r.description}</p>
+                  <p className="mt-1 text-[11px] font-medium text-slate-400">{buildRows(r.key).length} records</p>
                 </div>
               </div>
-              <Button size="sm" variant="secondary" onClick={() => downloadCsv(`${r.key}.csv`, buildRows(r.key))}>
+              <Button size="sm" variant="secondary" className="shrink-0" onClick={() => downloadCsv(`${r.key}.csv`, buildRows(r.key))}>
                 <Download size={14} /> CSV
               </Button>
             </CardContent>

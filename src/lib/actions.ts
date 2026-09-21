@@ -12,12 +12,53 @@ export function armContainer(containerId: string, actor = 'Warehouse Operator') 
   useDataStore.getState().addAuditLogEntry({ user: actor, action: 'CONTAINER_ARMED', entity: container.number, description: `${container.number} armed and sealed` })
 }
 
+// After unlock, a Smart Seal's physical IoT device is detached and returned
+// to the available pool (Reverse Logistics) for reuse on a future container.
+// A Basic Seal has no device — it's a single-use tag, so unlock just flags
+// the container/seal as unsealed; it can never be picked up again.
+function releaseSealAfterUnlock(containerId: string, actor: string) {
+  const container = useDataStore.getState().containers.find((c) => c.id === containerId)
+  if (!container || container.securityMode === 'BASIC_SEAL' || !container.eSealId) return
+  const device = useDataStore.getState().devices.find((d) => d.id === container.eSealId)
+  if (!device) return
+  useDataStore.getState().updateDevice(device.id, {
+    containerId: null,
+    lifecycle: 'IDLE_AT_DESTINATION',
+    motion: 'NO_MOTION',
+    daysIdle: 0,
+    returnStatus: 'PENDING',
+  })
+  useDataStore.getState().addTimelineEvent({
+    containerId,
+    type: 'SEAL_DETACHED',
+    label: `Smart Seal ${device.id} detached — available for reuse`,
+    actor,
+    sealId: device.id,
+  })
+  useDataStore.getState().addAuditLogEntry({
+    user: actor,
+    action: 'SEAL_DETACHED',
+    entity: device.id,
+    description: `${device.id} detached from ${container.number} and returned to the reuse pool (Reverse Logistics)`,
+  })
+}
+
 export function requestAndConfirmUnlock(containerId: string, actor = 'Supervisor') {
   const container = useDataStore.getState().containers.find((c) => c.id === containerId)
   if (!container) return
   useDataStore.getState().updateContainer(containerId, { status: 'UNLOCKED', isUnlocked: true })
   useDataStore.getState().addTimelineEvent({ containerId, type: 'CONTAINER_UNLOCKED', label: 'Container unlocked', actor })
   useDataStore.getState().addAuditLogEntry({ user: actor, action: 'UNLOCK_APPROVED', entity: container.number, description: `Unlock approved for ${container.number}` })
+  if (container.securityMode === 'BASIC_SEAL') {
+    useDataStore.getState().addAuditLogEntry({
+      user: actor,
+      action: 'SEAL_FLAGGED_UNSEALED',
+      entity: container.regularSealId ?? container.number,
+      description: `Basic Seal ${container.regularSealId ?? ''} flagged as unsealed — single-use, cannot be reused`,
+    })
+  } else {
+    releaseSealAfterUnlock(containerId, actor)
+  }
 }
 
 export function offlineUnlock(containerId: string) {
@@ -26,6 +67,7 @@ export function offlineUnlock(containerId: string) {
   useDataStore.getState().updateContainer(containerId, { status: 'UNLOCKED', isUnlocked: true, offlineMode: true })
   useDataStore.getState().addTimelineEvent({ containerId, type: 'OFFLINE_UNLOCK', label: 'Offline unlock successful (PIN verified)', actor: 'Driver' })
   useDataStore.getState().addAuditLogEntry({ user: 'Driver', action: 'OFFLINE_UNLOCK', entity: container.number, description: `${container.number} unlocked offline via static PIN` })
+  releaseSealAfterUnlock(containerId, 'Driver')
 }
 
 export function simulateTamper(containerId: string) {

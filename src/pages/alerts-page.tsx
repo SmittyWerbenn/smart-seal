@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { DataTable, type Column } from '@/components/shared/data-table'
@@ -16,8 +16,9 @@ export default function AlertsPage() {
   const containers = useDataStore((s) => s.containers)
   const setAlertStatus = useDataStore((s) => s.setAlertStatus)
   const navigate = useNavigate()
-  const [severity, setSeverity] = useState<AlertSeverity | 'ALL'>('ALL')
-  const [status, setStatus] = useState<AlertStatus | 'ALL'>('ALL')
+  const [params] = useSearchParams()
+  const [severity, setSeverity] = useState<AlertSeverity | 'ALL'>((params.get('severity') as AlertSeverity | null) ?? 'ALL')
+  const [status, setStatus] = useState<AlertStatus | 'ALL'>((params.get('status') as AlertStatus | null) ?? 'ALL')
 
   const filtered = alerts.filter((a) => (severity === 'ALL' || a.severity === severity) && (status === 'ALL' || a.status === status))
 

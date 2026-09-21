@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { buildInitialDataset } from '@/mock'
-import { pointOnRoute } from '@/mock/geo'
+import { pointOnRoute, portForCity } from '@/mock/geo'
 import type {
   AlertItem,
   AlertStatus,
@@ -49,6 +49,7 @@ interface DataState {
   addCargoLine: (line: Omit<CargoLine, 'id'>) => void
   updateCargoLine: (id: string, patch: Partial<CargoLine>) => void
   removeCargoLine: (id: string) => void
+  addContainer: (input: { number: string; isoType: string; routeId: string; shipper: string; consignee: string; eta?: string }) => Container
   addBasicSealBatch: (items: { id: string; barcode: string }[]) => void
   addAlert: (alert: Omit<AlertItem, 'id' | 'createdAt' | 'status'> & Partial<Pick<AlertItem, 'status'>>) => AlertItem
   setAlertStatus: (id: string, status: AlertStatus) => void
@@ -72,7 +73,7 @@ function seedState() {
 
 export const useDataStore = create<DataState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       ...seedState(),
 
       updateContainer: (id, patch) =>
@@ -115,6 +116,57 @@ export const useDataStore = create<DataState>()(
         })),
 
       removeCargoLine: (id) => set((state) => ({ cargo: state.cargo.filter((c) => c.id !== id) })),
+
+      addContainer: (input) => {
+        const route = get().routes.find((r) => r.id === input.routeId) ?? get().routes[0]
+        const originPort = portForCity(route.originLabel)
+        const destinationPort = portForCity(route.destinationLabel)
+        const id = nextId('CNT')
+        const shipmentId = nextId('SHP')
+        const container: Container = {
+          id,
+          number: input.number,
+          isoType: input.isoType,
+          originCity: route.originLabel,
+          originPort: originPort.name,
+          destinationCity: route.destinationLabel,
+          destinationPort: destinationPort.name,
+          status: 'CREATED',
+          trackingMode: 'NONE',
+          securityMode: 'SINGLE_SEAL',
+          eSealId: null,
+          boltSealId: null,
+          regularSealId: null,
+          currentLocation: route.waypoints[0],
+          routeId: route.id,
+          routeProgress: 0,
+          eta: input.eta ?? new Date(Date.now() + 3 * 24 * 3600 * 1000).toISOString(),
+          riskLevel: 'LOW',
+          riskFactors: [],
+          markerState: 'OFFLINE',
+          lastUpdate: new Date().toISOString(),
+          offlineMode: false,
+          isArmed: false,
+          isUnlocked: false,
+          insideDestinationGeofence: false,
+          shipmentId,
+        }
+        const shipment: Shipment = {
+          id: shipmentId,
+          containerId: id,
+          bookingNumber: `BK-${id.replace('CNT-', '')}`,
+          shipper: input.shipper,
+          consignee: input.consignee,
+          originCity: route.originLabel,
+          destinationCity: route.destinationLabel,
+          status: 'CREATED',
+          createdAt: new Date().toISOString(),
+        }
+        set((state) => ({ containers: [container, ...state.containers], shipments: [shipment, ...state.shipments] }))
+        get().addTimelineEvent({ containerId: id, type: 'CONTAINER_CREATED', label: 'Container created', actor: 'Warehouse Operator' })
+        get().addAuditLogEntry({ user: 'Warehouse Operator', action: 'CONTAINER_CREATED', entity: container.number, description: `${container.number} created for stuffing` })
+        return container
+      },
 
       addBasicSealBatch: (items) =>
         set((state) => ({
@@ -181,7 +233,7 @@ export const useDataStore = create<DataState>()(
       },
     }),
     {
-      name: 'smartseal-data-v10',
+      name: 'smartseal-data-v13',
       partialize: (state) => {
         const { hydrated, ...rest } = state
         void hydrated

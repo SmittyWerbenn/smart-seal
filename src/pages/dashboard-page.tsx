@@ -1,21 +1,22 @@
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts'
 import {
-  Container as ContainerIcon,
-  Ship,
-  Anchor,
-  Sailboat,
-  MapPin,
   ShieldCheck,
-  BatteryWarning,
-  AlertOctagon,
   WifiOff,
   Maximize2,
   Tags,
   ScanLine,
   Unlock,
   Satellite,
+  Radio,
+  Navigation,
+  Barcode as BarcodeIcon,
+  FilePlus2,
+  Package,
+  PackageCheck,
+  ChevronRight,
+  type LucideIcon,
 } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
@@ -38,7 +39,15 @@ const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string
   { label: 'Delivered', statuses: ['AT_DESTINATION', 'UNLOCKED', 'DELIVERED'], color: '#16a34a' },
 ]
 
-const DEVICE_HEALTH_COLORS = { Online: '#16a34a', Offline: '#64748b', 'Low Battery': '#d97706', Tamper: '#dc2626' }
+const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; description: string; path: string }[] = [
+  { step: 1, icon: BarcodeIcon, title: 'Generate Barcode', description: 'Provision a batch of Basic Seal barcodes ahead of time, ready for stuffing.', path: '/eseals/generate' },
+  { step: 2, icon: FilePlus2, title: 'Create Container', description: 'Register a new container and pick its shipping route.', path: '/stuffing' },
+  { step: 3, icon: Package, title: 'Input Cargo', description: 'Record what is being loaded: product, DO number, quantity.', path: '/cargo' },
+  { step: 4, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
+  { step: 5, icon: ScanLine, title: 'Attach Seal', description: 'Scan the seal to attach it to this container, check battery (Smart Seal), then arm it.', path: '/stuffing' },
+  { step: 6, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
+  { step: 7, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination, the seal is opened, cargo is handed to the consignee.', path: '/containers' },
+]
 
 export default function DashboardPage() {
   const { containers, devices, alerts, timeline, vessels } = useDataStore()
@@ -51,14 +60,6 @@ export default function DashboardPage() {
   }, [containers, currentUser])
 
   const kpis = useMemo(() => {
-    const active = visibleContainers.filter((c) => c.status !== 'DELIVERED').length
-    const inTransit = visibleContainers.filter((c) => ['IN_TRANSIT_ORIGIN', 'IN_TRANSIT_DESTINATION'].includes(c.status)).length
-    const atPort = visibleContainers.filter((c) => ['AT_ORIGIN_PORT', 'ARRIVED_DESTINATION_PORT'].includes(c.status)).length
-    const onVessel = visibleContainers.filter((c) => ['LOADED_ON_BOARD', 'OCEAN_TRANSIT'].includes(c.status)).length
-    const atDestination = visibleContainers.filter((c) => ['AT_DESTINATION', 'UNLOCKED', 'DELIVERED'].includes(c.status)).length
-    const lowBattery = devices.filter((d) => d.battery < 30).length
-    const criticalAlerts = alerts.filter((a) => a.severity === 'CRITICAL' && a.status === 'OPEN').length
-
     // Seal composition — this is the primary lens for the dashboard: what's
     // sealed, with which kind of seal, before anything about its journey.
     const smartSeals = visibleContainers.filter((c) => c.eSealId).length
@@ -70,22 +71,26 @@ export default function DashboardPage() {
     // live-tracked, basic seals and un-sealed containers are not.
     const liveTracked = visibleContainers.filter((c) => c.trackingMode !== 'NONE').length
     const noTracking = visibleContainers.filter((c) => c.trackingMode === 'NONE' && c.status !== 'DELIVERED').length
+    const aisTracked = visibleContainers.filter((c) => c.trackingMode === 'AIS').length
+    const iotTracked = visibleContainers.filter((c) => c.trackingMode === 'IOT_GPS').length
 
-    return { active, inTransit, atPort, onVessel, atDestination, lowBattery, criticalAlerts, smartSeals, basicSeals, totalSeals, notSealed, liveTracked, noTracking }
-  }, [visibleContainers, devices, alerts])
+    return {
+      smartSeals,
+      basicSeals,
+      totalSeals,
+      notSealed,
+      liveTracked,
+      noTracking,
+      aisTracked,
+      iotTracked,
+    }
+  }, [visibleContainers])
 
   const statusChartData = STATUS_GROUPS.map((g) => ({
     label: g.label,
     value: visibleContainers.filter((c) => g.statuses.includes(c.status)).length,
     color: g.color,
   }))
-
-  const deviceHealthData = [
-    { name: 'Online', value: devices.filter((d) => d.status === 'ONLINE').length },
-    { name: 'Offline', value: devices.filter((d) => d.status === 'OFFLINE').length },
-    { name: 'Low Battery', value: devices.filter((d) => d.status === 'LOW_BATTERY').length },
-    { name: 'Tamper', value: devices.filter((d) => d.status === 'TAMPER').length },
-  ].filter((d) => d.value > 0)
 
   const recentAlerts = [...alerts].slice(0, 6)
   const recentActivity = [...timeline].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).slice(0, 8)
@@ -112,29 +117,71 @@ export default function DashboardPage() {
     <div className="pb-10">
       <PageHeader title={`Welcome back, ${currentUser?.name?.split(' ')[0] ?? ''}`} description="Seal fleet overview — what's sealed, how it's tracked, and where it is." />
 
+      <div className="px-4 md:px-6">
+        <Card className="mb-4">
+          <CardHeader>
+            <CardTitle>Workflow: From Stuffing to Delivery</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+              {WORKFLOW_STEPS.map((s, i) => {
+                const Icon = s.icon
+                return (
+                  <div key={s.step} className="relative">
+                    <button
+                      onClick={() => navigate(s.path)}
+                      className="flex h-full w-full flex-col items-start gap-2 rounded-lg border border-slate-200 p-3 text-left transition hover:border-brand-400 hover:bg-brand-50"
+                    >
+                      <div className="flex w-full items-center justify-between">
+                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-600 text-xs font-semibold text-white">{s.step}</span>
+                        <Icon size={18} className="text-brand-600" />
+                      </div>
+                      <p className="text-sm font-semibold text-navy-900">{s.title}</p>
+                      <p className="text-xs leading-snug text-slate-500">{s.description}</p>
+                    </button>
+                    {i < WORKFLOW_STEPS.length - 1 && (
+                      <ChevronRight size={16} className="absolute -right-2.5 top-1/2 hidden -translate-y-1/2 text-slate-300 lg:block" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+            <p className="mt-3 text-xs text-slate-400">
+              Click any step to jump straight to that page. Basic Seals skip live tracking (step 5) — their status is still confirmed by scanning the barcode at each checkpoint.
+            </p>
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 p-3">
+              <p className="text-xs text-slate-500">
+                <span className="font-semibold text-navy-700">Note:</span> the scan in step 4 is specifically for <em>attaching</em> a seal during stuffing, so it
+                requires a login. Scanning to <em>verify</em> a seal afterward — check its status and declared contents — can be done anytime, by anyone, no login
+                needed, on the public page below.
+              </p>
+              <a
+                href={`${window.location.origin}${window.location.pathname}#/scan`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex shrink-0 items-center gap-1.5 rounded-md border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
+              >
+                <ScanLine size={14} /> Open Public Verification Page
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <p className="px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Seal Overview</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4 md:px-6">
         <KpiCard label="Total Seals" value={kpis.totalSeals} icon={Tags} tone="brand" onClick={() => navigate('/containers')} />
-        <KpiCard label="Smart Seals" value={kpis.smartSeals} icon={ShieldCheck} tone="brand" onClick={() => navigate('/eseals')} />
-        <KpiCard label="Basic Seals" value={kpis.basicSeals} icon={ScanLine} tone="default" onClick={() => navigate('/containers')} />
+        <KpiCard label="Smart Seals" value={kpis.smartSeals} icon={ShieldCheck} tone="brand" onClick={() => navigate('/eseals?type=Smart')} />
+        <KpiCard label="Basic Seals" value={kpis.basicSeals} icon={ScanLine} tone="default" onClick={() => navigate('/eseals?type=Basic')} />
         <KpiCard label="Not Sealed" value={kpis.notSealed} icon={Unlock} tone="default" onClick={() => navigate('/stuffing')} />
       </div>
 
-      <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Tracking &amp; Health</p>
+      <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Tracking</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4 md:px-6">
-        <KpiCard label="Live Tracked" value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/containers')} />
-        <KpiCard label="No Tracking" value={kpis.noTracking} icon={WifiOff} tone="default" onClick={() => navigate('/containers')} />
-        <KpiCard label="Low Battery" value={kpis.lowBattery} icon={BatteryWarning} tone="warning" onClick={() => navigate('/eseals')} />
-        <KpiCard label="Critical Alerts" value={kpis.criticalAlerts} icon={AlertOctagon} tone="critical" onClick={() => navigate('/alerts')} />
-      </div>
-
-      <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Container Journey</p>
-      <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-5 md:px-6">
-        <KpiCard label="Active Containers" value={kpis.active} icon={ContainerIcon} tone="default" onClick={() => navigate('/containers')} />
-        <KpiCard label="In Transit" value={kpis.inTransit} icon={Ship} tone="default" onClick={() => navigate('/containers')} />
-        <KpiCard label="At Port" value={kpis.atPort} icon={Anchor} tone="default" onClick={() => navigate('/containers')} />
-        <KpiCard label="On Vessel" value={kpis.onVessel} icon={Sailboat} tone="default" onClick={() => navigate('/vessels')} />
-        <KpiCard label="At Destination" value={kpis.atDestination} icon={MapPin} tone="success" onClick={() => navigate('/containers')} />
+        <KpiCard label="Live Tracked" value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/containers?tracking=LIVE')} />
+        <KpiCard label="No Tracking" value={kpis.noTracking} icon={WifiOff} tone="default" onClick={() => navigate('/containers?tracking=NONE')} />
+        <KpiCard label="AIS Tracked" value={kpis.aisTracked} icon={Radio} tone="default" onClick={() => navigate('/containers?tracking=AIS')} />
+        <KpiCard label="IoT GPS Tracked" value={kpis.iotTracked} icon={Navigation} tone="default" onClick={() => navigate('/containers?tracking=IOT_GPS')} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:grid-cols-3 md:px-6">
@@ -212,8 +259,8 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:grid-cols-3 md:px-6">
-        <Card className="md:col-span-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6">
+        <Card>
           <CardHeader>
             <CardTitle>Container Status</CardTitle>
           </CardHeader>
@@ -231,36 +278,6 @@ export default function DashboardPage() {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Device Status Breakdown</CardTitle>
-          </CardHeader>
-          <CardContent className="h-72">
-            {deviceHealthData.length === 0 ? (
-              <EmptyState title="No device data" />
-            ) : (
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie data={deviceHealthData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={85} paddingAngle={2}>
-                    {deviceHealthData.map((entry) => (
-                      <Cell key={entry.name} fill={DEVICE_HEALTH_COLORS[entry.name as keyof typeof DEVICE_HEALTH_COLORS]} />
-                    ))}
-                  </Pie>
-                  <Tooltip contentStyle={{ borderRadius: 8, border: '1px solid #e2e8f0', fontSize: 12 }} />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-            <div className="mt-2 flex flex-wrap justify-center gap-3 text-xs text-slate-500">
-              {deviceHealthData.map((d) => (
-                <span key={d.name} className="flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full" style={{ background: DEVICE_HEALTH_COLORS[d.name as keyof typeof DEVICE_HEALTH_COLORS] }} />
-                  {d.name} ({d.value})
-                </span>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>

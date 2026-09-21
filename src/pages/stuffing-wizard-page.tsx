@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BatteryWarning, CheckCircle2, ChevronRight, PackageCheck, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
+import { BatteryWarning, CheckCircle2, ChevronRight, PackageCheck, Plus, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScannerModal } from '@/components/shared/scanner-modal'
+import { CreateContainerModal } from '@/components/container/create-container-modal'
 import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
@@ -32,6 +33,7 @@ export default function StuffingWizardPage() {
   const [regularCode, setRegularCode] = useState<string | null>(null)
   const [regularScanOpen, setRegularScanOpen] = useState(false)
   const [battery, setBattery] = useState(65)
+  const [createOpen, setCreateOpen] = useState(false)
 
   const container = containers.find((c) => c.id === containerId)
   const esealResultCode = container?.eSealId ?? `ESEAL-${container?.id.replace('CNT-', '') ?? '000000'}`
@@ -71,6 +73,7 @@ export default function StuffingWizardPage() {
       type: 'SEAL_ATTACHED',
       label: isRegular ? `Basic seal ${regularCode} attached` : `Smart e-seal ${esealCode} attached`,
       actor: 'Warehouse Operator',
+      sealId: (isRegular ? regularCode : esealCode) ?? undefined,
     })
     addTimelineEvent({ containerId: container.id, type: 'CONTAINER_ARMED', label: 'Container armed & sealed', actor: 'Warehouse Operator' })
     addAuditLogEntry({ user: 'Warehouse Operator', action: 'CONTAINER_ARMED', entity: container.number, description: `${container.number} armed and sealed (${securityMode})` })
@@ -113,10 +116,13 @@ export default function StuffingWizardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Step 1 — Select Container</CardTitle>
+              <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
+                <Plus size={14} /> Create New Container
+              </Button>
             </CardHeader>
             <CardContent>
               {eligible.length === 0 ? (
-                <EmptyState title="No containers available" description="All containers are already armed." />
+                <EmptyState title="No containers available" description="Create a new container to start stuffing." />
               ) : (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {eligible.slice(0, 12).map((c) => (
@@ -140,6 +146,16 @@ export default function StuffingWizardPage() {
             </CardContent>
           </Card>
         )}
+
+        <CreateContainerModal
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          onCreated={(c) => {
+            setCreateOpen(false)
+            setContainerId(c.id)
+            setStep('security')
+          }}
+        />
 
         {step === 'security' && container && (
           <Card>

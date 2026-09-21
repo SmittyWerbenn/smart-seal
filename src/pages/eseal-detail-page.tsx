@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { ArrowLeft, Moon, Radio, ShieldAlert, WifiOff } from 'lucide-react'
+import { ArrowLeft, Link2, Moon, Radio, ShieldAlert, Unlink, WifiOff } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { useDataStore } from '@/store/dataStore'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -9,7 +9,7 @@ import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicator
 import { DeviceStatusBadge } from '@/components/shared/status-badge'
 import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { EmptyState } from '@/components/shared/states'
-import { formatDateTime, formatTime, titleCase } from '@/lib/utils'
+import { cn, formatDateTime, formatTime, titleCase } from '@/lib/utils'
 import { simulateLowBattery, simulateOffline, simulateTamper } from '@/lib/actions'
 
 function MiniChart({ data, color, unit }: { data: { timestamp: string; value: number }[]; color: string; unit: string }) {
@@ -31,10 +31,22 @@ export default function ESealDetailPage() {
   const navigate = useNavigate()
   const devices = useDataStore((s) => s.devices)
   const containers = useDataStore((s) => s.containers)
+  const timeline = useDataStore((s) => s.timeline)
   const updateDevice = useDataStore((s) => s.updateDevice)
 
   const device = devices.find((d) => d.id === id)
   const container = containers.find((c) => c.id === device?.containerId)
+
+  // Full lifecycle across every container this physical seal has ever been
+  // attached to or detached from — not just the container it's on right now.
+  // Smart Seals get detached and reused (Reverse Logistics), so a single
+  // container's Events tab only shows part of the story.
+  const sealHistory = useMemo(() => {
+    if (!device) return []
+    return timeline
+      .filter((e) => e.sealId === device.id)
+      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+  }, [timeline, device])
 
   if (!device) {
     return <EmptyState title="Device not found" action={{ label: 'Back to E-Seals', onClick: () => navigate('/eseals') }} />
@@ -130,6 +142,49 @@ export default function ESealDetailPage() {
           </CardHeader>
           <CardContent>
             <MiniChart data={device.temperatureHistory} color="#d97706" unit="°C" />
+          </CardContent>
+        </Card>
+
+        <Card className="md:col-span-3">
+          <CardHeader>
+            <CardTitle>Seal History</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {sealHistory.length === 0 ? (
+              <EmptyState title="No history yet" description="Attach and detach events for this seal will appear here as it's used across containers." />
+            ) : (
+              <ol className="space-y-2">
+                {sealHistory.map((event) => {
+                  const evtContainer = containers.find((c) => c.id === event.containerId)
+                  return (
+                    <li key={event.id} className="flex items-start gap-3 rounded-md border border-slate-100 p-3">
+                      <span
+                        className={cn(
+                          'mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full',
+                          event.type === 'SEAL_ATTACHED' ? 'bg-brand-50 text-brand-600' : 'bg-slate-100 text-slate-500',
+                        )}
+                      >
+                        {event.type === 'SEAL_ATTACHED' ? <Link2 size={13} /> : <Unlink size={13} />}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-navy-900">{event.label}</p>
+                        <p className="text-xs text-slate-500">
+                          {formatDateTime(event.timestamp)} · {event.actor}
+                        </p>
+                      </div>
+                      {evtContainer && (
+                        <button
+                          onClick={() => navigate(`/containers/${evtContainer.id}`)}
+                          className="shrink-0 text-xs font-medium text-brand-600 hover:underline"
+                        >
+                          {evtContainer.number}
+                        </button>
+                      )}
+                    </li>
+                  )
+                })}
+              </ol>
+            )}
           </CardContent>
         </Card>
       </div>

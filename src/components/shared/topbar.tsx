@@ -1,10 +1,11 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu, ChevronDown, LogOut, Search } from 'lucide-react'
+import { Menu, ChevronDown, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 import { ALL_ROLES } from '@/mock/users'
 import { NotificationBell } from './notification-bell'
+import { GlobalSearch } from './global-search'
 import { cn } from '@/lib/utils'
 
 export function Topbar({ title }: { title?: string }) {
@@ -23,19 +24,7 @@ export function Topbar({ title }: { title?: string }) {
       {title && <h1 className="hidden text-sm font-semibold text-navy-900 md:block">{title}</h1>}
 
       <div className="ml-auto flex items-center gap-2 md:ml-auto">
-        <div className="relative hidden items-center md:flex">
-          <Search size={14} className="pointer-events-none absolute left-2.5 text-slate-400" />
-          <input
-            placeholder="Search container, seal, vessel…"
-            className="h-9 w-64 rounded-md border border-slate-200 bg-slate-50 pl-8 pr-3 text-sm placeholder:text-slate-400 focus:border-brand-500 focus:bg-white focus:outline-none"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                const value = (e.target as HTMLInputElement).value.trim()
-                if (value) navigate(`/containers?q=${encodeURIComponent(value)}`)
-              }
-            }}
-          />
-        </div>
+        <GlobalSearch />
 
         <NotificationBell />
 

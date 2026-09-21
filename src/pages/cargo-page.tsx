@@ -1,13 +1,16 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock } from 'lucide-react'
+import { Lock, Plus } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { DataTable, type Column } from '@/components/shared/data-table'
 import { Card } from '@/components/ui/card'
-import { Input, Select } from '@/components/ui/input'
+import { Input, Label, Select } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Modal } from '@/components/ui/modal'
+import { CargoFormModal } from '@/components/container/cargo-form-modal'
 import type { CargoLine } from '@/types'
 
 export default function CargoPage() {
@@ -17,8 +20,13 @@ export default function CargoPage() {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState('ALL')
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [pickedContainerId, setPickedContainerId] = useState('')
+  const [formContainerId, setFormContainerId] = useState<string | null>(null)
 
   const isClient = currentUser?.role === 'CLIENT'
+  const canManage = currentUser?.role !== 'CLIENT' && currentUser?.role !== 'AUDITOR'
+  const formContainer = containers.find((c) => c.id === formContainerId)
   const categories = useMemo(() => Array.from(new Set(cargo.map((c) => c.category))).sort(), [cargo])
 
   const masked = useMemo(
@@ -55,7 +63,23 @@ export default function CargoPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Cargo / Delivery Orders" description={`${filtered.length} cargo lines`} />
+      <PageHeader
+        title="Cargo / Delivery Orders"
+        description={`${filtered.length} cargo lines`}
+        actions={
+          canManage && (
+            <Button
+              size="sm"
+              onClick={() => {
+                setPickedContainerId(containers[0]?.id ?? '')
+                setPickerOpen(true)
+              }}
+            >
+              <Plus size={14} /> Add Cargo
+            </Button>
+          )
+        }
+      />
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
           <Input placeholder="Search container, product, client, DO…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-72" />
@@ -70,6 +94,47 @@ export default function CargoPage() {
         </div>
         <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.containerId}`)} emptyTitle="No cargo records" />
       </Card>
+
+      <Modal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        title="Add Cargo — Select Container"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setPickerOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={!pickedContainerId}
+              onClick={() => {
+                setPickerOpen(false)
+                setFormContainerId(pickedContainerId)
+              }}
+            >
+              Next
+            </Button>
+          </>
+        }
+      >
+        {containers.length === 0 ? (
+          <p className="text-sm text-slate-500">No containers exist yet. Create one via New Stuffing first.</p>
+        ) : (
+          <div>
+            <Label htmlFor="cargo-picker-container">Container</Label>
+            <Select id="cargo-picker-container" value={pickedContainerId} onChange={(e) => setPickedContainerId(e.target.value)}>
+              {containers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.number} — {c.originCity} → {c.destinationCity}
+                </option>
+              ))}
+            </Select>
+          </div>
+        )}
+      </Modal>
+
+      {formContainer && (
+        <CargoFormModal open={!!formContainerId} onClose={() => setFormContainerId(null)} container={formContainer} />
+      )}
     </div>
   )
 }

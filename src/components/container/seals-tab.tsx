@@ -53,8 +53,15 @@ function RegularSealTab({ container }: { container: Container }) {
         </CardHeader>
         <CardContent>
           {isUnlocked ? (
-            <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
-              <Unlock size={16} /> Container unlocked (manual supervisor override).
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
+                <Unlock size={16} /> Container unlocked (manual supervisor override).
+              </div>
+              <div className="flex items-start gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
+                <Lock size={14} className="mt-0.5 shrink-0" />
+                Basic Seal {container.regularSealId} flagged as <span className="font-medium text-navy-700">unsealed</span> — it's a single-use
+                tag with no electronics, so it cannot be reused on another container.
+              </div>
             </div>
           ) : (
             <>
@@ -185,8 +192,19 @@ export function SealsTab({ container, device }: { container: Container; device?:
         </CardHeader>
         <CardContent>
           {isUnlocked ? (
-            <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
-              <Unlock size={16} /> Container unlocked{container.offlineMode ? ' via offline PIN' : ''}.
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
+                <Unlock size={16} /> Container unlocked{container.offlineMode ? ' via offline PIN' : ''}.
+              </div>
+              <div className="flex items-start gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
+                <ShieldCheck size={14} className="mt-0.5 shrink-0" />
+                Smart Seal {container.eSealId} has been <span className="font-medium text-navy-700">detached and returned to the available pool</span> for
+                reuse — track its pickup in{' '}
+                <button onClick={() => navigate('/reverse-logistics')} className="font-medium text-brand-600 hover:underline">
+                  Reverse Logistics
+                </button>
+                .
+              </div>
             </div>
           ) : (
             <>

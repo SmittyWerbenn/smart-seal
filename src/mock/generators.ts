@@ -231,8 +231,15 @@ export function generateContainersAndRelated(vessels: Vessel[], count = 32) {
           : i % 5 === 1
             ? 'SINGLE_SEAL'
             : 'DUAL_SEAL'
+    // Only live-tracked once actually sealed (statusIdx >= 2, same gate as
+    // eSealId below) — a CREATED/STUFFING container has no device attached
+    // yet, so it can't be tracked regardless of which seal type it'll get.
     const trackingMode =
-      securityMode === 'BASIC_SEAL' ? 'NONE' : status === 'OCEAN_TRANSIT' || status === 'LOADED_ON_BOARD' ? 'AIS' : 'IOT_GPS'
+      securityMode === 'BASIC_SEAL' || statusIdx < 2
+        ? 'NONE'
+        : status === 'OCEAN_TRANSIT' || status === 'LOADED_ON_BOARD'
+          ? 'AIS'
+          : 'IOT_GPS'
     const risk = securityMode === 'BASIC_SEAL' ? { level: 'LOW' as const, factors: [] } : riskForStatus()
     const markerState =
       risk.level === 'CRITICAL'
@@ -354,12 +361,21 @@ export function generateContainersAndRelated(vessels: Vessel[], count = 32) {
         label: historyTypes[e].label,
         actor: e < 3 ? 'Warehouse Operator' : e < 8 ? 'System' : 'Control Tower',
         timestamp: isoNow(-(eventsToShow - e) * rng.int(30, 180)),
+        // Tag the arming event with the seal that was attached, so its
+        // cross-container Seal History has real seed data to show.
+        ...(historyTypes[e].type === 'CONTAINER_ARMED' && taggedSealId ? { sealId: taggedSealId } : {}),
       })
     }
   }
 
   return { containers, shipments, cargo, timeline }
 }
+
+// Dashboard "Device Health" summary is derived straight from battery/signal/
+// lastSeen via deviceHealthStatus() — pinned here so the demo always reads as
+// 2 critical, 5 warning, the rest healthy, instead of a random mix.
+const CRITICAL_DEVICE_COUNT = 2
+const WARNING_DEVICE_COUNT = 5
 
 export function generateDevices(containers: Container[], count = 42): ESealDevice[] {
   const devices: ESealDevice[] = []
@@ -370,7 +386,14 @@ export function generateDevices(containers: Container[], count = 42): ESealDevic
   for (let i = 0; i < count; i++) {
     const id = `ESEAL-${pad(i + 1, 6)}`
     const owner = containers.find((c) => c.eSealId === id)
-    const battery = owner ? rng.int(55, 100) : rng.int(10, 100)
+    const healthTier: 'CRITICAL' | 'WARNING' | 'HEALTHY' =
+      i < CRITICAL_DEVICE_COUNT ? 'CRITICAL' : i < CRITICAL_DEVICE_COUNT + WARNING_DEVICE_COUNT ? 'WARNING' : 'HEALTHY'
+    // Signal/last-seen stay in safe ranges outside HEALTHY too, so battery is
+    // the only lever — keeps each device pinned to exactly its intended tier.
+    const battery =
+      healthTier === 'CRITICAL' ? rng.int(3, 14) : healthTier === 'WARNING' ? rng.int(20, 34) : owner ? rng.int(55, 100) : rng.int(36, 100)
+    const signal = healthTier === 'HEALTHY' ? rng.int(50, 100) : rng.int(40, 90)
+    const lastSeenMinutesAgo = healthTier === 'HEALTHY' ? rng.int(0, 25) : rng.int(0, 20)
     const lifecycle: ESealDevice['lifecycle'] = owner
       ? 'IN_TRANSIT'
       : rng.pick(['IN_WAREHOUSE', 'IDLE_AT_DESTINATION', 'MAINTENANCE', 'BROKEN', 'IN_WAREHOUSE'])
@@ -385,12 +408,12 @@ export function generateDevices(containers: Container[], count = 42): ESealDevic
       containerId: owner?.id ?? null,
       battery,
       temperature: rng.int(24, 34),
-      signal: status === 'OFFLINE' ? rng.int(0, 10) : rng.int(50, 100),
+      signal,
       status,
       motion: owner ? 'MOTION_DETECTED' : rng.pick(['NO_MOTION', 'DEEP_SLEEP']),
       lifecycle,
       location: owner ? owner.currentLocation : rng.pick(Object.values(WAREHOUSES)),
-      lastSeen: isoNow(-rng.int(0, 240)),
+      lastSeen: isoNow(-lastSeenMinutesAgo),
       batteryHistory: makeHistory(battery, 24, 3, 60),
       signalHistory: makeHistory(70, 24, 8, 60),
       temperatureHistory: makeHistory(28, 24, 2, 60),

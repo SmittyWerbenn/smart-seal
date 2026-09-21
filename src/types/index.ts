@@ -232,6 +232,9 @@ export interface TimelineEvent {
   actor: string
   timestamp: string
   location?: GeoPoint
+  // Set on seal attach/detach events so a Smart Seal's full lifecycle can be
+  // traced across every container it's been reused on, not just the current one.
+  sealId?: string
 }
 
 export interface AuditLogEntry {
