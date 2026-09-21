@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Smart Container Seal & Tracking
+// Smart Seal & Container Tracking
 // Core domain types shared across mock services, state stores and UI.
 // ---------------------------------------------------------------------------
 

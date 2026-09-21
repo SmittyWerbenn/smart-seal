@@ -42,7 +42,7 @@ export default function LoginPage() {
             <div className="flex items-center gap-2"><Warehouse size={16} className="text-brand-300" /> Reverse logistics control</div>
           </div>
         </div>
-        <p className="relative z-10 text-xs text-slate-500">© 2026 Smart Container Seal &amp; Tracking — Prototype build for stakeholder demonstration.</p>
+        <p className="relative z-10 text-xs text-slate-500">© 2026 Smart Seal &amp; Container Tracking — Prototype build for stakeholder demonstration.</p>
       </div>
 
       <div className="flex items-center justify-center bg-white px-6 py-12">
@@ -50,7 +50,7 @@ export default function LoginPage() {
           <div className="mb-8 lg:hidden">
             <AppLogo />
           </div>
-          <h1 className="text-xl font-semibold text-navy-900">Sign in to Smart Container Seal &amp; Tracking</h1>
+          <h1 className="text-xl font-semibold text-navy-900">Sign in to Smart Seal &amp; Container Tracking</h1>
           <p className="mb-6 mt-1 text-sm text-slate-500">Container IoT &amp; Supply-Chain Tracking</p>
 
           <form

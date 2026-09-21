@@ -1,4 +1,4 @@
-# Smart Container Seal & Tracking
+# Smart Seal & Container Tracking
 
 Container IoT & Supply-Chain Tracking
 

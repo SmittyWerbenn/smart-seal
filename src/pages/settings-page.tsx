@@ -25,7 +25,7 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-slate-500">
-              All data in Smart Container Seal &amp; Tracking is mocked and stored in your browser's local storage. Use this to restore the original demo dataset at any time.
+              All data in Smart Seal &amp; Container Tracking is mocked and stored in your browser's local storage. Use this to restore the original demo dataset at any time.
             </p>
             <Button variant="danger" onClick={() => setConfirmOpen(true)}>
               <RotateCcw size={14} /> Reset Prototype Data
