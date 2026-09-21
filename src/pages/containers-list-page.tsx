@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Download, Plus, ScanLine } from 'lucide-react'
+import { Download, Maximize2, Minimize2, Plus, ScanLine } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
+import { useUiStore } from '@/store/uiStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { DataTable, type Column } from '@/components/shared/data-table'
+import { TrackingMap } from '@/components/map/tracking-map'
 import { Input, Select } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
@@ -12,13 +14,16 @@ import { Badge } from '@/components/ui/badge'
 import { ContainerStatusBadge, MarkerStateBadge, RiskBadge } from '@/components/shared/status-badge'
 import { SealScanFlow } from '@/components/shared/seal-scan-flow'
 import { Card } from '@/components/ui/card'
-import { downloadCsv, formatDateTime, sealIdFor, titleCase } from '@/lib/utils'
+import { cn, downloadCsv, formatDateTime, sealIdFor, titleCase } from '@/lib/utils'
 import type { Container } from '@/types'
 
 export default function ContainersListPage() {
   const containers = useDataStore((s) => s.containers)
   const cargo = useDataStore((s) => s.cargo)
+  const vessels = useDataStore((s) => s.vessels)
+  const geofences = useDataStore((s) => s.geofences)
   const currentUser = useAuthStore((s) => s.currentUser)
+  const { selectedContainerId, setSelectedContainer } = useUiStore()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
@@ -26,6 +31,9 @@ export default function ContainersListPage() {
   const [risk, setRisk] = useState('ALL')
   const [sealType, setSealType] = useState<'ALL' | 'SMART' | 'BASIC' | 'NONE'>('ALL')
   const [scanOpen, setScanOpen] = useState(false)
+  const [mapExpanded, setMapExpanded] = useState(false)
+  const [showVessels, setShowVessels] = useState(true)
+  const [showGeofences, setShowGeofences] = useState(true)
 
   const scoped = useMemo(() => {
     if (currentUser?.role !== 'CLIENT') return containers
@@ -139,7 +147,7 @@ export default function ContainersListPage() {
       </Modal>
 
       <Card className="mx-4 mb-4 md:mx-6">
-        <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
+        <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">
           <Input placeholder="Search seal ID, container, city…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56" />
           <Select value={sealType} onChange={(e) => setSealType(e.target.value as typeof sealType)} className="w-40">
             <option value="ALL">All seal types</option>
@@ -163,6 +171,39 @@ export default function ContainersListPage() {
               </option>
             ))}
           </Select>
+          <div className="ml-auto flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              <input type="checkbox" checked={showVessels} onChange={(e) => setShowVessels(e.target.checked)} /> Vessels
+            </label>
+            <label className="flex items-center gap-1.5 text-xs text-slate-500">
+              <input type="checkbox" checked={showGeofences} onChange={(e) => setShowGeofences(e.target.checked)} /> Geofences
+            </label>
+            <Button variant="secondary" size="sm" onClick={() => setMapExpanded((v) => !v)}>
+              {mapExpanded ? (
+                <>
+                  <Minimize2 size={14} /> Collapse Map
+                </>
+              ) : (
+                <>
+                  <Maximize2 size={14} /> Full Map
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        <div className={cn('relative w-full', mapExpanded ? 'h-[70vh]' : 'h-64')}>
+          <TrackingMap
+            containers={filtered}
+            vessels={showVessels ? vessels : []}
+            geofences={showGeofences ? geofences : []}
+            selectedContainerId={selectedContainerId}
+            onSelectContainer={(id) => {
+              setSelectedContainer(id)
+              navigate(`/containers/${id}`)
+            }}
+            center={[-3.5, 108]}
+            zoom={5}
+          />
         </div>
         <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.id}`)} emptyTitle="No containers match your filters" />
       </Card>

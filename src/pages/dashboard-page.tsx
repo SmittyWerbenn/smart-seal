@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
       <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Tracking &amp; Health</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4 md:px-6">
-        <KpiCard label="Live Tracked" value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/control-tower')} />
+        <KpiCard label="Live Tracked" value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/containers')} />
         <KpiCard label="No Tracking" value={kpis.noTracking} icon={WifiOff} tone="default" onClick={() => navigate('/containers')} />
         <KpiCard label="Low Battery" value={kpis.lowBattery} icon={BatteryWarning} tone="warning" onClick={() => navigate('/eseals')} />
         <KpiCard label="Critical Alerts" value={kpis.criticalAlerts} icon={AlertOctagon} tone="critical" onClick={() => navigate('/alerts')} />
@@ -131,7 +131,7 @@ export default function DashboardPage() {
       <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Container Journey</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-5 md:px-6">
         <KpiCard label="Active Containers" value={kpis.active} icon={ContainerIcon} tone="default" onClick={() => navigate('/containers')} />
-        <KpiCard label="In Transit" value={kpis.inTransit} icon={Ship} tone="default" onClick={() => navigate('/control-tower')} />
+        <KpiCard label="In Transit" value={kpis.inTransit} icon={Ship} tone="default" onClick={() => navigate('/containers')} />
         <KpiCard label="At Port" value={kpis.atPort} icon={Anchor} tone="default" onClick={() => navigate('/containers')} />
         <KpiCard label="On Vessel" value={kpis.onVessel} icon={Sailboat} tone="default" onClick={() => navigate('/vessels')} />
         <KpiCard label="At Destination" value={kpis.atDestination} icon={MapPin} tone="success" onClick={() => navigate('/containers')} />
@@ -142,7 +142,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Fleet at Sea</CardTitle>
             <button
-              onClick={() => navigate('/control-tower')}
+              onClick={() => navigate('/containers')}
               className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
             >
               <Maximize2 size={12} /> Open Full Map

@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
 import { DeviceStatusBadge } from '@/components/shared/status-badge'
+import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { EmptyState } from '@/components/shared/states'
 import { formatDateTime, formatTime, titleCase } from '@/lib/utils'
 import { simulateLowBattery, simulateOffline, simulateTamper } from '@/lib/actions'
@@ -74,6 +75,9 @@ export default function ESealDetailPage() {
             <Row label="Location" value={`${device.location.lat.toFixed(3)}, ${device.location.lng.toFixed(3)}`} />
             <Row label="Last Seen" value={formatDateTime(device.lastSeen)} />
             <Row label="Lifecycle" value={titleCase(device.lifecycle)} />
+            <div className="flex flex-col items-center border-t border-slate-100 pt-3">
+              <BarcodeGraphic code={device.barcode} />
+            </div>
           </CardContent>
         </Card>
 

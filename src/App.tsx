@@ -6,7 +6,6 @@ import { FieldShell } from '@/pages/field/field-shell'
 
 import LoginPage from '@/pages/login-page'
 import DashboardPage from '@/pages/dashboard-page'
-import ControlTowerPage from '@/pages/control-tower-page'
 import ContainersListPage from '@/pages/containers-list-page'
 import ContainerDetailPage from '@/pages/container-detail-page'
 import ShipmentsPage from '@/pages/shipments-page'
@@ -66,7 +65,8 @@ export default function App() {
           }
         >
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/control-tower" element={<ControlTowerPage />} />
+          {/* Control Tower was merged into Seal Monitoring — keep a redirect for old links/bookmarks. */}
+          <Route path="/control-tower" element={<Navigate to="/containers" replace />} />
           <Route path="/containers" element={<ContainersListPage />} />
           <Route path="/containers/:id" element={<ContainerDetailPage />} />
           <Route path="/containers/:id/stuffing" element={<StuffingWizardPage />} />
