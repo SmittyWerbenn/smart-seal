@@ -5,7 +5,9 @@ import path from 'path'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/smart-seal/',
+  // Served from the custom domain root (smart-seal.frel.cloud), not the
+  // default github.io/<repo>/ subpath — so assets must resolve from '/'.
+  base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
