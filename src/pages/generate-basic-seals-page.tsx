@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, Download, Printer, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Download, Printer, RotateCcw } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -18,23 +18,34 @@ function nextBatch(startAt: number, quantity: number) {
   })
 }
 
+function parseSealNumber(id: string) {
+  const n = parseInt(id.replace('SEAL-', ''), 10)
+  return Number.isNaN(n) ? 0 : n
+}
+
 export default function GenerateBasicSealsPage() {
   const containers = useDataStore((s) => s.containers)
+  const basicSealStock = useDataStore((s) => s.basicSealStock)
+  const addBasicSealBatch = useDataStore((s) => s.addBasicSealBatch)
   const navigate = useNavigate()
 
   const nextAvailable = useMemo(() => {
-    const numbers = containers
-      .map((c) => c.regularSealId)
-      .filter((id): id is string => !!id)
-      .map((id) => parseInt(id.replace('SEAL-', ''), 10))
-      .filter((n) => !Number.isNaN(n))
-    return (numbers.length ? Math.max(...numbers) : 0) + 1
-  }, [containers])
+    const fromContainers = containers.map((c) => c.regularSealId).filter((id): id is string => !!id).map(parseSealNumber)
+    const fromStock = basicSealStock.map((s) => s.id).map(parseSealNumber)
+    const all = [...fromContainers, ...fromStock]
+    return (all.length ? Math.max(...all) : 0) + 1
+  }, [containers, basicSealStock])
 
   const [quantity, setQuantity] = useState(50)
   const [batch, setBatch] = useState<{ id: string; barcode: string }[]>([])
 
-  const generate = () => setBatch(nextBatch(nextAvailable, Math.max(1, Math.min(500, quantity))))
+  const generate = () => {
+    const generated = nextBatch(nextAvailable, Math.max(1, Math.min(500, quantity)))
+    setBatch(generated)
+    // Provisioned the moment they're generated — they show up in Seal
+    // Devices immediately, as "In Stock" until scanned during stuffing.
+    addBasicSealBatch(generated)
+  }
 
   return (
     <div className="pb-10">
@@ -69,6 +80,9 @@ export default function GenerateBasicSealsPage() {
                   <Button variant="secondary" onClick={() => window.print()}>
                     <Printer size={14} /> Print
                   </Button>
+                  <Button onClick={() => navigate('/eseals?type=Basic')}>
+                    View in Seal Devices <ArrowRight size={14} />
+                  </Button>
                 </>
               )}
             </div>
@@ -81,8 +95,8 @@ export default function GenerateBasicSealsPage() {
       ) : (
         <div className="px-4 md:px-6">
           <p className="mb-3 text-xs text-slate-400 print:hidden">
-            {batch.length} barcodes generated ({batch[0].id} – {batch[batch.length - 1].id}). Export CSV for your inventory system, or Print to hand a
-            printable sheet to your seal vendor.
+            {batch.length} barcodes generated ({batch[0].id} – {batch[batch.length - 1].id}) and added to Seal Devices as "In Stock". Export CSV for your
+            inventory system, or Print to hand a printable sheet to your seal vendor.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3">
             {batch.map((b) => (

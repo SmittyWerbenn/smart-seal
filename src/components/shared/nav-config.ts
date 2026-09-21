@@ -13,7 +13,6 @@ import {
   ScrollText,
   Users,
   Settings,
-  PlaySquare,
   type LucideIcon,
 } from 'lucide-react'
 import type { Role } from '@/types'
@@ -39,7 +38,6 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Reports', path: '/reports', icon: FileBarChart, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'WAREHOUSE', 'SUPERVISOR', 'CLIENT', 'AUDITOR'] },
   { label: 'Audit Logs', path: '/audit-logs', icon: ScrollText, roles: ['SUPER_ADMIN', 'SUPERVISOR', 'AUDITOR'] },
   { label: 'Users & Roles', path: '/users', icon: Users, roles: ['SUPER_ADMIN'] },
-  { label: 'Simulation', path: '/simulation', icon: PlaySquare, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'SUPERVISOR'] },
   { label: 'Settings', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'WAREHOUSE', 'SUPERVISOR', 'CLIENT', 'AUDITOR'] },
 ]
 

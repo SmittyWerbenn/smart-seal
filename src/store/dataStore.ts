@@ -7,6 +7,7 @@ import type {
   AlertStatus,
   AppNotification,
   AuditLogEntry,
+  BasicSealStockItem,
   CargoLine,
   Container,
   ESealDevice,
@@ -38,6 +39,7 @@ interface DataState {
   routes: RouteDefinition[]
   ports: Port[]
   warehouses: Record<string, { lat: number; lng: number }>
+  basicSealStock: BasicSealStockItem[]
   hydrated: boolean
 
   updateContainer: (id: string, patch: Partial<Container>) => void
@@ -47,6 +49,7 @@ interface DataState {
   addCargoLine: (line: Omit<CargoLine, 'id'>) => void
   updateCargoLine: (id: string, patch: Partial<CargoLine>) => void
   removeCargoLine: (id: string) => void
+  addBasicSealBatch: (items: { id: string; barcode: string }[]) => void
   addAlert: (alert: Omit<AlertItem, 'id' | 'createdAt' | 'status'> & Partial<Pick<AlertItem, 'status'>>) => AlertItem
   setAlertStatus: (id: string, status: AlertStatus) => void
   addTimelineEvent: (event: Omit<TimelineEvent, 'id' | 'timestamp'> & { timestamp?: string }) => void
@@ -62,6 +65,7 @@ function seedState() {
   return {
     ...data,
     notifications: [] as AppNotification[],
+    basicSealStock: [] as BasicSealStockItem[],
     hydrated: true,
   }
 }
@@ -111,6 +115,11 @@ export const useDataStore = create<DataState>()(
         })),
 
       removeCargoLine: (id) => set((state) => ({ cargo: state.cargo.filter((c) => c.id !== id) })),
+
+      addBasicSealBatch: (items) =>
+        set((state) => ({
+          basicSealStock: [...items.map((i) => ({ ...i, createdAt: new Date().toISOString() })), ...state.basicSealStock],
+        })),
 
       addAlert: (alert) => {
         const full: AlertItem = {
@@ -172,7 +181,7 @@ export const useDataStore = create<DataState>()(
       },
     }),
     {
-      name: 'smartseal-data-v9',
+      name: 'smartseal-data-v10',
       partialize: (state) => {
         const { hydrated, ...rest } = state
         void hydrated

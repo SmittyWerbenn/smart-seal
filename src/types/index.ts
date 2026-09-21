@@ -270,3 +270,12 @@ export interface Port {
   country: string
   position: GeoPoint
 }
+
+// A Basic Seal that's been provisioned (barcode generated, printed) but not
+// yet attached to a container — sits in the Seal Devices registry as "In
+// Stock" until a warehouse operator scans it during stuffing.
+export interface BasicSealStockItem {
+  id: string
+  barcode: string
+  createdAt: string
+}

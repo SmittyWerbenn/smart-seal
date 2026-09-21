@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Barcode as BarcodeIcon } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
@@ -32,9 +32,11 @@ interface SealRow {
 export default function ESealsListPage() {
   const devices = useDataStore((s) => s.devices)
   const containers = useDataStore((s) => s.containers)
+  const basicSealStock = useDataStore((s) => s.basicSealStock)
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [type, setType] = useState<'ALL' | 'Smart' | 'Basic'>('ALL')
+  const [params] = useSearchParams()
+  const [query, setQuery] = useState(params.get('q') ?? '')
+  const [type, setType] = useState<'ALL' | 'Smart' | 'Basic'>((params.get('type') as 'Smart' | 'Basic' | null) ?? 'ALL')
 
   const rows = useMemo<SealRow[]>(() => {
     const smart: SealRow[] = devices.map((d) => {
@@ -70,8 +72,22 @@ export default function ESealsListPage() {
         lastSeen: c.lastUpdate,
         lifecycle: titleCase(c.status),
       }))
-    return [...smart, ...basic]
-  }, [devices, containers])
+    const stock: SealRow[] = basicSealStock.map((s) => ({
+      id: s.id,
+      type: 'Basic',
+      barcode: s.barcode,
+      containerId: null,
+      containerNumber: null,
+      battery: null,
+      signal: null,
+      deviceStatus: null,
+      statusLabel: 'In Stock',
+      location: null,
+      lastSeen: s.createdAt,
+      lifecycle: 'Unassigned',
+    }))
+    return [...stock, ...smart, ...basic]
+  }, [devices, containers, basicSealStock])
 
   const filtered = rows.filter((r) => {
     if (type !== 'ALL' && r.type !== type) return false
@@ -99,7 +115,7 @@ export default function ESealsListPage() {
     <div className="pb-10">
       <PageHeader
         title="Seal Devices"
-        description={`${filtered.length} of ${rows.length} seals (${rows.filter((r) => r.type === 'Smart').length} smart, ${rows.filter((r) => r.type === 'Basic').length} basic)`}
+        description={`${filtered.length} of ${rows.length} seals (${rows.filter((r) => r.type === 'Smart').length} smart, ${rows.filter((r) => r.type === 'Basic').length} basic${basicSealStock.length ? `, ${basicSealStock.length} in stock` : ''})`}
         actions={
           <Button size="sm" variant="secondary" onClick={() => navigate('/eseals/generate')}>
             <BarcodeIcon size={14} /> Generate Basic Seal Barcodes
@@ -119,7 +135,10 @@ export default function ESealsListPage() {
           columns={columns}
           rows={filtered}
           rowKey={(r) => r.id}
-          onRowClick={(r) => (r.type === 'Smart' ? navigate(`/eseals/${r.id}`) : r.containerId && navigate(`/containers/${r.containerId}`))}
+          onRowClick={(r) => {
+            if (r.type === 'Smart') navigate(`/eseals/${r.id}`)
+            else if (r.containerId) navigate(`/containers/${r.containerId}`)
+          }}
           emptyTitle="No seals found"
         />
       </Card>
