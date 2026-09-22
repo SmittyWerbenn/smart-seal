@@ -9,6 +9,7 @@ import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicator
 import { DeviceStatusBadge } from '@/components/shared/status-badge'
 import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { EmptyState } from '@/components/shared/states'
+import { UnlockPanel } from '@/components/container/unlock-panel'
 import { cn, formatDateTime, formatTime, titleCase } from '@/lib/utils'
 import { simulateLowBattery, simulateOffline, simulateTamper } from '@/lib/actions'
 
@@ -119,6 +120,12 @@ export default function ESealDetailPage() {
             <Radio size={14} /> Motion state: <span className="font-medium text-navy-700">{titleCase(device.motion)}</span>
           </CardContent>
         </Card>
+
+        {container && (
+          <div className="md:col-span-3">
+            <UnlockPanel container={container} />
+          </div>
+        )}
 
         <Card>
           <CardHeader>
