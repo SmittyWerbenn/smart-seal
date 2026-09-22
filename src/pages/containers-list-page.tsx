@@ -50,9 +50,13 @@ export default function ContainersListPage() {
   const [mapExpanded, setMapExpanded] = useState(false)
 
   const scoped = useMemo(() => {
-    if (currentUser?.role !== 'CLIENT') return containers
+    // Once a seal is unlocked its journey is done — Seal Monitoring is for
+    // what's still active, not a permanent archive. Delivered/unlocked
+    // history stays queryable via Reports/Audit Logs.
+    const active = containers.filter((c) => !c.isUnlocked)
+    if (currentUser?.role !== 'CLIENT') return active
     const ownedIds = new Set(cargo.filter((c) => c.clientId === currentUser.clientId).map((c) => c.containerId))
-    return containers.filter((c) => ownedIds.has(c.id))
+    return active.filter((c) => ownedIds.has(c.id))
   }, [containers, cargo, currentUser])
 
   const filtered = scoped.filter((c) => {

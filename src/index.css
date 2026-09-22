@@ -64,6 +64,12 @@ body {
   height: 100%;
   background: #eaf1fb;
   font-family: var(--font-sans);
+  /* Leaflet's own controls/panes use z-index up to 1000, higher than any
+     modal or dropdown in this app (Tailwind z-50 = 50). Without an explicit
+     z-index here, .leaflet-container's `position: relative` alone doesn't
+     create a stacking context, so those controls escape and render on top
+     of modals/menus. Setting z-index contains them to the map itself. */
+  z-index: 0;
 }
 
 .scissor-marker {

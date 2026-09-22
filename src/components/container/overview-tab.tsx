@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/shared/states'
 import { useAuthStore } from '@/store/authStore'
 import { formatDateTime, securityModeLabel, titleCase } from '@/lib/utils'
 import { CargoFormModal } from './cargo-form-modal'
+import { UnlockPanel } from './unlock-panel'
 import type { CargoLine, Container, ESealDevice } from '@/types'
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
@@ -58,6 +59,8 @@ export function OverviewTab({ container, device, cargo }: { container: Container
           </div>
         </CardContent>
       </Card>
+
+      {canManage && <UnlockPanel container={container} />}
 
       <Card className="lg:col-span-3">
         <CardHeader>

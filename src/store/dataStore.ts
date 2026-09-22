@@ -49,7 +49,7 @@ interface DataState {
   addCargoLine: (line: Omit<CargoLine, 'id'>) => void
   updateCargoLine: (id: string, patch: Partial<CargoLine>) => void
   removeCargoLine: (id: string) => void
-  addContainer: (input: { number: string; isoType: string; routeId: string; shipper: string; consignee: string; eta?: string }) => Container
+  addContainer: (input: { number: string; isoType: string; originCity: string; destinationCity: string; shipper: string; consignee: string; eta?: string }) => Container
   addBasicSealBatch: (items: { id: string; barcode: string }[]) => void
   addAlert: (alert: Omit<AlertItem, 'id' | 'createdAt' | 'status'> & Partial<Pick<AlertItem, 'status'>>) => AlertItem
   setAlertStatus: (id: string, status: AlertStatus) => void
@@ -118,18 +118,27 @@ export const useDataStore = create<DataState>()(
       removeCargoLine: (id) => set((state) => ({ cargo: state.cargo.filter((c) => c.id !== id) })),
 
       addContainer: (input) => {
-        const route = get().routes.find((r) => r.id === input.routeId) ?? get().routes[0]
-        const originPort = portForCity(route.originLabel)
-        const destinationPort = portForCity(route.destinationLabel)
+        const originCity = input.originCity.trim()
+        const destinationCity = input.destinationCity.trim()
+        // The city names are free text (custom data entry, not picked from a
+        // fixed route list) — match them to a real route for map waypoints
+        // when possible, and fall back to a generic domestic route otherwise
+        // so the container is still creatable and shows up on the map.
+        const matchedRoute = get().routes.find(
+          (r) => r.originLabel.toLowerCase() === originCity.toLowerCase() && r.destinationLabel.toLowerCase() === destinationCity.toLowerCase(),
+        )
+        const route = matchedRoute ?? get().routes[0]
+        const originPort = portForCity(originCity)
+        const destinationPort = portForCity(destinationCity)
         const id = nextId('CNT')
         const shipmentId = nextId('SHP')
         const container: Container = {
           id,
           number: input.number,
           isoType: input.isoType,
-          originCity: route.originLabel,
+          originCity,
           originPort: originPort.name,
-          destinationCity: route.destinationLabel,
+          destinationCity,
           destinationPort: destinationPort.name,
           status: 'CREATED',
           trackingMode: 'NONE',
@@ -157,8 +166,8 @@ export const useDataStore = create<DataState>()(
           bookingNumber: `BK-${id.replace('CNT-', '')}`,
           shipper: input.shipper,
           consignee: input.consignee,
-          originCity: route.originLabel,
-          destinationCity: route.destinationLabel,
+          originCity,
+          destinationCity,
           status: 'CREATED',
           createdAt: new Date().toISOString(),
         }

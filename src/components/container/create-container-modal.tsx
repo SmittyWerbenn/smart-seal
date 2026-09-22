@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Input, Label, Select } from '@/components/ui/input'
+import { Input, Label } from '@/components/ui/input'
 import { useDataStore } from '@/store/dataStore'
-import { DOMESTIC_ROUTES } from '@/mock/geo'
+import { CITIES, PORTS } from '@/mock/geo'
 import type { Container } from '@/types'
 
 const ISO_TYPES = ['20GP', '40GP', '40HC', '20RF']
+// Suggestions only — origin/destination are free text, not locked to this list.
+const CITY_SUGGESTIONS = Array.from(new Set([...CITIES, ...PORTS.map((p) => p.city)]))
 
 interface CreateContainerModalProps {
   open: boolean
@@ -20,18 +22,21 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
 
   const [number, setNumber] = useState('')
   const [isoType, setIsoType] = useState(ISO_TYPES[0])
-  const [routeId, setRouteId] = useState(DOMESTIC_ROUTES[0].id)
+  const [originCity, setOriginCity] = useState('')
+  const [destinationCity, setDestinationCity] = useState('')
   const [shipper, setShipper] = useState('')
   const [consignee, setConsignee] = useState('')
 
   const numberValid = /^[A-Z]{4}\d{6,7}$/.test(number.trim().toUpperCase())
   const numberTaken = containers.some((c) => c.number.toUpperCase() === number.trim().toUpperCase())
-  const canSubmit = numberValid && !numberTaken && shipper.trim().length > 0 && consignee.trim().length > 0
+  const canSubmit =
+    numberValid && !numberTaken && isoType.trim().length > 0 && originCity.trim().length > 0 && destinationCity.trim().length > 0 && shipper.trim().length > 0 && consignee.trim().length > 0
 
   const reset = () => {
     setNumber('')
     setIsoType(ISO_TYPES[0])
-    setRouteId(DOMESTIC_ROUTES[0].id)
+    setOriginCity('')
+    setDestinationCity('')
     setShipper('')
     setConsignee('')
   }
@@ -40,8 +45,9 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
     if (!canSubmit) return
     const container = addContainer({
       number: number.trim().toUpperCase(),
-      isoType,
-      routeId,
+      isoType: isoType.trim(),
+      originCity: originCity.trim(),
+      destinationCity: destinationCity.trim(),
       shipper: shipper.trim(),
       consignee: consignee.trim(),
     })
@@ -90,27 +96,36 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
           {numberValid && numberTaken && <p className="mt-1 text-xs text-critical-500">This container number is already in use.</p>}
         </div>
 
+        <div>
+          <Label htmlFor="new-cnt-iso">ISO Type</Label>
+          <Input id="new-cnt-iso" list="iso-type-suggestions" value={isoType} onChange={(e) => setIsoType(e.target.value)} placeholder="e.g. 20GP" />
+          <datalist id="iso-type-suggestions">
+            {ISO_TYPES.map((t) => (
+              <option key={t} value={t} />
+            ))}
+          </datalist>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="new-cnt-iso">ISO Type</Label>
-            <Select id="new-cnt-iso" value={isoType} onChange={(e) => setIsoType(e.target.value)}>
-              {ISO_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </Select>
+            <Label htmlFor="new-cnt-origin">Origin City</Label>
+            <Input id="new-cnt-origin" list="city-suggestions" value={originCity} onChange={(e) => setOriginCity(e.target.value)} placeholder="e.g. Jakarta" />
           </div>
           <div>
-            <Label htmlFor="new-cnt-route">Route</Label>
-            <Select id="new-cnt-route" value={routeId} onChange={(e) => setRouteId(e.target.value)}>
-              {DOMESTIC_ROUTES.map((r) => (
-                <option key={r.id} value={r.id}>
-                  {r.name}
-                </option>
-              ))}
-            </Select>
+            <Label htmlFor="new-cnt-destination">Destination City</Label>
+            <Input
+              id="new-cnt-destination"
+              list="city-suggestions"
+              value={destinationCity}
+              onChange={(e) => setDestinationCity(e.target.value)}
+              placeholder="e.g. Surabaya"
+            />
           </div>
+          <datalist id="city-suggestions">
+            {CITY_SUGGESTIONS.map((c) => (
+              <option key={c} value={c} />
+            ))}
+          </datalist>
         </div>
 
         <div>

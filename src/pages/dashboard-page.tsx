@@ -13,7 +13,6 @@ import {
   Navigation,
   Barcode as BarcodeIcon,
   FilePlus2,
-  Package,
   PackageCheck,
   ChevronRight,
   type LucideIcon,
@@ -41,12 +40,11 @@ const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string
 
 const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; description: string; path: string }[] = [
   { step: 1, icon: BarcodeIcon, title: 'Generate Barcode', description: 'Provision a batch of Basic Seal barcodes ahead of time, ready for stuffing.', path: '/eseals/generate' },
-  { step: 2, icon: FilePlus2, title: 'Create Container', description: 'Register a new container and pick its shipping route.', path: '/stuffing' },
-  { step: 3, icon: Package, title: 'Input Cargo', description: 'Record what is being loaded: product, DO number, quantity.', path: '/cargo' },
-  { step: 4, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
-  { step: 5, icon: ScanLine, title: 'Attach Seal', description: 'Scan the seal to attach it to this container, check battery (Smart Seal), then arm it.', path: '/stuffing' },
-  { step: 6, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
-  { step: 7, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination, the seal is opened, cargo is handed to the consignee.', path: '/containers' },
+  { step: 2, icon: FilePlus2, title: 'Create Container & Cargo', description: 'Register a new container and record what is being loaded: product, DO number, quantity.', path: '/stuffing' },
+  { step: 3, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
+  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Scan the seal to attach it to this container, check battery (Smart Seal), then arm it.', path: '/stuffing' },
+  { step: 5, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
+  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination, the seal is opened, cargo is handed to the consignee.', path: '/containers' },
 ]
 
 export default function DashboardPage() {
@@ -123,7 +121,7 @@ export default function DashboardPage() {
             <CardTitle>Workflow: From Stuffing to Delivery</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
               {WORKFLOW_STEPS.map((s, i) => {
                 const Icon = s.icon
                 return (

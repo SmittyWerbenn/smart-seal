@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { ShieldCheck, WifiOff } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Input, Label, Select } from '@/components/ui/input'
+import { Input, Label } from '@/components/ui/input'
 import { useDataStore } from '@/store/dataStore'
-import { CLIENTS } from '@/mock/clients'
+import { CLIENT_NAMES, clientIdFor } from '@/mock/clients'
 import { PRODUCT_CATALOG, PRODUCT_CATEGORIES, skuFromProduct } from '@/mock/products'
 import type { CargoLine, Container } from '@/types'
 
@@ -21,7 +21,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
 
   const [productName, setProductName] = useState(existing?.productName ?? '')
   const [category, setCategory] = useState(existing?.category ?? PRODUCT_CATEGORIES[0])
-  const [clientId, setClientId] = useState(existing?.clientId ?? CLIENTS[0].id)
+  const [clientName, setClientName] = useState(existing?.clientName ?? '')
   const [doNumber, setDoNumber] = useState(existing?.doNumber ?? `DO-${Math.floor(Math.random() * 900 + 100)}`)
   const [quantity, setQuantity] = useState(existing?.quantity ?? 100)
   const [unit, setUnit] = useState(existing?.unit ?? 'units')
@@ -32,7 +32,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
   const reset = () => {
     setProductName('')
     setCategory(PRODUCT_CATEGORIES[0])
-    setClientId(CLIENTS[0].id)
+    setClientName('')
     setDoNumber(`DO-${Math.floor(Math.random() * 900 + 100)}`)
     setQuantity(100)
     setUnit('units')
@@ -40,13 +40,12 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
   }
 
   const handleSubmit = () => {
-    if (!productName.trim()) return
-    const client = CLIENTS.find((c) => c.id === clientId)!
+    if (!productName.trim() || !clientName.trim()) return
     const payload = {
       containerId: container.id,
       sealId: taggedSealId,
-      clientId,
-      clientName: client.name,
+      clientId: clientIdFor(clientName.trim()),
+      clientName: clientName.trim(),
       doNumber,
       productName: productName.trim(),
       category,
@@ -74,7 +73,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!productName.trim()}>
+          <Button onClick={handleSubmit} disabled={!productName.trim() || !clientName.trim()}>
             {existing ? 'Save Changes' : 'Add Cargo'}
           </Button>
         </>
@@ -121,13 +120,12 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
           </div>
           <div>
             <Label htmlFor="cargo-client">Client</Label>
-            <Select id="cargo-client" value={clientId} onChange={(e) => setClientId(e.target.value)}>
-              {CLIENTS.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+            <Input id="cargo-client" list="client-suggestions" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. PT Sinar Nusantara" />
+            <datalist id="client-suggestions">
+              {CLIENT_NAMES.map((name) => (
+                <option key={name} value={name} />
               ))}
-            </Select>
+            </datalist>
           </div>
         </div>
 
