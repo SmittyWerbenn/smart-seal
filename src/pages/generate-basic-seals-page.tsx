@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, Download, Printer, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Download, FileText, Printer, RotateCcw } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Label } from '@/components/ui/input'
 import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { barcodeFor } from '@/lib/barcode'
+import { exportBarcodesToPdf } from '@/lib/pdf-export'
 import { downloadCsv } from '@/lib/utils'
 
 function nextBatch(startAt: number, quantity: number) {
@@ -77,6 +78,12 @@ export default function GenerateBasicSealsPage() {
                   >
                     <Download size={14} /> Export CSV
                   </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => exportBarcodesToPdf(batch, `basic-seal-barcodes-${batch[0].id}-${batch[batch.length - 1].id}.pdf`)}
+                  >
+                    <FileText size={14} /> Export PDF
+                  </Button>
                   <Button variant="secondary" onClick={() => window.print()}>
                     <Printer size={14} /> Print
                   </Button>
@@ -96,7 +103,7 @@ export default function GenerateBasicSealsPage() {
         <div className="px-4 md:px-6">
           <p className="mb-3 text-xs text-slate-400 print:hidden">
             {batch.length} barcodes generated ({batch[0].id} – {batch[batch.length - 1].id}) and added to Seal Inventory as "In Stock". Export CSV for your
-            inventory system, or Print to hand a printable sheet to your seal vendor.
+            inventory system, Export PDF for a printable barcode sheet you can save or email, or Print directly.
           </p>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 print:grid-cols-3">
             {batch.map((b) => (
