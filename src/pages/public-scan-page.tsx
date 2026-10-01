@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Package, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
+import { Building2, Package, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { AppLogo } from '@/components/shared/logo'
 import { ScannerModal } from '@/components/shared/scanner-modal'
@@ -156,6 +156,10 @@ export default function PublicScanPage() {
                   manifest.map((line) => (
                     <div key={line.id} className="rounded-md border border-slate-100 p-2.5 text-xs">
                       <p className="font-medium text-navy-800">{line.productName}</p>
+                      <p className="mt-0.5 flex items-center gap-1 font-medium text-brand-700">
+                        <Building2 size={12} className="shrink-0" />
+                        <span className="text-slate-400">Company:</span> {line.clientName?.trim() || '-'}
+                      </p>
                       <p className="text-slate-500">
                         {titleCase(line.category)} · {line.quantity.toLocaleString()} {line.unit}
                       </p>

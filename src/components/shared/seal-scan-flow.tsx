@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Lock, MapPin, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
+import { Building2, Lock, MapPin, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
 import { ScannerModal } from './scanner-modal'
@@ -64,8 +64,12 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
                       {owned ? (
                         <>
                           <p className="font-medium text-navy-800">{line.productName}</p>
+                          <p className="mt-0.5 flex items-center gap-1 font-medium text-brand-700">
+                            <Building2 size={12} className="shrink-0" />
+                            <span className="text-slate-400">Company:</span> {line.clientName?.trim() || '-'}
+                          </p>
                           <p className="text-slate-500">
-                            {line.clientName} · {line.doNumber} · {line.quantity.toLocaleString()} {line.unit}
+                            {line.doNumber} · {line.quantity.toLocaleString()} {line.unit}
                           </p>
                         </>
                       ) : (
