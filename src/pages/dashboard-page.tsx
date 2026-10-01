@@ -52,13 +52,13 @@ const DOC_FLOWS: { key: string; title: string; icon: LucideIcon; tone: string; b
     title: 'SEAL',
     icon: ShieldCheck,
     tone: 'border-brand-200 bg-brand-50/40',
-    badge: '2 Foto Diperlukan',
+    badge: '2 Photos Required',
     note: SEAL_PHOTO_TEXT,
     steps: [
-      { label: 'Foto Barang Sebelum Seal', kind: 'photo', tag: 'Foto Wajib' },
-      { label: 'Pasang Seal', kind: 'action' },
-      { label: 'Foto Container Setelah Seal', kind: 'photo', tag: 'Foto Wajib' },
-      { label: 'Seal Selesai', kind: 'done', tag: 'Dokumentasi Selesai' },
+      { label: 'Photo of Cargo Before Sealing', kind: 'photo', tag: 'Photo Required' },
+      { label: 'Attach Seal', kind: 'action' },
+      { label: 'Photo of Container After Seal Fitted', kind: 'photo', tag: 'Photo Required' },
+      { label: 'Seal Complete', kind: 'done', tag: 'Documentation Complete' },
     ],
   },
   {
@@ -66,27 +66,27 @@ const DOC_FLOWS: { key: string; title: string; icon: LucideIcon; tone: string; b
     title: 'UNLOCK',
     icon: Unlock,
     tone: 'border-green-200 bg-success-100/30',
-    badge: '2 Foto Diperlukan',
+    badge: '2 Photos Required',
     note: UNLOCK_PHOTO_TEXT,
     steps: [
-      { label: 'Foto Container Sebelum Unlock', kind: 'photo', tag: 'Foto Wajib' },
-      { label: 'Buka Seal', kind: 'action' },
-      { label: 'Foto Barang Setelah Seal Dibuka', kind: 'photo', tag: 'Foto Wajib' },
-      { label: 'Unlock Selesai', kind: 'done', tag: 'Dokumentasi Selesai' },
+      { label: 'Photo of Container Before Unlock', kind: 'photo', tag: 'Photo Required' },
+      { label: 'Open Seal', kind: 'action' },
+      { label: 'Photo of Cargo After Seal Opened', kind: 'photo', tag: 'Photo Required' },
+      { label: 'Unlock Complete', kind: 'done', tag: 'Documentation Complete' },
     ],
   },
   {
     key: 'issue',
-    title: 'KENDALA',
+    title: 'ISSUE',
     icon: AlertTriangle,
     tone: 'border-amber-200 bg-warning-100/40',
-    badge: 'Foto Kendala',
-    note: 'Dokumentasi kendala dapat menggunakan beberapa foto (minimal 1), plus catatan kendala.',
+    badge: 'Issue Photos',
+    note: 'Issue documentation can use several photos (minimum 1), plus an issue note.',
     steps: [
-      { label: 'Tandai Ada Kendala', kind: 'action' },
-      { label: 'Upload 1 atau Beberapa Foto', kind: 'photo', tag: 'Foto Kendala' },
-      { label: 'Tambahkan Catatan Kendala', kind: 'action' },
-      { label: 'Simpan Dokumentasi', kind: 'done', tag: 'Dokumentasi Selesai' },
+      { label: 'Mark Issue', kind: 'action' },
+      { label: 'Upload 1 or Several Photos', kind: 'photo', tag: 'Issue Photos' },
+      { label: 'Add Issue Note', kind: 'action' },
+      { label: 'Save Documentation', kind: 'done', tag: 'Documentation Complete' },
     ],
   },
 ]
@@ -95,9 +95,9 @@ const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; descripti
   { step: 1, icon: BarcodeIcon, title: 'Generate Barcode', description: 'Provision a batch of Basic Seal barcodes ahead of time, ready for stuffing.', path: '/eseals/generate' },
   { step: 2, icon: FilePlus2, title: 'Create Container & Cargo', description: 'Register a new container and record what is being loaded: product, DO number, quantity.', path: '/stuffing' },
   { step: 3, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
-  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Take the cargo photo, scan the seal, check battery (Smart Seal), take the sealed-container photo, then arm it.', path: '/stuffing', photo: '2 Foto Diperlukan' },
+  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Take the cargo photo, scan the seal, check battery (Smart Seal), take the sealed-container photo, then arm it.', path: '/stuffing', photo: '2 Photos Required' },
   { step: 5, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
-  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination. Photograph the container, open the seal, photograph the cargo, hand over to the consignee.', path: '/containers', photo: '2 Foto Diperlukan' },
+  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination. Photograph the container, open the seal, photograph the cargo, hand over to the consignee.', path: '/containers', photo: '2 Photos Required' },
 ]
 
 export default function DashboardPage() {
@@ -205,7 +205,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4 border-t border-slate-100 pt-4">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <Camera size={13} /> Dokumentasi Foto — kapan &amp; foto apa yang diambil
+                <Camera size={13} /> Photo Documentation — when &amp; what photo to take
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 {DOC_FLOWS.map((flow) => {
