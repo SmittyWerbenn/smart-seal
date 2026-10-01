@@ -32,6 +32,8 @@ import { TrackingMap } from '@/components/map/tracking-map'
 import { BatteryIndicator, SignalIndicator, deviceHealthStatus, type DeviceHealth } from '@/components/shared/indicators'
 import { cn, formatDateTime, sealIdFor, timeAgo, titleCase } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { useUiStore, type Lang } from '@/store/uiStore'
+import { t as translate, type Lang as LocaleLang } from '@/lib/i18n'
 import { SEAL_PHOTO_TEXT, UNLOCK_PHOTO_TEXT } from '@/lib/documentation'
 import type { ContainerStatus } from '@/types'
 
@@ -102,6 +104,7 @@ const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; descripti
 export default function DashboardPage() {
   const { containers, devices, alerts, timeline, vessels } = useDataStore()
   const currentUser = useAuthStore((s) => s.currentUser)
+  const lang = useUiStore((s) => s.lang)
   const navigate = useNavigate()
 
   const visibleContainers = useMemo(() => {

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Menu, ChevronDown, LogOut } from 'lucide-react'
+import { Menu, ChevronDown, Globe, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
-import { useUiStore } from '@/store/uiStore'
+import { useUiStore, type Lang } from '@/store/uiStore'
 import { ALL_ROLES } from '@/mock/users'
 import { NotificationBell } from './notification-bell'
 import { GlobalSearch } from './global-search'
@@ -11,6 +11,8 @@ import { cn } from '@/lib/utils'
 export function Topbar({ title }: { title?: string }) {
   const { currentUser, switchRole, logout } = useAuthStore()
   const setMobileNavOpen = useUiStore((s) => s.setMobileNavOpen)
+  const setLang = useUiStore((s) => s.setLang)
+  const lang = useUiStore((s) => s.lang)
   const [roleMenuOpen, setRoleMenuOpen] = useState(false)
   const navigate = useNavigate()
 
@@ -25,8 +27,17 @@ export function Topbar({ title }: { title?: string }) {
 
       <div className="ml-auto flex items-center gap-2 md:ml-auto">
         <GlobalSearch />
-
         <NotificationBell />
+
+        <button
+          onClick={() => setLang(lang === 'id' ? 'en' : 'id')}
+          className="flex items-center gap-1.5 rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-navy-700 hover:bg-slate-50"
+          aria-label="Ganti bahasa"
+          title="Ganti bahasa"
+        >
+          <Globe size={14} />
+          {lang === 'id' ? 'ID' : 'EN'}
+        </button>
 
         <div className="relative">
           <button
