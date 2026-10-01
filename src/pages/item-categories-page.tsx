@@ -21,7 +21,8 @@ export default function ItemCategoriesPage() {
   const updateItemCategory = useDataStore((s) => s.updateItemCategory)
   const removeItemCategory = useDataStore((s) => s.removeItemCategory)
   const role = useAuthStore((s) => s.currentUser?.role)
-  const canManage = role === 'SUPER_ADMIN' || role === 'SUPERVISOR'
+  // Same roles that can see the menu (nav-config.ts) can manage categories.
+  const canManage = role === 'SUPER_ADMIN' || role === 'CONTROL_TOWER' || role === 'WAREHOUSE' || role === 'SUPERVISOR'
 
   const [editing, setEditing] = useState<ItemCategory | 'new' | null>(null)
   const [name, setName] = useState('')
