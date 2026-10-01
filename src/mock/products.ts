@@ -1,3 +1,5 @@
+import type { ItemCategory } from '@/types'
+
 // Shared product catalog — used both by mock data generation and by the
 // manual "Add Cargo" form so suggestions stay consistent with generated data.
 export interface ProductDef {
@@ -37,6 +39,36 @@ export const PRODUCT_CATALOG: ProductDef[] = [
 ]
 
 export const PRODUCT_CATEGORIES: string[] = Array.from(new Set(PRODUCT_CATALOG.map((p) => p.category)))
+
+// Seed for the Master Kategori Barang (item category master). After seeding, the
+// master in dataStore is the only source of category names and colors.
+const SEED_COLORS: Record<string, string> = {
+  Electronics: '#2563eb',
+  Textile: '#9333ea',
+  'Coffee Beans': '#92400e',
+  Rubber: '#475569',
+  'Machinery Parts': '#ea580c',
+  'Palm Oil Products': '#ca8a04',
+  Furniture: '#0d9488',
+  Ceramics: '#db2777',
+  Rice: '#16a34a',
+  'Frozen Seafood': '#0891b2',
+}
+export const FALLBACK_CATEGORY_COLORS = ['#dc2626', '#2563eb', '#16a34a', '#eab308', '#9333ea', '#ea580c', '#0891b2', '#db2777']
+
+export function categoryIdFor(name: string): string {
+  return `cat-${name.trim().replace(/\s+/g, '-').toLowerCase()}`
+}
+
+export function buildItemCategorySeed(extraNames: string[] = []): ItemCategory[] {
+  const names = Array.from(new Set([...PRODUCT_CATEGORIES, ...extraNames.map((n) => n.trim()).filter(Boolean)]))
+  return names.map((name, i) => ({
+    id: categoryIdFor(name),
+    name,
+    color: SEED_COLORS[name] ?? FALLBACK_CATEGORY_COLORS[i % FALLBACK_CATEGORY_COLORS.length],
+    active: true,
+  }))
+}
 
 export function skuFromProduct(product: string, index: number): string {
   const initials = product

@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react'
 import { Lock, Package, Plus } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { CategoryBadge } from '@/components/shared/category-badge'
 import { Button } from '@/components/ui/button'
 import { RiskBadge } from '@/components/shared/status-badge'
 import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
@@ -91,7 +92,7 @@ export function OverviewTab({ container, device, cargo }: { container: Container
                           {line.quantity.toLocaleString()} {line.unit} · {line.doNumber}
                         </p>
                         <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                          <Badge variant="brand">{line.category}</Badge>
+                          <CategoryBadge categoryId={line.categoryId} />
                           {line.sealId && <Badge variant="outline">{line.sealId}</Badge>}
                         </div>
                       </div>

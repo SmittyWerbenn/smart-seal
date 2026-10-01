@@ -2,10 +2,10 @@ import { useState } from 'react'
 import { ShieldCheck, WifiOff } from 'lucide-react'
 import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
-import { Input, Label } from '@/components/ui/input'
+import { Input, Label, Select } from '@/components/ui/input'
 import { useDataStore } from '@/store/dataStore'
 import { CLIENT_NAMES, clientIdFor } from '@/mock/clients'
-import { PRODUCT_CATALOG, PRODUCT_CATEGORIES, skuFromProduct } from '@/mock/products'
+import { PRODUCT_CATALOG, categoryIdFor, skuFromProduct } from '@/mock/products'
 import type { CargoLine, Container } from '@/types'
 
 interface CargoFormModalProps {
@@ -16,11 +16,12 @@ interface CargoFormModalProps {
 }
 
 export function CargoFormModal({ open, onClose, container, existing }: CargoFormModalProps) {
+  const categories = useDataStore((s) => s.itemCategories)
   const addCargoLine = useDataStore((s) => s.addCargoLine)
   const updateCargoLine = useDataStore((s) => s.updateCargoLine)
 
   const [productName, setProductName] = useState(existing?.productName ?? '')
-  const [category, setCategory] = useState(existing?.category ?? PRODUCT_CATEGORIES[0])
+  const [category, setCategory] = useState<string>(existing?.categoryId ?? '')
   const [clientName, setClientName] = useState(existing?.clientName ?? '')
   const [doNumber, setDoNumber] = useState(existing?.doNumber ?? `DO-${Math.floor(Math.random() * 900 + 100)}`)
   const [quantity, setQuantity] = useState(existing?.quantity ?? 100)
@@ -31,7 +32,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
 
   const reset = () => {
     setProductName('')
-    setCategory(PRODUCT_CATEGORIES[0])
+    setCategory('')
     setClientName('')
     setDoNumber(`DO-${Math.floor(Math.random() * 900 + 100)}`)
     setQuantity(100)
@@ -48,7 +49,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
       clientName: clientName.trim(),
       doNumber,
       productName: productName.trim(),
-      category,
+      categoryId: category || null,
       sku: skuFromProduct(productName.trim(), Math.floor(Math.random() * 90 + 10)),
       quantity,
       unit,
@@ -95,7 +96,9 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
               setProductName(e.target.value)
               const match = PRODUCT_CATALOG.find((p) => p.product === e.target.value)
               if (match) {
-                setCategory(match.category)
+                // Suggest the master category matching the catalog entry; only if it exists and is active.
+                const suggested = categories.find((c) => c.id === categoryIdFor(match.category) && c.active)
+                if (suggested) setCategory(suggested.id)
                 setUnit(match.unit)
               }
             }}
@@ -111,12 +114,17 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
         <div className="grid grid-cols-2 gap-3">
           <div>
             <Label htmlFor="cargo-category">Category</Label>
-            <Input id="cargo-category" list="category-suggestions" value={category} onChange={(e) => setCategory(e.target.value)} />
-            <datalist id="category-suggestions">
-              {PRODUCT_CATEGORIES.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
+            <Select id="cargo-category" value={category} onChange={(e) => setCategory(e.target.value)}>
+              <option value="">— Uncategorized —</option>
+              {categories
+                .filter((c) => c.active || c.id === category)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                    {c.active ? '' : ' (inactive)'}
+                  </option>
+                ))}
+            </Select>
           </div>
           <div>
             <Label htmlFor="cargo-client">Client</Label>

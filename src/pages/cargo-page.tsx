@@ -7,7 +7,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { DataTable, type Column } from '@/components/shared/data-table'
 import { Card } from '@/components/ui/card'
 import { Input, Label, Select } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { CategoryBadge } from '@/components/shared/category-badge'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { CargoFormModal } from '@/components/container/cargo-form-modal'
@@ -27,7 +27,7 @@ export default function CargoPage() {
   const isClient = currentUser?.role === 'CLIENT'
   const canManage = currentUser?.role !== 'CLIENT' && currentUser?.role !== 'AUDITOR'
   const formContainer = containers.find((c) => c.id === formContainerId)
-  const categories = useMemo(() => Array.from(new Set(cargo.map((c) => c.category))).sort(), [cargo])
+  const categories = useDataStore((s) => s.itemCategories)
 
   const masked = useMemo(
     () =>
@@ -39,7 +39,7 @@ export default function CargoPage() {
   )
 
   const filtered = masked.filter((c) => {
-    if (category !== 'ALL' && c.category !== category) return false
+    if (category === 'NONE' ? c.categoryId !== null : category !== 'ALL' && c.categoryId !== category) return false
     const container = containers.find((x) => x.id === c.containerId)
     return `${container?.number ?? ''} ${c.owned ? c.clientName : ''} ${c.owned ? c.doNumber : ''} ${c.owned ? c.productName : ''}`
       .toLowerCase()
@@ -49,7 +49,7 @@ export default function CargoPage() {
   const columns: Column<CargoLine & { owned: boolean }>[] = [
     { key: 'container', header: 'Container', render: (c) => containers.find((x) => x.id === c.containerId)?.number ?? c.containerId },
     { key: 'product', header: 'Product', render: (c) => (c.owned ? <span className="font-medium text-navy-900">{c.productName}</span> : '—') },
-    { key: 'category', header: 'Category', render: (c) => <Badge variant="brand">{c.category}</Badge> },
+    { key: 'category', header: 'Category', render: (c) => <CategoryBadge categoryId={c.categoryId} /> },
     {
       key: 'client',
       header: 'Client',
@@ -86,10 +86,11 @@ export default function CargoPage() {
           <Select value={category} onChange={(e) => setCategory(e.target.value)} className="w-52">
             <option value="ALL">All categories</option>
             {categories.map((cat) => (
-              <option key={cat} value={cat}>
-                {cat}
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
               </option>
             ))}
+            <option value="NONE">Uncategorized</option>
           </Select>
         </div>
         <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.containerId}`)} emptyTitle="No cargo records" />

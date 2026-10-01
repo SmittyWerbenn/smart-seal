@@ -21,6 +21,7 @@ import ReverseLogisticsPage from '@/pages/reverse-logistics-page'
 import ReportsPage from '@/pages/reports-page'
 import AuditLogsPage from '@/pages/audit-logs-page'
 import UsersRolesPage from '@/pages/users-roles-page'
+import ItemCategoriesPage from '@/pages/item-categories-page'
 import SettingsPage from '@/pages/settings-page'
 import SimulationPage from '@/pages/simulation-page'
 import StuffingWizardPage from '@/pages/stuffing-wizard-page'
@@ -82,6 +83,7 @@ export default function App() {
           <Route path="/geofences" element={<GeofencesPage />} />
           <Route path="/reverse-logistics" element={<ReverseLogisticsPage />} />
           <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/master/item-categories" element={<ItemCategoriesPage />} />
           <Route path="/audit-logs" element={<AuditLogsPage />} />
           <Route path="/users" element={<UsersRolesPage />} />
           <Route path="/simulation" element={<SimulationPage />} />

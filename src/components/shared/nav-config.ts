@@ -12,6 +12,7 @@ import {
   ScrollText,
   Users,
   Settings,
+  Palette,
   type LucideIcon,
 } from 'lucide-react'
 import type { Role } from '@/types'
@@ -21,6 +22,7 @@ export interface NavItem {
   path: string
   icon: LucideIcon
   roles: Role[]
+  group?: string // optional section heading rendered above the first item of a group
 }
 
 export const NAV_ITEMS: NavItem[] = [
@@ -34,6 +36,7 @@ export const NAV_ITEMS: NavItem[] = [
   { label: 'Vessels / AIS', path: '/vessels', icon: Sailboat, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'SUPERVISOR'] },
   { label: 'Geofences', path: '/geofences', icon: MapPinned, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'SUPERVISOR'] },
   { label: 'Reverse Logistics', path: '/reverse-logistics', icon: Recycle, roles: ['SUPER_ADMIN', 'WAREHOUSE', 'SUPERVISOR'] },
+  { label: 'Master Kategori Barang', path: '/master/item-categories', icon: Palette, group: 'Master Data', roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'WAREHOUSE', 'SUPERVISOR'] },
   { label: 'Audit Logs', path: '/audit-logs', icon: ScrollText, roles: ['SUPER_ADMIN', 'SUPERVISOR', 'AUDITOR'] },
   { label: 'Users & Roles', path: '/users', icon: Users, roles: ['SUPER_ADMIN'] },
   { label: 'Settings', path: '/settings', icon: Settings, roles: ['SUPER_ADMIN', 'CONTROL_TOWER', 'WAREHOUSE', 'SUPERVISOR', 'CLIENT', 'AUDITOR'] },

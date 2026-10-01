@@ -140,11 +140,18 @@ export interface CargoLine {
   clientName: string
   doNumber: string
   productName: string
-  category: string
+  categoryId: string | null // FK -> ItemCategory.id; null = uncategorized
   sku: string
   quantity: number
   unit: string
   address: string
+}
+
+export interface ItemCategory {
+  id: string
+  name: string
+  color: string // hex, e.g. #dc2626 — single source of truth for every category badge
+  active: boolean
 }
 
 export interface Shipment {

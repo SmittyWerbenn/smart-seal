@@ -24,9 +24,12 @@ export function Sidebar() {
           <AppLogo iconOnly={sidebarCollapsed} />
         </div>
         <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-          {items.map((item) => (
+          {items.map((item, i) => (
+            <div key={item.path}>
+              {item.group && items[i - 1]?.group !== item.group && (
+                sidebarCollapsed ? <div className="mx-3 my-2 border-t border-slate-100" /> : <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.group}</p>
+              )}
             <NavLink
-              key={item.path}
               to={item.path}
               className={({ isActive }) =>
                 cn(
@@ -38,6 +41,7 @@ export function Sidebar() {
               <item.icon size={17} className="shrink-0" />
               {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
             </NavLink>
+            </div>
           ))}
         </nav>
         <button
@@ -56,9 +60,12 @@ export function Sidebar() {
               <AppLogo />
             </div>
             <nav className="flex-1 space-y-0.5 overflow-y-auto px-2 py-3">
-              {items.map((item) => (
+              {items.map((item, i) => (
+                <div key={item.path}>
+                  {item.group && items[i - 1]?.group !== item.group && (
+                    <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.group}</p>
+                  )}
                 <NavLink
-                  key={item.path}
                   to={item.path}
                   onClick={() => setMobileNavOpen(false)}
                   className={({ isActive }) =>
@@ -71,6 +78,7 @@ export function Sidebar() {
                   <item.icon size={17} />
                   <span>{item.label}</span>
                 </NavLink>
+                </div>
               ))}
             </nav>
           </aside>

@@ -1,7 +1,7 @@
 import { makeRng } from './rng'
 import { CITIES, DOMESTIC_ROUTES, INTERNATIONAL_ROUTES, PORTS, ROUTES, WAREHOUSES, pointOnRoute, portForCity } from './geo'
 import { CLIENT_NAMES, clientIdFor } from './clients'
-import { PRODUCT_CATALOG, skuFromProduct, type ProductDef } from './products'
+import { PRODUCT_CATALOG, categoryIdFor, skuFromProduct, type ProductDef } from './products'
 import { barcodeFor } from '@/lib/barcode'
 import type {
   AlertItem,
@@ -328,7 +328,7 @@ export function generateContainersAndRelated(vessels: Vessel[], count = 32) {
         clientName: i === 0 ? ['PT Sinar Nusantara', 'PT Bahari Jaya Logistik', 'PT Karya Mandiri Sejahtera'][c] : client,
         doNumber: `DO-${pad(i * 10 + c + 1, 3)}`,
         productName: productDef.product,
-        category: productDef.category,
+        categoryId: categoryIdFor(productDef.category),
         sku: skuFromProduct(productDef.product, c + 1),
         quantity: rng.int(productDef.qty[0], productDef.qty[1]),
         unit: productDef.unit,

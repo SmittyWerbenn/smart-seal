@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Lock, Package, Pencil, Plus, ShieldCheck, Trash2, WifiOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { CategoryBadge } from '@/components/shared/category-badge'
 import { Button } from '@/components/ui/button'
 import { useAuthStore } from '@/store/authStore'
 import { useDataStore } from '@/store/dataStore'
@@ -74,7 +74,7 @@ export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: 
                 <CardContent className="space-y-1.5 text-sm">
                   {owned ? (
                     <>
-                      <Row label="Category" value={<Badge variant="brand">{line.category}</Badge>} />
+                      <Row label="Category" value={<CategoryBadge categoryId={line.categoryId} />} />
                       <Row label="DO Number" value={line.doNumber} />
                       <Row label="SKU" value={line.sku} />
                       <Row label="Quantity" value={`${line.quantity.toLocaleString()} ${line.unit}`} />

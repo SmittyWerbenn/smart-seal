@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { buildInitialDataset } from '@/mock'
 import { pointOnRoute, portForCity } from '@/mock/geo'
+import { buildItemCategorySeed, categoryIdFor } from '@/mock/products'
 import type {
   AlertItem,
   AlertStatus,
@@ -12,6 +13,7 @@ import type {
   Container,
   ESealDevice,
   Geofence,
+  ItemCategory,
   Port,
   RouteDefinition,
   Shipment,
@@ -32,6 +34,7 @@ interface DataState {
   alerts: AlertItem[]
   geofences: Geofence[]
   cargo: CargoLine[]
+  itemCategories: ItemCategory[]
   shipments: Shipment[]
   timeline: TimelineEvent[]
   auditLog: AuditLogEntry[]
@@ -49,6 +52,9 @@ interface DataState {
   addCargoLine: (line: Omit<CargoLine, 'id'>) => void
   updateCargoLine: (id: string, patch: Partial<CargoLine>) => void
   removeCargoLine: (id: string) => void
+  addItemCategory: (input: { name: string; color: string; active: boolean }) => { ok: boolean; error?: string }
+  updateItemCategory: (id: string, patch: { name?: string; color?: string; active?: boolean }) => { ok: boolean; error?: string }
+  removeItemCategory: (id: string) => { ok: boolean; error?: string }
   addContainer: (input: { number: string; isoType: string; originCity: string; destinationCity: string; shipper: string; consignee: string; eta?: string }) => Container
   addBasicSealBatch: (items: { id: string; barcode: string }[]) => void
   addAlert: (alert: Omit<AlertItem, 'id' | 'createdAt' | 'status'> & Partial<Pick<AlertItem, 'status'>>) => AlertItem
@@ -59,6 +65,14 @@ interface DataState {
   markNotificationRead: (id: string) => void
   markAllNotificationsRead: () => void
   resetAll: () => void
+}
+
+function validateCategory(list: ItemCategory[], input: { name: string; color: string }, selfId?: string): string | null {
+  const name = input.name.trim()
+  if (!name) return 'Category name is required.'
+  if (list.some((c) => c.id !== selfId && c.name.trim().toLowerCase() === name.toLowerCase())) return 'Category name already exists.'
+  if (!/^#[0-9a-f]{6}$/i.test(input.color)) return 'Color must be a hex value like #dc2626.'
+  return null
 }
 
 function seedState() {
@@ -177,6 +191,42 @@ export const useDataStore = create<DataState>()(
         return container
       },
 
+      addItemCategory: (input) => {
+        const err = validateCategory(get().itemCategories, input)
+        if (err) return { ok: false, error: err }
+        const cat: ItemCategory = { id: nextId('cat'), name: input.name.trim(), color: input.color.toLowerCase(), active: input.active }
+        set((state) => ({ itemCategories: [...state.itemCategories, cat] }))
+        get().addAuditLogEntry({ user: 'Admin', action: 'CATEGORY_CREATED', entity: cat.name, description: `Item category "${cat.name}" created` })
+        return { ok: true }
+      },
+
+      updateItemCategory: (id, patch) => {
+        const current = get().itemCategories.find((c) => c.id === id)
+        if (!current) return { ok: false, error: 'Category not found.' }
+        const next = { name: current.name, color: current.color, active: current.active, ...patch }
+        const err = validateCategory(get().itemCategories, next, id)
+        if (err) return { ok: false, error: err }
+        set((state) => ({
+          itemCategories: state.itemCategories.map((c) =>
+            c.id === id ? { ...c, name: next.name.trim(), color: next.color.toLowerCase(), active: next.active } : c,
+          ),
+        }))
+        get().addAuditLogEntry({ user: 'Admin', action: 'CATEGORY_UPDATED', entity: next.name.trim(), description: `Item category "${current.name}" updated` })
+        return { ok: true }
+      },
+
+      // Deleting a category that cargo still references is blocked (deactivate instead)
+      // so existing items never end up pointing at a missing category.
+      removeItemCategory: (id) => {
+        const current = get().itemCategories.find((c) => c.id === id)
+        if (!current) return { ok: false, error: 'Category not found.' }
+        const used = get().cargo.filter((l) => l.categoryId === id).length
+        if (used > 0) return { ok: false, error: `Category is used by ${used} cargo item(s). Deactivate it instead.` }
+        set((state) => ({ itemCategories: state.itemCategories.filter((c) => c.id !== id) }))
+        get().addAuditLogEntry({ user: 'Admin', action: 'CATEGORY_DELETED', entity: current.name, description: `Item category "${current.name}" deleted` })
+        return { ok: true }
+      },
+
       addBasicSealBatch: (items) =>
         set((state) => ({
           basicSealStock: [...items.map((i) => ({ ...i, createdAt: new Date().toISOString() })), ...state.basicSealStock],
@@ -243,6 +293,22 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'smartseal-data-v13',
+      version: 1,
+      // v0 -> v1: cargo.category (free text) became cargo.categoryId -> itemCategories master.
+      // Existing items keep their category (derived from the old text); empty text becomes null.
+      migrate: (persisted, version) => {
+        const state = (persisted ?? {}) as Record<string, unknown>
+        if (version < 1) {
+          const oldCargo = (Array.isArray(state.cargo) ? state.cargo : []) as (Record<string, unknown> & { category?: string })[]
+          state.itemCategories = buildItemCategorySeed(oldCargo.map((c) => String(c.category ?? '')))
+          state.cargo = oldCargo.map((c) => {
+            const { category, ...rest } = c
+            const name = String(category ?? '').trim()
+            return { ...rest, categoryId: name ? categoryIdFor(name) : null }
+          })
+        }
+        return state as unknown as DataState
+      },
       partialize: (state) => {
         const { hydrated, ...rest } = state
         void hydrated
