@@ -21,8 +21,9 @@ export default function ItemCategoriesPage() {
   const updateItemCategory = useDataStore((s) => s.updateItemCategory)
   const removeItemCategory = useDataStore((s) => s.removeItemCategory)
   const role = useAuthStore((s) => s.currentUser?.role)
-  // Same roles that can see the menu (nav-config.ts) can manage categories.
+  // Add/edit: every role that can see the menu (nav-config.ts). Delete: admin-level only.
   const canManage = role === 'SUPER_ADMIN' || role === 'CONTROL_TOWER' || role === 'WAREHOUSE' || role === 'SUPERVISOR'
+  const canDelete = role === 'SUPER_ADMIN' || role === 'SUPERVISOR'
 
   const [editing, setEditing] = useState<ItemCategory | 'new' | null>(null)
   const [name, setName] = useState('')
@@ -82,6 +83,7 @@ export default function ItemCategoriesPage() {
                 <button onClick={() => openForm(c)} aria-label={`Edit ${c.name}`} className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-navy-700">
                   <Pencil size={14} />
                 </button>
+                {canDelete && (
                 <button
                   onClick={() => {
                     setDeleteError('')
@@ -92,6 +94,7 @@ export default function ItemCategoriesPage() {
                 >
                   <Trash2 size={14} />
                 </button>
+                )}
               </div>
             ),
           } satisfies Column<ItemCategory>,
