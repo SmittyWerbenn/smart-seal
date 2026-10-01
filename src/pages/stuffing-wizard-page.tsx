@@ -1,17 +1,20 @@
 import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BatteryWarning, CheckCircle2, ChevronRight, PackageCheck, Plus, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
+import { AlertTriangle, BatteryWarning, CheckCircle2, ChevronRight, PackageCheck, Plus, ScanLine, ShieldCheck, WifiOff } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ScannerModal } from '@/components/shared/scanner-modal'
+import { PhotoSlot } from '@/components/shared/photo-ui'
+import { IssueReportModal } from '@/components/shared/issue-report-modal'
+import { saveSealPhotos, SEAL_PHOTO_TEXT } from '@/lib/documentation'
 import { CreateContainerModal } from '@/components/container/create-container-modal'
 import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
 
-type Step = 'container' | 'security' | 'scan' | 'battery' | 'confirm' | 'success'
+type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'confirm' | 'success'
 
 export default function StuffingWizardPage() {
   const { id } = useParams()
@@ -34,6 +37,10 @@ export default function StuffingWizardPage() {
   const [regularScanOpen, setRegularScanOpen] = useState(false)
   const [battery, setBattery] = useState(65)
   const [createOpen, setCreateOpen] = useState(false)
+  const [photoBefore, setPhotoBefore] = useState<string | null>(null)
+  const [photoAfter, setPhotoAfter] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState('')
+  const [issueOpen, setIssueOpen] = useState(false)
 
   const container = containers.find((c) => c.id === containerId)
   const esealResultCode = container?.eSealId ?? `ESEAL-${container?.id.replace('CNT-', '') ?? '000000'}`
@@ -49,10 +56,19 @@ export default function StuffingWizardPage() {
     setEsealCode(null)
     setRegularCode(null)
     setBattery(65)
+    setPhotoBefore(null)
+    setPhotoAfter(null)
+    setPhotoError('')
   }
 
   const armContainerNow = () => {
     if (!container) return
+    // Both seal photos are mandatory; they are saved first so a failed save never leaves a sealed container without documentation.
+    const saved = saveSealPhotos(container.id, photoBefore, photoAfter, 'Warehouse Operator')
+    if (!saved.ok) {
+      setPhotoError(saved.error ?? 'Foto gagal disimpan.')
+      return
+    }
     const isRegular = securityMode === 'BASIC_SEAL'
     updateContainer(container.id, {
       status: 'SEALED',
@@ -83,10 +99,13 @@ export default function StuffingWizardPage() {
   const steps: { key: Step; label: string }[] = [
     { key: 'container', label: 'Container' },
     { key: 'security', label: 'Security Mode' },
+    { key: 'photo-before', label: 'Foto Barang' },
     { key: 'scan', label: 'Scan Seals' },
     ...(securityMode === 'BASIC_SEAL' ? [] : [{ key: 'battery' as Step, label: 'Battery Check' }]),
+    { key: 'photo-after', label: 'Foto Container' },
     { key: 'confirm', label: 'Arm Container' },
   ]
+  const no = (key: Step) => steps.findIndex((s) => s.key === key) + 1
 
   return (
     <div className="mx-auto max-w-3xl pb-16">
@@ -168,7 +187,7 @@ export default function StuffingWizardPage() {
                   key={mode}
                   onClick={() => {
                     setSecurityMode(mode)
-                    setStep('scan')
+                    setStep('photo-before')
                   }}
                   className="flex flex-col items-start gap-2 rounded-lg border border-slate-200 p-4 text-left hover:border-brand-400 hover:bg-brand-50"
                 >
@@ -183,10 +202,49 @@ export default function StuffingWizardPage() {
           </Card>
         )}
 
+        {step === 'photo-before' && container && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step {no('photo-before')} — Foto Barang Sebelum Seal</CardTitle>
+              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
+                <span className="font-semibold">Seal membutuhkan 2 foto.</span> {SEAL_PHOTO_TEXT} Ambil foto pertama sekarang, sebelum seal dipasang.
+              </div>
+              <PhotoSlot step={1} label="Foto Barang di Dalam Container (Sebelum Seal)" hint="Pastikan kondisi barang di dalam container terlihat jelas." value={photoBefore} onChange={setPhotoBefore} />
+              <Button className="w-full" disabled={!photoBefore} onClick={() => setStep('scan')}>
+                Lanjut ke Pasang Seal
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 'photo-after' && container && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step {no('photo-after')} — Foto Container Setelah Seal</CardTitle>
+              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">Seal sudah terpasang. Ambil foto kedua: kondisi container setelah seal terpasang.</div>
+              <PhotoSlot step={2} label="Foto Container Setelah Seal Terpasang" hint="Seal harus terlihat terpasang pada pintu container." value={photoAfter} onChange={setPhotoAfter} />
+              <div className="flex items-center justify-between gap-2">
+                <button type="button" onClick={() => setIssueOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:underline">
+                  <AlertTriangle size={13} /> Ada Kendala
+                </button>
+                <Button disabled={!photoAfter} onClick={() => setStep('confirm')}>
+                  Lanjut ke Arm Container
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {step === 'scan' && container && securityMode === 'BASIC_SEAL' && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 3 — Scan Basic Seal</CardTitle>
+              <CardTitle>Step {no('scan')} — Scan Basic Seal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <ScanRow label="Scan Basic Seal" done={!!regularCode} code={regularCode} onScan={() => setRegularScanOpen(true)} />
@@ -195,8 +253,8 @@ export default function StuffingWizardPage() {
                 <WifiOff size={16} className="mt-0.5 shrink-0" />
                 No battery check needed — this seal has no electronics or IoT device.
               </div>
-              <Button className="mt-2 w-full" disabled={!sealsComplete} onClick={() => setStep('confirm')}>
-                Continue to Arm Container
+              <Button className="mt-2 w-full" disabled={!sealsComplete} onClick={() => setStep('photo-after')}>
+                Continue to Foto Container
               </Button>
             </CardContent>
           </Card>
@@ -205,7 +263,7 @@ export default function StuffingWizardPage() {
         {step === 'scan' && container && securityMode === 'SINGLE_SEAL' && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 3 — Scan Smart Seal</CardTitle>
+              <CardTitle>Step {no('scan')} — Scan Smart Seal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <ScanRow label="Scan Smart E-Seal" done={!!esealCode} code={esealCode} onScan={() => setEsealScanOpen(true)} />
@@ -222,7 +280,7 @@ export default function StuffingWizardPage() {
         {step === 'battery' && container && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 4 — Battery Check</CardTitle>
+              <CardTitle>Step {no('battery')} — Battery Check</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
@@ -246,8 +304,8 @@ export default function StuffingWizardPage() {
                 </div>
               )}
 
-              <Button className="w-full" disabled={!batteryOk} onClick={() => setStep('confirm')}>
-                Continue to Arm Container
+              <Button className="w-full" disabled={!batteryOk} onClick={() => setStep('photo-after')}>
+                Continue to Foto Container
               </Button>
             </CardContent>
           </Card>
@@ -256,7 +314,7 @@ export default function StuffingWizardPage() {
         {step === 'confirm' && container && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 5 — Arm Container</CardTitle>
+              <CardTitle>Step {no('confirm')} — Arm Container</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <dl className="space-y-2 text-sm">
@@ -270,8 +328,10 @@ export default function StuffingWizardPage() {
                   </>
                 )}
                 <Row label="Security Mode" value={securityMode === 'SINGLE_SEAL' ? 'Smart Seal' : 'Basic Seal'} />
+                <Row label="Dokumentasi Foto" value={photoBefore && photoAfter ? 'Dokumentasi Selesai (2 foto)' : '2 Foto Diperlukan'} />
               </dl>
-              <Button className="w-full" size="lg" onClick={armContainerNow}>
+              {photoError && <p className="text-xs text-critical-500">{photoError}</p>}
+              <Button className="w-full" size="lg" disabled={!photoBefore || !photoAfter} onClick={armContainerNow}>
                 <ShieldCheck size={16} /> ARM CONTAINER
               </Button>
             </CardContent>
@@ -296,6 +356,8 @@ export default function StuffingWizardPage() {
           </Card>
         )}
       </div>
+
+      {container && <IssueReportModal open={issueOpen} onClose={() => setIssueOpen(false)} container={container} context="SEAL" />}
 
       <ScannerModal
         open={esealScanOpen}

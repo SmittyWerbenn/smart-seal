@@ -154,6 +154,30 @@ export interface ItemCategory {
   active: boolean
 }
 
+// Photo documentation of the Seal / Unlock process (and issue reports).
+export type DocPhotoType = 'SEAL_BEFORE' | 'SEAL_AFTER' | 'UNLOCK_BEFORE' | 'UNLOCK_AFTER' | 'ISSUE'
+
+export interface ContainerPhoto {
+  id: string
+  containerId: string // every photo belongs to exactly one container
+  type: DocPhotoType
+  dataUrl: string // compressed JPEG data URL (browser-local storage)
+  takenAt: string
+  takenBy: string
+  issueId?: string // set only for ISSUE photos -> IssueReport.id
+}
+
+export type IssueContext = 'SEAL' | 'UNLOCK' | 'GENERAL'
+
+export interface IssueReport {
+  id: string
+  containerId: string
+  context: IssueContext
+  note: string
+  createdAt: string
+  createdBy: string
+}
+
 export interface Shipment {
   id: string
   containerId: string

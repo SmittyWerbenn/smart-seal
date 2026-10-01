@@ -11,6 +11,7 @@ import { useAuthStore } from '@/store/authStore'
 import { formatDateTime, securityModeLabel, titleCase } from '@/lib/utils'
 import { CargoFormModal } from './cargo-form-modal'
 import { UnlockPanel } from './unlock-panel'
+import { PhotoDocsSection } from './photo-docs-section'
 import type { CargoLine, Container, ESealDevice } from '@/types'
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
@@ -62,6 +63,9 @@ export function OverviewTab({ container, device, cargo }: { container: Container
       </Card>
 
       {canManage && <UnlockPanel container={container} />}
+
+      {/* Photos can show other clients' goods, so they stay hidden from CLIENT users. */}
+      {currentUser?.role !== 'CLIENT' && <PhotoDocsSection container={container} canManage={canManage} />}
 
       <Card className="lg:col-span-3">
         <CardHeader>

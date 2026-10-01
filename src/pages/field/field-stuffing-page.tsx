@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { BatteryWarning, CheckCircle2, ShieldCheck, WifiOff } from 'lucide-react'
+import { AlertTriangle, BatteryWarning, CheckCircle2, ShieldCheck, WifiOff } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { Button } from '@/components/ui/button'
 import { ScannerModal } from '@/components/shared/scanner-modal'
+import { PhotoSlot } from '@/components/shared/photo-ui'
+import { IssueReportModal } from '@/components/shared/issue-report-modal'
+import { saveSealPhotos, SEAL_PHOTO_TEXT } from '@/lib/documentation'
 import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
 
-type Step = 'container' | 'security' | 'scan' | 'battery' | 'success'
+type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'success'
 
 export default function FieldStuffingPage() {
   const { id } = useParams()
@@ -27,12 +30,21 @@ export default function FieldStuffingPage() {
   const [regularCode, setRegularCode] = useState<string | null>(null)
   const [regularScanOpen, setRegularScanOpen] = useState(false)
   const [battery, setBattery] = useState(88)
+  const [photoBefore, setPhotoBefore] = useState<string | null>(null)
+  const [photoAfter, setPhotoAfter] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState('')
+  const [issueOpen, setIssueOpen] = useState(false)
 
   const container = containers.find((c) => c.id === containerId)
   const sealsComplete = securityMode === 'BASIC_SEAL' ? !!regularCode : !!esealCode
 
   const arm = () => {
     if (!container) return
+    const saved = saveSealPhotos(container.id, photoBefore, photoAfter, 'Driver')
+    if (!saved.ok) {
+      setPhotoError(saved.error ?? 'Foto gagal disimpan.')
+      return
+    }
     const isRegular = securityMode === 'BASIC_SEAL'
     updateContainer(container.id, {
       status: 'SEALED',
@@ -88,7 +100,7 @@ export default function FieldStuffingPage() {
               key={mode}
               onClick={() => {
                 setSecurityMode(mode)
-                setStep('scan')
+                setStep('photo-before')
               }}
               className="w-full rounded-lg border border-slate-200 bg-white p-4 text-left shadow-sm"
             >
@@ -97,6 +109,44 @@ export default function FieldStuffingPage() {
             </button>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (step === 'photo-before') {
+    return (
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-navy-900">Foto Barang Sebelum Seal</h1>
+          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+        </div>
+        <div className="mb-3 rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
+          <span className="font-semibold">Seal membutuhkan 2 foto.</span> {SEAL_PHOTO_TEXT}
+        </div>
+        <PhotoSlot step={1} label="Foto Barang di Dalam Container (Sebelum Seal)" value={photoBefore} onChange={setPhotoBefore} />
+        <Button size="lg" className="mt-4 w-full" disabled={!photoBefore} onClick={() => setStep('scan')}>
+          Lanjut ke Pasang Seal
+        </Button>
+      </div>
+    )
+  }
+
+  if (step === 'photo-after') {
+    return (
+      <div className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-navy-900">Foto Container Setelah Seal</h1>
+          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+        </div>
+        <PhotoSlot step={2} label="Foto Container Setelah Seal Terpasang" value={photoAfter} onChange={setPhotoAfter} />
+        {photoError && <p className="mt-2 text-xs text-critical-500">{photoError}</p>}
+        <Button size="lg" className="mt-4 w-full" disabled={!photoBefore || !photoAfter} onClick={arm}>
+          <ShieldCheck size={16} /> ARM CONTAINER
+        </Button>
+        <button type="button" onClick={() => setIssueOpen(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-amber-700">
+          <AlertTriangle size={14} /> Ada Kendala
+        </button>
+        <IssueReportModal open={issueOpen} onClose={() => setIssueOpen(false)} container={container} context="SEAL" />
       </div>
     )
   }
@@ -114,8 +164,8 @@ export default function FieldStuffingPage() {
           <div className="flex items-center gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
             <WifiOff size={16} /> No battery check needed — this seal has no IoT device.
           </div>
-          <Button size="lg" className="w-full" disabled={!sealsComplete} onClick={arm}>
-            <ShieldCheck size={16} /> ARM CONTAINER
+          <Button size="lg" className="w-full" disabled={!sealsComplete} onClick={() => setStep('photo-after')}>
+            Continue to Foto Container
           </Button>
         </div>
         <ScannerModal open={regularScanOpen} onClose={() => setRegularScanOpen(false)} title="Scan Basic Seal" resultCode={regularResultCode} onScanned={setRegularCode} />
@@ -156,8 +206,8 @@ export default function FieldStuffingPage() {
             <BatteryWarning size={18} /> Battery low — recharge before arming.
           </div>
         )}
-        <Button size="lg" className="mt-4 w-full" disabled={!ok} onClick={arm}>
-          <ShieldCheck size={16} /> ARM CONTAINER
+        <Button size="lg" className="mt-4 w-full" disabled={!ok} onClick={() => setStep('photo-after')}>
+          Continue to Foto Container
         </Button>
       </div>
     )

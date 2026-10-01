@@ -15,6 +15,10 @@ import {
   FilePlus2,
   PackageCheck,
   ChevronRight,
+  Camera,
+  CheckCircle2,
+  AlertTriangle,
+  ArrowRight,
   type LucideIcon,
 } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
@@ -27,6 +31,8 @@ import { EmptyState } from '@/components/shared/states'
 import { TrackingMap } from '@/components/map/tracking-map'
 import { BatteryIndicator, SignalIndicator, deviceHealthStatus, type DeviceHealth } from '@/components/shared/indicators'
 import { cn, formatDateTime, sealIdFor, timeAgo, titleCase } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
+import { SEAL_PHOTO_TEXT, UNLOCK_PHOTO_TEXT } from '@/lib/documentation'
 import type { ContainerStatus } from '@/types'
 
 const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string }[] = [
@@ -38,13 +44,59 @@ const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string
   { label: 'Delivered', statuses: ['AT_DESTINATION', 'UNLOCKED', 'DELIVERED'], color: '#16a34a' },
 ]
 
-const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; description: string; path: string }[] = [
+type DocFlowStep = { label: string; kind: 'photo' | 'action' | 'done'; tag?: string }
+const DOC_FLOWS: { key: string; title: string; icon: LucideIcon; tone: string; badge: string; note: string; steps: DocFlowStep[] }[] = [
+  {
+    key: 'seal',
+    title: 'SEAL',
+    icon: ShieldCheck,
+    tone: 'border-brand-200 bg-brand-50/40',
+    badge: '2 Foto Diperlukan',
+    note: SEAL_PHOTO_TEXT,
+    steps: [
+      { label: 'Foto Barang Sebelum Seal', kind: 'photo', tag: 'Foto Wajib' },
+      { label: 'Pasang Seal', kind: 'action' },
+      { label: 'Foto Container Setelah Seal', kind: 'photo', tag: 'Foto Wajib' },
+      { label: 'Seal Selesai', kind: 'done', tag: 'Dokumentasi Selesai' },
+    ],
+  },
+  {
+    key: 'unlock',
+    title: 'UNLOCK',
+    icon: Unlock,
+    tone: 'border-green-200 bg-success-100/30',
+    badge: '2 Foto Diperlukan',
+    note: UNLOCK_PHOTO_TEXT,
+    steps: [
+      { label: 'Foto Container Sebelum Unlock', kind: 'photo', tag: 'Foto Wajib' },
+      { label: 'Buka Seal', kind: 'action' },
+      { label: 'Foto Barang Setelah Seal Dibuka', kind: 'photo', tag: 'Foto Wajib' },
+      { label: 'Unlock Selesai', kind: 'done', tag: 'Dokumentasi Selesai' },
+    ],
+  },
+  {
+    key: 'issue',
+    title: 'KENDALA',
+    icon: AlertTriangle,
+    tone: 'border-amber-200 bg-warning-100/40',
+    badge: 'Foto Kendala',
+    note: 'Dokumentasi kendala dapat menggunakan beberapa foto (minimal 1), plus catatan kendala.',
+    steps: [
+      { label: 'Tandai Ada Kendala', kind: 'action' },
+      { label: 'Upload 1 atau Beberapa Foto', kind: 'photo', tag: 'Foto Kendala' },
+      { label: 'Tambahkan Catatan Kendala', kind: 'action' },
+      { label: 'Simpan Dokumentasi', kind: 'done', tag: 'Dokumentasi Selesai' },
+    ],
+  },
+]
+
+const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; description: string; path: string; photo?: string }[] = [
   { step: 1, icon: BarcodeIcon, title: 'Generate Barcode', description: 'Provision a batch of Basic Seal barcodes ahead of time, ready for stuffing.', path: '/eseals/generate' },
   { step: 2, icon: FilePlus2, title: 'Create Container & Cargo', description: 'Register a new container and record what is being loaded: product, DO number, quantity.', path: '/stuffing' },
   { step: 3, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
-  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Scan the seal to attach it to this container, check battery (Smart Seal), then arm it.', path: '/stuffing' },
+  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Take the cargo photo, scan the seal, check battery (Smart Seal), take the sealed-container photo, then arm it.', path: '/stuffing', photo: '2 Foto Diperlukan' },
   { step: 5, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
-  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination, the seal is opened, cargo is handed to the consignee.', path: '/containers' },
+  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination. Photograph the container, open the seal, photograph the cargo, hand over to the consignee.', path: '/containers', photo: '2 Foto Diperlukan' },
 ]
 
 export default function DashboardPage() {
@@ -136,6 +188,11 @@ export default function DashboardPage() {
                       </div>
                       <p className="text-sm font-semibold text-navy-900">{s.title}</p>
                       <p className="text-xs leading-snug text-slate-500">{s.description}</p>
+                      {s.photo && (
+                        <Badge variant="warning" className="mt-auto">
+                          <Camera size={11} /> {s.photo}
+                        </Badge>
+                      )}
                     </button>
                     {i < WORKFLOW_STEPS.length - 1 && (
                       <ChevronRight size={16} className="absolute -right-2.5 top-1/2 hidden -translate-y-1/2 text-slate-300 lg:block" />
@@ -143,6 +200,51 @@ export default function DashboardPage() {
                   </div>
                 )
               })}
+            </div>
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                <Camera size={13} /> Dokumentasi Foto — kapan &amp; foto apa yang diambil
+              </p>
+              <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+                {DOC_FLOWS.map((flow) => {
+                  const FlowIcon = flow.icon
+                  return (
+                    <div key={flow.key} className={cn('rounded-lg border p-3', flow.tone)}>
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <p className="flex items-center gap-1.5 text-sm font-semibold text-navy-900">
+                          <FlowIcon size={15} /> {flow.title}
+                        </p>
+                        <Badge variant={flow.key === 'issue' ? 'warning' : 'brand'}>{flow.badge}</Badge>
+                      </div>
+                      <ol className="space-y-1.5">
+                        {flow.steps.map((st, idx) => (
+                          <li key={st.label} className="flex items-center gap-2 text-xs">
+                            <span
+                              className={cn(
+                                'flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold',
+                                st.kind === 'photo' ? 'bg-amber-500 text-white' : st.kind === 'done' ? 'bg-success-500 text-white' : 'bg-slate-200 text-slate-600',
+                              )}
+                            >
+                              {st.kind === 'photo' ? <Camera size={11} /> : st.kind === 'done' ? <CheckCircle2 size={11} /> : <ArrowRight size={11} />}
+                            </span>
+                            <span className={cn('text-navy-800', st.kind === 'photo' && 'font-medium')}>
+                              <span className="text-slate-400">{idx + 1}.</span> {st.label}
+                            </span>
+                            {st.tag && (
+                              <span className={cn('ml-auto shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium', st.kind === 'done' ? 'bg-success-100 text-green-800' : 'bg-warning-100 text-amber-800')}>
+                                {st.tag}
+                              </span>
+                            )}
+                          </li>
+                        ))}
+                      </ol>
+                      <p className="mt-2 flex items-start gap-1 text-[11px] leading-snug text-slate-600">
+                        <ArrowRight size={11} className="mt-0.5 shrink-0" /> {flow.note}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
             <p className="mt-3 text-xs text-slate-400">
               Click any step to jump straight to that page. Basic Seals skip live tracking (step 5) — their status is still confirmed by scanning the barcode at each checkpoint.

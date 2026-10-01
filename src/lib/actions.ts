@@ -3,6 +3,8 @@
 // and anywhere a direct device/container action is triggered outside the guided
 // journey in simulationStore.
 import { useDataStore } from '@/store/dataStore'
+import { usePhotoStore } from '@/store/photoStore'
+import { hasUnlockDocs } from '@/lib/documentation'
 
 export function armContainer(containerId: string, actor = 'Warehouse Operator') {
   const container = useDataStore.getState().containers.find((c) => c.id === containerId)
@@ -43,9 +45,11 @@ function releaseSealAfterUnlock(containerId: string, actor: string) {
   })
 }
 
-export function requestAndConfirmUnlock(containerId: string, actor = 'Supervisor') {
+// Unlock cannot complete without its 2 mandatory photos (container before opening + goods after opening).
+export function requestAndConfirmUnlock(containerId: string, actor = 'Supervisor'): boolean {
   const container = useDataStore.getState().containers.find((c) => c.id === containerId)
-  if (!container) return
+  if (!container) return false
+  if (!hasUnlockDocs(usePhotoStore.getState().photos, containerId)) return false
   useDataStore.getState().updateContainer(containerId, { status: 'UNLOCKED', isUnlocked: true })
   useDataStore.getState().addTimelineEvent({ containerId, type: 'CONTAINER_UNLOCKED', label: 'Container unlocked', actor })
   useDataStore.getState().addAuditLogEntry({ user: actor, action: 'UNLOCK_APPROVED', entity: container.number, description: `Unlock approved for ${container.number}` })
@@ -59,15 +63,18 @@ export function requestAndConfirmUnlock(containerId: string, actor = 'Supervisor
   } else {
     releaseSealAfterUnlock(containerId, actor)
   }
+  return true
 }
 
-export function offlineUnlock(containerId: string) {
+export function offlineUnlock(containerId: string): boolean {
   const container = useDataStore.getState().containers.find((c) => c.id === containerId)
-  if (!container) return
+  if (!container) return false
+  if (!hasUnlockDocs(usePhotoStore.getState().photos, containerId)) return false
   useDataStore.getState().updateContainer(containerId, { status: 'UNLOCKED', isUnlocked: true, offlineMode: true })
   useDataStore.getState().addTimelineEvent({ containerId, type: 'OFFLINE_UNLOCK', label: 'Offline unlock successful (PIN verified)', actor: 'Driver' })
   useDataStore.getState().addAuditLogEntry({ user: 'Driver', action: 'OFFLINE_UNLOCK', entity: container.number, description: `${container.number} unlocked offline via static PIN` })
   releaseSealAfterUnlock(containerId, 'Driver')
+  return true
 }
 
 export function simulateTamper(containerId: string) {

@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ShieldCheck, Unlock, Wifi, WifiOff } from 'lucide-react'
+import { AlertTriangle, Lock, ShieldCheck, Unlock, Wifi, WifiOff } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { Input, Label } from '@/components/ui/input'
 import { offlineUnlock, requestAndConfirmUnlock } from '@/lib/actions'
+import { saveUnlockPhotos, UNLOCK_PHOTO_TEXT } from '@/lib/documentation'
+import { PhotoSlot } from '@/components/shared/photo-ui'
+import { IssueReportModal } from '@/components/shared/issue-report-modal'
+import { useAuthStore } from '@/store/authStore'
 import type { Container } from '@/types'
 
 const OFFLINE_PIN = '123456'
@@ -21,6 +25,44 @@ export function UnlockPanel({ container }: { container: Container }) {
   const [pin, setPin] = useState('')
   const [pinError, setPinError] = useState('')
   const [offlineSuccess, setOfflineSuccess] = useState(false)
+  const [photoBefore, setPhotoBefore] = useState<string | null>(null)
+  const [photoAfter, setPhotoAfter] = useState<string | null>(null)
+  const [photoError, setPhotoError] = useState('')
+  const [issueOpen, setIssueOpen] = useState(false)
+  const actor = useAuthStore((s) => s.currentUser?.name ?? 'User')
+  const photosReady = !!photoBefore && !!photoAfter
+
+  const resetPhotos = () => {
+    setPhotoBefore(null)
+    setPhotoAfter(null)
+    setPhotoError('')
+  }
+
+  // Photos are saved first; the unlock only runs if both are stored.
+  const unlockWithPhotos = (run: (id: string) => boolean): boolean => {
+    const saved = saveUnlockPhotos(container.id, photoBefore, photoAfter, actor)
+    if (!saved.ok) {
+      setPhotoError(saved.error ?? 'Foto gagal disimpan.')
+      return false
+    }
+    const done = run(container.id)
+    if (done) resetPhotos()
+    return done
+  }
+
+  const photoBlock = (
+    <div className="space-y-2.5">
+      <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
+        <span className="font-semibold">Unlock membutuhkan 2 foto.</span> {UNLOCK_PHOTO_TEXT}
+      </div>
+      <PhotoSlot step={1} label="Foto Container Sebelum Seal Dibuka" value={photoBefore} onChange={setPhotoBefore} />
+      <PhotoSlot step={2} label="Foto Barang di Dalam Container Setelah Seal Dibuka" value={photoAfter} onChange={setPhotoAfter} />
+      {photoError && <p className="text-xs text-critical-500">{photoError}</p>}
+      <button type="button" onClick={() => setIssueOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:underline">
+        <AlertTriangle size={13} /> Ada Kendala
+      </button>
+    </div>
+  )
 
   const isUnlocked = container.isUnlocked
   const canUnlock = container.insideDestinationGeofence && !container.isUnlocked
@@ -58,17 +100,27 @@ export function UnlockPanel({ container }: { container: Container }) {
 
         <Modal
           open={confirmOpen}
-          onClose={() => setConfirmOpen(false)}
+          onClose={() => {
+            setConfirmOpen(false)
+            resetPhotos()
+          }}
+          className="max-h-[90vh] overflow-y-auto"
           title="Confirm Manual Unlock"
           footer={
             <>
-              <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setConfirmOpen(false)
+                  resetPhotos()
+                }}
+              >
                 Cancel
               </Button>
               <Button
+                disabled={!photosReady}
                 onClick={() => {
-                  requestAndConfirmUnlock(container.id)
-                  setConfirmOpen(false)
+                  if (unlockWithPhotos((id) => requestAndConfirmUnlock(id))) setConfirmOpen(false)
                 }}
               >
                 Confirm Unlock
@@ -90,7 +142,9 @@ export function UnlockPanel({ container }: { container: Container }) {
               <dd className="font-medium">Manual (no GPS available)</dd>
             </div>
           </dl>
+          <div className="mt-4 border-t border-slate-100 pt-3">{photoBlock}</div>
         </Modal>
+        <IssueReportModal open={issueOpen} onClose={() => setIssueOpen(false)} container={container} context="UNLOCK" />
       </Card>
     )
   }
@@ -138,17 +192,27 @@ export function UnlockPanel({ container }: { container: Container }) {
 
       <Modal
         open={requestOpen}
-        onClose={() => setRequestOpen(false)}
+        onClose={() => {
+          setRequestOpen(false)
+          resetPhotos()
+        }}
+        className="max-h-[90vh] overflow-y-auto"
         title="Confirm Unlock"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setRequestOpen(false)}>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setRequestOpen(false)
+                resetPhotos()
+              }}
+            >
               Cancel
             </Button>
             <Button
+              disabled={!photosReady}
               onClick={() => {
-                requestAndConfirmUnlock(container.id)
-                setRequestOpen(false)
+                if (unlockWithPhotos((id) => requestAndConfirmUnlock(id))) setRequestOpen(false)
               }}
             >
               Confirm Unlock
@@ -176,6 +240,7 @@ export function UnlockPanel({ container }: { container: Container }) {
             <dd className="font-medium">{container.eSealId ?? '—'} armed</dd>
           </div>
         </dl>
+        <div className="mt-4 border-t border-slate-100 pt-3">{photoBlock}</div>
       </Modal>
 
       <Modal
@@ -185,7 +250,9 @@ export function UnlockPanel({ container }: { container: Container }) {
           setOfflineSuccess(false)
           setPin('')
           setPinError('')
+          resetPhotos()
         }}
+        className="max-h-[90vh] overflow-y-auto"
         title="Offline Unlock"
       >
         {offlineSuccess ? (
@@ -210,12 +277,13 @@ export function UnlockPanel({ container }: { container: Container }) {
               {pinError && <p className="mt-1 text-xs text-critical-500">{pinError}</p>}
               <p className="mt-1 text-[11px] text-slate-400">Demo PIN: {OFFLINE_PIN}</p>
             </div>
+            {photoBlock}
             <Button
               className="w-full"
+              disabled={!photosReady}
               onClick={() => {
                 if (pin === OFFLINE_PIN) {
-                  offlineUnlock(container.id)
-                  setOfflineSuccess(true)
+                  if (unlockWithPhotos((id) => offlineUnlock(id))) setOfflineSuccess(true)
                 } else {
                   setPinError('Incorrect PIN. Please try again.')
                 }
@@ -226,6 +294,7 @@ export function UnlockPanel({ container }: { container: Container }) {
           </div>
         )}
       </Modal>
+      <IssueReportModal open={issueOpen} onClose={() => setIssueOpen(false)} container={container} context="UNLOCK" />
     </Card>
   )
 }

@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { buildInitialDataset } from '@/mock'
 import { pointOnRoute, portForCity } from '@/mock/geo'
+import { usePhotoStore } from './photoStore'
 import { buildItemCategorySeed, categoryIdFor } from '@/mock/products'
 import type {
   AlertItem,
@@ -288,6 +289,7 @@ export const useDataStore = create<DataState>()(
 
       resetAll: () => {
         idCounter = 1
+        usePhotoStore.getState().clearAll() // photos reference seeded containers, so they reset together
         set(seedState())
       },
     }),
