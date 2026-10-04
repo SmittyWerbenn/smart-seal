@@ -2,10 +2,13 @@ import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './sidebar'
 import { Topbar } from './topbar'
 import { NAV_ITEMS } from './nav-config'
+import { useT } from '@/i18n'
 
 export function AppShell() {
   const location = useLocation()
-  const activeLabel = NAV_ITEMS.find((n) => location.pathname.startsWith(n.path))?.label
+  const t = useT()
+  const activeItem = NAV_ITEMS.find((n) => location.pathname.startsWith(n.path))
+  const activeLabel = activeItem ? t(activeItem.labelKey) : undefined
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-slate-50">

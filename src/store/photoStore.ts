@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist, type StateStorage } from 'zustand/middleware'
 import type { ContainerPhoto, DocPhotoType, IssueContext, IssueReport } from '@/types'
+import { translate } from '@/i18n'
 
 // Photos live in their own persisted store (separate localStorage key) so that a
 // full browser quota can never corrupt the main data store.
@@ -23,7 +24,9 @@ export interface PhotoResult {
   error?: string
 }
 
-const QUOTA_ERROR = 'Penyimpanan browser penuh — foto tidak tersimpan. Hapus data prototype lama (Settings → Reset) atau gunakan foto lebih sedikit.'
+function quotaError() {
+  return translate('msg.msg023')
+}
 
 let counter = 0
 function photoId(prefix: string) {
@@ -48,7 +51,7 @@ export const usePhotoStore = create<PhotoState>()(
         set(next)
         if (!lastWriteOk) {
           set(prev)
-          return { ok: false, error: QUOTA_ERROR }
+          return { ok: false, error: quotaError() }
         }
         return { ok: true }
       }

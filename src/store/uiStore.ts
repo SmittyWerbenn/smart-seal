@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
-export type Lang = 'id' | 'en'
+export type Lang = 'en' | 'id'
 
 interface UiState {
   selectedContainerId: string | null
@@ -23,7 +23,7 @@ export const useUiStore = create<UiState>()(
       selectedVesselId: null,
       sidebarCollapsed: false,
       mobileNavOpen: false,
-      lang: 'id',
+      lang: 'en',
       setSelectedContainer: (id) => set({ selectedContainerId: id }),
       setSelectedVessel: (id) => set({ selectedVesselId: id }),
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),

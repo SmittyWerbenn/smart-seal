@@ -4,6 +4,7 @@ import { Modal } from '@/components/ui/modal'
 import { Button } from '@/components/ui/button'
 import { BarcodeGraphic } from './barcode-graphic'
 import { barcodeFor } from '@/lib/barcode'
+import { translate } from '@/i18n'
 
 interface ScannerModalProps {
   open: boolean
@@ -66,7 +67,7 @@ export function ScannerModal({ open, onClose, title, scannerType = 'Barcode', re
         {!scanned ? (
           <>
             <p className="flex items-center gap-1.5 text-center text-xs text-slate-500">
-              <ScanLine size={14} /> Position the barcode inside the frame
+              <ScanLine size={14} /> {translate('ui.positionTheBarcodeInsideThe')}
             </p>
             <Button className="w-full" onClick={runScan} disabled={scanning}>
               {scanning ? 'Scanning…' : 'Simulate Scan'}
@@ -79,7 +80,7 @@ export function ScannerModal({ open, onClose, title, scannerType = 'Barcode', re
               <p className="mt-0.5 font-mono text-[11px] font-normal tracking-wide text-green-700">Barcode {barcodeFor(resultCode)}</p>
             </div>
             <Button className="w-full" variant="secondary" onClick={reset}>
-              Done
+              {translate('ui.done')}
             </Button>
           </>
         )}

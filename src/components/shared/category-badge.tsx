@@ -1,3 +1,4 @@
+import { translate } from '@/i18n'
 import { useDataStore } from '@/store/dataStore'
 import { cn, readableTextColor } from '@/lib/utils'
 
@@ -7,7 +8,7 @@ export function CategoryBadge({ categoryId, className }: { categoryId: string | 
   const category = useDataStore((s) => (categoryId ? s.itemCategories.find((c) => c.id === categoryId) : undefined))
   const base = 'inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium'
   if (!category) {
-    return <span className={cn(base, 'border-slate-200 bg-slate-100 text-slate-500', className)}>Uncategorized</span>
+    return <span className={cn(base, 'border-slate-200 bg-slate-100 text-slate-500', className)}>{translate('common.uncategorized')}</span>
   }
   return (
     <span

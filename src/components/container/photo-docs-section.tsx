@@ -9,6 +9,7 @@ import { DOC_PHOTO_META, hasSealDocs, hasUnlockDocs, latestPhoto } from '@/lib/d
 import { usePhotoStore } from '@/store/photoStore'
 import { formatDateTime } from '@/lib/utils'
 import type { Container, ContainerPhoto, DocPhotoType } from '@/types'
+import { translate } from '@/i18n'
 
 function toGallery(p: ContainerPhoto): GalleryPhoto {
   const meta = DOC_PHOTO_META[p.type]
@@ -20,7 +21,7 @@ function Group({ title, complete, required, children }: { title: string; complet
     <div>
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <h4 className="text-sm font-semibold text-navy-900">{title}</h4>
-        {complete ? <Badge variant="success">Dokumentasi Selesai</Badge> : <Badge variant="warning">{required}</Badge>}
+        {complete ? <Badge variant="success">{translate('ui.documentationComplete')}</Badge> : <Badge variant="warning">{required}</Badge>}
       </div>
       {children}
     </div>
@@ -44,32 +45,32 @@ export function PhotoDocsSection({ container, canManage }: { container: Containe
     <Card className="lg:col-span-3">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Camera size={15} className="text-brand-600" /> Dokumentasi Foto
+          <Camera size={15} className="text-brand-600" /> {translate('ui.photoDocumentation')}
         </CardTitle>
         {canManage && (
           <Button size="sm" variant="secondary" onClick={() => setIssueOpen(true)}>
-            <AlertTriangle size={13} /> Ada Kendala
+            <AlertTriangle size={13} /> {translate('ui.issueReported')}
           </Button>
         )}
       </CardHeader>
       <CardContent className="space-y-6">
-        <Group title="Seal" complete={hasSealDocs(mine, container.id)} required="2 Foto Diperlukan">
+        <Group title={translate('ui.seal')} complete={hasSealDocs(mine, container.id)} required="2 Foto Diperlukan">
           {sealPhotos.length > 0 ? (
             <PhotoGrid photos={sealPhotos} columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" />
           ) : (
-            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">Belum ada dokumentasi Seal. Diambil saat container di-seal: foto barang sebelum seal + foto container setelah seal terpasang.</p>
+            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">{translate('ui.noSealDocumentationYetTaken')}</p>
           )}
         </Group>
-        <Group title="Unlock" complete={hasUnlockDocs(mine, container.id)} required="2 Foto Diperlukan">
+        <Group title={translate('ui.unlock')} complete={hasUnlockDocs(mine, container.id)} required="2 Foto Diperlukan">
           {unlockPhotos.length > 0 ? (
             <PhotoGrid photos={unlockPhotos} columns="grid-cols-2 sm:grid-cols-3 lg:grid-cols-4" />
           ) : (
-            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">Belum ada dokumentasi Unlock. Diambil saat seal dibuka: foto container sebelum dibuka + foto barang setelah seal dibuka.</p>
+            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">{translate('ui.noUnlockDocumentationYetTaken')}</p>
           )}
         </Group>
-        <Group title="Kendala" complete={myIssues.length > 0} required="Tidak ada kendala tercatat">
+        <Group title={translate('ui.issue')} complete={myIssues.length > 0} required="Tidak ada kendala tercatat">
           {myIssues.length === 0 ? (
-            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">Tidak ada kendala yang dilaporkan.</p>
+            <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">{translate('ui.noIssuesReported')}</p>
           ) : (
             <div className="space-y-4">
               {myIssues.map((issue) => {
@@ -77,7 +78,7 @@ export function PhotoDocsSection({ container, canManage }: { container: Containe
                 return (
                   <div key={issue.id} className="rounded-md border border-amber-200 bg-warning-100/40 p-3">
                     <p className="text-xs text-slate-500">
-                      <span className="font-medium text-amber-800">Foto Kendala</span> · {issue.context === 'SEAL' ? 'saat Seal' : issue.context === 'UNLOCK' ? 'saat Unlock' : 'umum'} ·{' '}
+                      <span className="font-medium text-amber-800">{translate('ui.issuePhoto')}</span> · {issue.context === 'SEAL' ? 'saat Seal' : issue.context === 'UNLOCK' ? 'saat Unlock' : 'umum'} ·{' '}
                       {formatDateTime(issue.createdAt)} · {issue.createdBy} · {issuePhotos.length} foto
                     </p>
                     {issue.note && <p className="mt-1 text-sm text-navy-800">{issue.note}</p>}

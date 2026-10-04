@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { ContainerStatusBadge } from '@/components/shared/status-badge'
 import { formatDate } from '@/lib/utils'
 import type { Shipment } from '@/types'
+import { translate } from '@/i18n'
 
 export default function ShipmentsPage() {
   const shipments = useDataStore((s) => s.shipments)
@@ -26,22 +27,22 @@ export default function ShipmentsPage() {
   const filtered = scoped.filter((s) => `${s.bookingNumber} ${s.shipper} ${s.consignee}`.toLowerCase().includes(query.toLowerCase()))
 
   const columns: Column<Shipment>[] = [
-    { key: 'booking', header: 'Booking No.', render: (s) => <span className="font-medium text-navy-900">{s.bookingNumber}</span> },
-    { key: 'shipper', header: 'Shipper', render: (s) => s.shipper },
-    { key: 'consignee', header: 'Consignee', render: (s) => s.consignee },
-    { key: 'route', header: 'Route', render: (s) => `${s.originCity} → ${s.destinationCity}` },
-    { key: 'status', header: 'Status', render: (s) => <ContainerStatusBadge status={s.status} /> },
-    { key: 'created', header: 'Created', render: (s) => formatDate(s.createdAt) },
+    { key: 'booking', get header() { return translate('ui.bookingNo') }, render: (s) => <span className="font-medium text-navy-900">{s.bookingNumber}</span> },
+    { key: 'shipper', get header() { return translate('ui.shipper') }, render: (s) => s.shipper },
+    { key: 'consignee', get header() { return translate('ui.consignee') }, render: (s) => s.consignee },
+    { key: 'route', get header() { return translate('ui.route') }, render: (s) => `${s.originCity} → ${s.destinationCity}` },
+    { key: 'status', get header() { return translate('ui.status') }, render: (s) => <ContainerStatusBadge status={s.status} /> },
+    { key: 'created', get header() { return translate('ui.created') }, render: (s) => formatDate(s.createdAt) },
   ]
 
   return (
     <div className="pb-10">
-      <PageHeader title="Shipments" description={`${filtered.length} of ${scoped.length} shipments`} />
+      <PageHeader title={translate('ui.shipments')} description={`${filtered.length} of ${scoped.length} shipments`} />
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="border-b border-slate-100 p-3">
-          <Input placeholder="Search booking, shipper, consignee…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-72" />
+          <Input placeholder={translate('ui.searchBookingShipperConsignee')} value={query} onChange={(e) => setQuery(e.target.value)} className="w-72" />
         </div>
-        <DataTable columns={columns} rows={filtered} rowKey={(s) => s.id} onRowClick={(s) => navigate(`/containers/${s.containerId}`)} emptyTitle="No shipments found" />
+        <DataTable columns={columns} rows={filtered} rowKey={(s) => s.id} onRowClick={(s) => navigate(`/containers/${s.containerId}`)} emptyTitle={translate('ui.noShipmentsFound')} />
       </Card>
     </div>
   )

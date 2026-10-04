@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input, Label } from '@/components/ui/input'
 import { EmptyState } from '@/components/shared/states'
 import { findContainerBySealCode, type SealLookupResult } from '@/lib/seal-lookup'
+import { translate } from '@/i18n'
 
 export default function PublicScanPage() {
   const containers = useDataStore((s) => s.containers)
@@ -53,10 +54,9 @@ export default function PublicScanPage() {
       </header>
 
       <main className="mx-auto max-w-md px-4 py-8">
-        <h1 className="text-lg font-semibold text-navy-900">Public Seal Verification</h1>
+        <h1 className="text-lg font-semibold text-navy-900">{translate('ui.publicSealVerification')}</h1>
         <p className="mt-1 text-sm text-slate-500">
-          Scan a seal's barcode or QR code to verify a container. No account required. Cargo details shown here are summarized —
-          sign in to the full platform for complete manifest access.
+          {translate('misc.publicScanDesc')}
         </p>
 
         {!result && !notFound && (
@@ -73,20 +73,20 @@ export default function PublicScanPage() {
             >
               <ScanLine size={20} />
               <span className="flex flex-col items-start text-left">
-                <span className="text-sm font-semibold">Scan Seal</span>
-                <span className="text-xs font-normal text-brand-100">Works for both Smart and Basic seals</span>
+                <span className="text-sm font-semibold">{translate('ui.scanSeal')}</span>
+                <span className="text-xs font-normal text-brand-100">{translate('ui.worksForBothSmartAnd')}</span>
               </span>
             </Button>
 
             <div className="flex items-center gap-3 py-1 text-xs text-slate-400">
-              <span className="h-px flex-1 bg-slate-200" /> or enter manually <span className="h-px flex-1 bg-slate-200" />
+              <span className="h-px flex-1 bg-slate-200" /> {translate('ui.orEnterManually')} <span className="h-px flex-1 bg-slate-200" />
             </div>
             <div className="flex gap-2">
               <div className="flex-1">
-                <Label htmlFor="manual-code">Seal code / barcode</Label>
+                <Label htmlFor="manual-code">{translate('ui.sealCodeBarcode')}</Label>
                 <Input
                   id="manual-code"
-                  placeholder="e.g. ESEAL-000123 or SEAL-000045"
+                  placeholder={translate('ui.eGEseal000123Or')}
                   value={manualCode}
                   onChange={(e) => {
                     setManualCode(e.target.value)
@@ -102,7 +102,7 @@ export default function PublicScanPage() {
                   if (!findContainerBySealCode(containers, manualCode.trim())) setManualError('Seal not recognized.')
                 }}
               >
-                Verify
+                {translate('ui.verify')}
               </Button>
             </div>
             {manualError && <p className="text-xs text-critical-500">{manualError}</p>}
@@ -111,7 +111,7 @@ export default function PublicScanPage() {
 
         {notFound && (
           <div className="mt-6">
-            <EmptyState title="Seal not recognized" description="Double-check the code and try again." />
+            <EmptyState title={translate('ui.sealNotRecognized')} description={translate('ui.doubleCheckTheCodeAnd')} />
             <Button
               variant="outline"
               className="mt-3 w-full"
@@ -120,7 +120,7 @@ export default function PublicScanPage() {
                 setManualCode('')
               }}
             >
-              Try Again
+              {translate('ui.tryAgain')}
             </Button>
           </div>
         )}
@@ -138,11 +138,11 @@ export default function PublicScanPage() {
 
               {result.kind === 'smart' ? (
                 <div className="mt-3 flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
-                  <ShieldCheck size={16} /> Verified Smart Seal — live GPS/AIS tracked.
+                  <ShieldCheck size={16} /> {translate('ui.verifiedSmartSealLiveGps')}
                 </div>
               ) : (
                 <div className="mt-3 flex items-center gap-2 rounded-md bg-slate-100 p-3 text-sm text-slate-600">
-                  <WifiOff size={16} /> Verified Basic Seal — no electronics, no live tracking.
+                  <WifiOff size={16} /> {translate('ui.verifiedBasicSealNoElectronics')}
                 </div>
               )}
 
@@ -151,18 +151,18 @@ export default function PublicScanPage() {
                   <Package size={12} /> Declared Contents ({manifest.length})
                 </p>
                 {manifest.length === 0 ? (
-                  <p className="text-xs text-slate-500">No cargo recorded for this container.</p>
+                  <p className="text-xs text-slate-500">{translate('ui.noCargoRecordedForThis')}</p>
                 ) : (
                   manifest.map((line) => (
                     <div key={line.id} className="rounded-md border border-slate-100 p-2.5 text-xs">
                       <p className="font-medium text-navy-800">{line.productName}</p>
                       <div className="mt-1 flex items-center gap-1.5">
-                        <span className="text-slate-400">Category:</span>
+                        <span className="text-slate-400">{translate('ui.category2')}</span>
                         <CategoryBadge categoryId={line.categoryId} />
                       </div>
                       <p className="mt-0.5 flex items-center gap-1 font-medium text-brand-700">
                         <Building2 size={12} className="shrink-0" />
-                        <span className="text-slate-400">Company:</span> {line.clientName?.trim() || '-'}
+                        <span className="text-slate-400">{translate('ui.company')}</span> {line.clientName?.trim() || '-'}
                       </p>
                       <p className="text-slate-500">
                         {line.sku} · {line.quantity.toLocaleString()} {line.unit}
@@ -181,7 +181,7 @@ export default function PublicScanPage() {
                 setManualCode('')
               }}
             >
-              Scan Another Seal
+              {translate('ui.scanAnotherSeal')}
             </Button>
           </div>
         )}
@@ -189,7 +189,7 @@ export default function PublicScanPage() {
         <ScannerModal
           open={scannerOpen}
           onClose={() => setScannerOpen(false)}
-          title="Scan Seal"
+          title={translate('ui.scanSeal')}
           scannerType="Barcode"
           resultCode={scanSampleCode}
           onScanned={(code) => lookup(code)}

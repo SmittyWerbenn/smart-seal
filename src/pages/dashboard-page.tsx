@@ -30,74 +30,75 @@ import { SeverityBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/states'
 import { TrackingMap } from '@/components/map/tracking-map'
 import { BatteryIndicator, SignalIndicator, deviceHealthStatus, type DeviceHealth } from '@/components/shared/indicators'
-import { cn, formatDateTime, sealIdFor, timeAgo, titleCase } from '@/lib/utils'
+import { cn, formatDateTime, sealIdFor, timeAgo } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { useUiStore } from '@/store/uiStore'
-import { SEAL_PHOTO_TEXT, UNLOCK_PHOTO_TEXT } from '@/lib/documentation'
+import { sealPhotoText, unlockPhotoText } from '@/lib/documentation'
 import type { ContainerStatus } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 const STATUS_GROUPS: { label: string; statuses: ContainerStatus[]; color: string }[] = [
-  { label: 'Created', statuses: ['CREATED', 'STUFFING'], color: '#94a3b8' },
-  { label: 'Sealed', statuses: ['SEALED'], color: '#2563eb' },
-  { label: 'In Transit', statuses: ['IN_TRANSIT_ORIGIN', 'GATE_IN_ORIGIN', 'IN_TRANSIT_DESTINATION'], color: '#568bff' },
-  { label: 'At Port', statuses: ['AT_ORIGIN_PORT', 'ARRIVED_DESTINATION_PORT'], color: '#1741b0' },
-  { label: 'On Vessel', statuses: ['LOADED_ON_BOARD', 'OCEAN_TRANSIT'], color: '#0891b2' },
-  { label: 'Delivered', statuses: ['AT_DESTINATION', 'UNLOCKED', 'DELIVERED'], color: '#16a34a' },
+  { get label() { return translate('ui.created') }, statuses: ['CREATED', 'STUFFING'], color: '#94a3b8' },
+  { get label() { return translate('ui.sealed') }, statuses: ['SEALED'], color: '#2563eb' },
+  { get label() { return translate('ui.inTransit') }, statuses: ['IN_TRANSIT_ORIGIN', 'GATE_IN_ORIGIN', 'IN_TRANSIT_DESTINATION'], color: '#568bff' },
+  { get label() { return translate('ui.atPort') }, statuses: ['AT_ORIGIN_PORT', 'ARRIVED_DESTINATION_PORT'], color: '#1741b0' },
+  { get label() { return translate('ui.onVessel') }, statuses: ['LOADED_ON_BOARD', 'OCEAN_TRANSIT'], color: '#0891b2' },
+  { get label() { return translate('ui.delivered') }, statuses: ['AT_DESTINATION', 'UNLOCKED', 'DELIVERED'], color: '#16a34a' },
 ]
 
 type DocFlowStep = { label: string; kind: 'photo' | 'action' | 'done'; tag?: string }
 const DOC_FLOWS: { key: string; title: string; icon: LucideIcon; tone: string; badge: string; note: string; steps: DocFlowStep[] }[] = [
   {
     key: 'seal',
-    title: 'SEAL',
+    get title() { return translate('ui.seal2') },
     icon: ShieldCheck,
     tone: 'border-brand-200 bg-brand-50/40',
-    badge: '2 Photos Required',
-    note: SEAL_PHOTO_TEXT,
+    get badge() { return translate('ui.n2PhotosRequired') },
+    get note() { return sealPhotoText() },
     steps: [
-      { label: 'Photo of Cargo Before Sealing', kind: 'photo', tag: 'Photo Required' },
-      { label: 'Attach Seal', kind: 'action' },
-      { label: 'Photo of Container After Seal Fitted', kind: 'photo', tag: 'Photo Required' },
-      { label: 'Seal Complete', kind: 'done', tag: 'Documentation Complete' },
+      { get label() { return translate('ui.photoOfCargoBeforeSealing') }, kind: 'photo', get tag() { return translate('ui.photoRequired') } },
+      { get label() { return translate('ui.attachSeal') }, kind: 'action' },
+      { get label() { return translate('ui.photoOfContainerAfterSeal') }, kind: 'photo', get tag() { return translate('ui.photoRequired') } },
+      { get label() { return translate('ui.sealComplete') }, kind: 'done', get tag() { return translate('ui.documentationComplete') } },
     ],
   },
   {
     key: 'unlock',
-    title: 'UNLOCK',
+    get title() { return translate('ui.unlock2') },
     icon: Unlock,
     tone: 'border-green-200 bg-success-100/30',
-    badge: '2 Photos Required',
-    note: UNLOCK_PHOTO_TEXT,
+    get badge() { return translate('ui.n2PhotosRequired') },
+    get note() { return unlockPhotoText() },
     steps: [
-      { label: 'Photo of Container Before Unlock', kind: 'photo', tag: 'Photo Required' },
-      { label: 'Open Seal', kind: 'action' },
-      { label: 'Photo of Cargo After Seal Opened', kind: 'photo', tag: 'Photo Required' },
-      { label: 'Unlock Complete', kind: 'done', tag: 'Documentation Complete' },
+      { get label() { return translate('ui.photoOfContainerBeforeUnlock') }, kind: 'photo', get tag() { return translate('ui.photoRequired') } },
+      { get label() { return translate('ui.openSeal') }, kind: 'action' },
+      { get label() { return translate('ui.photoOfCargoAfterSeal') }, kind: 'photo', get tag() { return translate('ui.photoRequired') } },
+      { get label() { return translate('ui.unlockComplete') }, kind: 'done', get tag() { return translate('ui.documentationComplete') } },
     ],
   },
   {
     key: 'issue',
-    title: 'ISSUE',
+    get title() { return translate('ui.issue2') },
     icon: AlertTriangle,
     tone: 'border-amber-200 bg-warning-100/40',
-    badge: 'Issue Photos',
-    note: 'Issue documentation can use several photos (minimum 1), plus an issue note.',
+    get badge() { return translate('ui.issuePhotos') },
+    get note() { return translate('ui.issueDocumentationCanUseSeveral') },
     steps: [
-      { label: 'Mark Issue', kind: 'action' },
-      { label: 'Upload 1 or Several Photos', kind: 'photo', tag: 'Issue Photos' },
-      { label: 'Add Issue Note', kind: 'action' },
-      { label: 'Save Documentation', kind: 'done', tag: 'Documentation Complete' },
+      { get label() { return translate('ui.markIssue') }, kind: 'action' },
+      { get label() { return translate('ui.upload1OrSeveralPhotos') }, kind: 'photo', get tag() { return translate('ui.issuePhotos') } },
+      { get label() { return translate('ui.addIssueNote') }, kind: 'action' },
+      { get label() { return translate('ui.saveDocumentation') }, kind: 'done', get tag() { return translate('ui.documentationComplete') } },
     ],
   },
 ]
 
 const WORKFLOW_STEPS: { step: number; icon: LucideIcon; title: string; description: string; path: string; photo?: string }[] = [
-  { step: 1, icon: BarcodeIcon, title: 'Generate Barcode', description: 'Provision a batch of Basic Seal barcodes ahead of time, ready for stuffing.', path: '/eseals/generate' },
-  { step: 2, icon: FilePlus2, title: 'Create Container & Cargo', description: 'Register a new container and record what is being loaded: product, DO number, quantity.', path: '/stuffing' },
-  { step: 3, icon: ShieldCheck, title: 'Choose Seal Type', description: 'Pick a Smart Seal (IoT, live-tracked) or a Basic Seal (barcode-only).', path: '/stuffing' },
-  { step: 4, icon: ScanLine, title: 'Attach Seal', description: 'Take the cargo photo, scan the seal, check battery (Smart Seal), take the sealed-container photo, then arm it.', path: '/stuffing', photo: '2 Photos Required' },
-  { step: 5, icon: Satellite, title: 'In Transit', description: 'The sealed container is moving — tracked live on the map.', path: '/containers' },
-  { step: 6, icon: PackageCheck, title: 'Arrive & Unlock', description: 'Reaches its destination. Photograph the container, open the seal, photograph the cargo, hand over to the consignee.', path: '/containers', photo: '2 Photos Required' },
+  { step: 1, icon: BarcodeIcon, get title() { return translate('ui.generateBarcode') }, get description() { return translate('ui.provisionABatchOfBasic') }, path: '/eseals/generate' },
+  { step: 2, icon: FilePlus2, get title() { return translate('ui.createContainerCargo') }, get description() { return translate('ui.registerANewContainerAnd') }, path: '/stuffing' },
+  { step: 3, icon: ShieldCheck, get title() { return translate('ui.chooseSealType') }, get description() { return translate('ui.pickASmartSealIot') }, path: '/stuffing' },
+  { step: 4, icon: ScanLine, get title() { return translate('ui.attachSeal') }, get description() { return translate('ui.takeTheCargoPhotoScan') }, path: '/stuffing', get photo() { return translate('ui.n2PhotosRequired') } },
+  { step: 5, icon: Satellite, get title() { return translate('ui.inTransit') }, get description() { return translate('ui.theSealedContainerIsMoving') }, path: '/containers' },
+  { step: 6, icon: PackageCheck, get title() { return translate('ui.arriveUnlock') }, get description() { return translate('ui.reachesItsDestinationPhotographThe') }, path: '/containers', get photo() { return translate('ui.n2PhotosRequired') } },
 ]
 
 export default function DashboardPage() {
@@ -167,12 +168,12 @@ export default function DashboardPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title={`Welcome back, ${currentUser?.name?.split(' ')[0] ?? ''}`} description="Seal fleet overview — what's sealed, how it's tracked, and where it is." />
+      <PageHeader title={translate('ui.welcomeBack', { name: currentUser?.name?.split(' ')[0] ?? '' })} description={translate('ui.sealFleetOverviewWhatS')} />
 
       <div className="px-4 md:px-6">
         <Card className="mb-4">
           <CardHeader>
-            <CardTitle>Workflow: From Stuffing to Delivery</CardTitle>
+            <CardTitle>{translate('ui.workflowFromStuffingToDelivery')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
@@ -205,7 +206,7 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4 border-t border-slate-100 pt-4">
               <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                <Camera size={13} /> Photo Documentation — when &amp; what photo to take
+                <Camera size={13} /> {translate('ui.photoDocumentationWhenWhatPhoto')}
               </p>
               <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
                 {DOC_FLOWS.map((flow) => {
@@ -249,13 +250,11 @@ export default function DashboardPage() {
               </div>
             </div>
             <p className="mt-3 text-xs text-slate-400">
-              Click any step to jump straight to that page. Basic Seals skip live tracking (step 5) — their status is still confirmed by scanning the barcode at each checkpoint.
+              {translate('ui.clickAnyStepToJump')}
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-slate-50 p-3">
               <p className="text-xs text-slate-500">
-                <span className="font-semibold text-navy-700">Note:</span> the scan in step 4 is specifically for <em>attaching</em> a seal during stuffing, so it
-                requires a login. Scanning to <em>verify</em> a seal afterward — check its status and declared contents — can be done anytime, by anyone, no login
-                needed, on the public page below.
+                <span className="font-semibold text-navy-700">{translate('ui.note')}</span> {translate('ui.scanNotePart1')} <em>{translate('ui.attaching')}</em> {translate('ui.scanNotePart2')} <em>{translate('ui.verify2')}</em> {translate('ui.scanNotePart3')}
               </p>
               <a
                 href={`${window.location.origin}${window.location.pathname}#/scan`}
@@ -263,38 +262,38 @@ export default function DashboardPage() {
                 rel="noopener noreferrer"
                 className="flex shrink-0 items-center gap-1.5 rounded-md border border-brand-200 bg-white px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
               >
-                <ScanLine size={14} /> Open Public Verification Page
+                <ScanLine size={14} /> {translate('ui.openPublicVerificationPage')}
               </a>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <p className="px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Seal Overview</p>
+      <p className="px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">{translate('ui.sealOverview')}</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4 md:px-6">
-        <KpiCard label="Total Seals" value={kpis.totalSeals} icon={Tags} tone="brand" onClick={() => navigate('/containers')} />
-        <KpiCard label="Smart Seals" value={kpis.smartSeals} icon={ShieldCheck} tone="brand" onClick={() => navigate('/eseals?type=Smart')} />
-        <KpiCard label="Basic Seals" value={kpis.basicSeals} icon={ScanLine} tone="default" onClick={() => navigate('/eseals?type=Basic')} />
-        <KpiCard label="Not Sealed" value={kpis.notSealed} icon={Unlock} tone="default" onClick={() => navigate('/stuffing')} />
+        <KpiCard label={translate('ui.totalSeals')} value={kpis.totalSeals} icon={Tags} tone="brand" onClick={() => navigate('/containers')} />
+        <KpiCard label={translate('ui.smartSeals')} value={kpis.smartSeals} icon={ShieldCheck} tone="brand" onClick={() => navigate('/eseals?type=Smart')} />
+        <KpiCard label={translate('ui.basicSeals')} value={kpis.basicSeals} icon={ScanLine} tone="default" onClick={() => navigate('/eseals?type=Basic')} />
+        <KpiCard label={translate('ui.notSealed')} value={kpis.notSealed} icon={Unlock} tone="default" onClick={() => navigate('/stuffing')} />
       </div>
 
-      <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">Tracking</p>
+      <p className="mt-4 px-4 pb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400 md:px-6">{translate('ui.tracking')}</p>
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-4 md:px-6">
-        <KpiCard label="Live Tracked" value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/containers?tracking=LIVE')} />
-        <KpiCard label="No Tracking" value={kpis.noTracking} icon={WifiOff} tone="default" onClick={() => navigate('/containers?tracking=NONE')} />
-        <KpiCard label="AIS Tracked" value={kpis.aisTracked} icon={Radio} tone="default" onClick={() => navigate('/containers?tracking=AIS')} />
-        <KpiCard label="IoT GPS Tracked" value={kpis.iotTracked} icon={Navigation} tone="default" onClick={() => navigate('/containers?tracking=IOT_GPS')} />
+        <KpiCard label={translate('ui.liveTracked')} value={kpis.liveTracked} icon={Satellite} tone="brand" onClick={() => navigate('/containers?tracking=LIVE')} />
+        <KpiCard label={translate('ui.noTracking')} value={kpis.noTracking} icon={WifiOff} tone="default" onClick={() => navigate('/containers?tracking=NONE')} />
+        <KpiCard label={translate('ui.aisTracked')} value={kpis.aisTracked} icon={Radio} tone="default" onClick={() => navigate('/containers?tracking=AIS')} />
+        <KpiCard label={translate('ui.iotGpsTracked')} value={kpis.iotTracked} icon={Navigation} tone="default" onClick={() => navigate('/containers?tracking=IOT_GPS')} />
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:grid-cols-3 md:px-6">
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Fleet at Sea</CardTitle>
+            <CardTitle>{translate('ui.fleetAtSea')}</CardTitle>
             <button
               onClick={() => navigate('/containers')}
               className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
             >
-              <Maximize2 size={12} /> Open Full Map
+              <Maximize2 size={12} /> {translate('ui.openFullMap')}
             </button>
           </CardHeader>
           <CardContent className="h-96 p-0">
@@ -304,33 +303,33 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Device Health</CardTitle>
+            <CardTitle>{translate('ui.deviceHealth')}</CardTitle>
             <button
               onClick={() => navigate('/containers')}
               className="flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:underline"
             >
-              View All Seals
+              {translate('ui.viewAllSeals')}
             </button>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid grid-cols-3 gap-2 text-center">
               <div className="rounded-md bg-success-100 py-2">
                 <p className="text-lg font-semibold text-green-700">{healthSummary.healthy}</p>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-green-700">Healthy</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-green-700">{translate('ui.healthy')}</p>
               </div>
               <div className="rounded-md bg-warning-100 py-2">
                 <p className="text-lg font-semibold text-amber-700">{healthSummary.warning}</p>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">Warning</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-amber-700">{translate('ui.warning')}</p>
               </div>
               <div className="rounded-md bg-critical-100 py-2">
                 <p className="text-lg font-semibold text-red-700">{healthSummary.critical}</p>
-                <p className="text-[11px] font-medium uppercase tracking-wide text-red-700">Critical</p>
+                <p className="text-[11px] font-medium uppercase tracking-wide text-red-700">{translate('ui.critical')}</p>
               </div>
             </div>
 
             <div className="max-h-56 space-y-2 overflow-y-auto">
               {priorityDevices.length === 0 ? (
-                <EmptyState title="No devices yet" />
+                <EmptyState title={translate('ui.noDevicesYet')} />
               ) : (
                 priorityDevices.map(({ device, health }) => (
                   <button
@@ -364,7 +363,7 @@ export default function DashboardPage() {
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:px-6">
         <Card>
           <CardHeader>
-            <CardTitle>Container Status</CardTitle>
+            <CardTitle>{translate('ui.containerStatus')}</CardTitle>
           </CardHeader>
           <CardContent className="h-72">
             <ResponsiveContainer width="100%" height="100%">
@@ -387,11 +386,11 @@ export default function DashboardPage() {
       <div className="mt-4 grid grid-cols-1 gap-4 px-4 md:grid-cols-2 md:px-6">
         <Card>
           <CardHeader>
-            <CardTitle>Recent Alerts</CardTitle>
+            <CardTitle>{translate('ui.recentAlerts')}</CardTitle>
           </CardHeader>
           <CardContent className="max-h-80 space-y-3 overflow-y-auto">
             {recentAlerts.length === 0 ? (
-              <EmptyState title="No alerts" description="All quiet across the network." />
+              <EmptyState title={translate('ui.noAlerts')} description={translate('ui.allQuietAcrossTheNetwork')} />
             ) : (
               recentAlerts.map((a) => (
                 <button
@@ -400,7 +399,7 @@ export default function DashboardPage() {
                   className="flex w-full items-start justify-between gap-3 rounded-md border border-slate-100 p-2.5 text-left hover:bg-slate-50"
                 >
                   <div>
-                    <p className="text-sm font-medium text-navy-900">{titleCase(a.category)}</p>
+                    <p className="text-sm font-medium text-navy-900">{enumLabel('alertCategory', a.category)}</p>
                     <p className="text-xs text-slate-500">{a.message}</p>
                     <p className="mt-0.5 text-[11px] text-slate-400">{timeAgo(a.createdAt)}</p>
                   </div>
@@ -413,11 +412,11 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Recent Seal Activity</CardTitle>
+            <CardTitle>{translate('ui.recentSealActivity')}</CardTitle>
           </CardHeader>
           <CardContent className="max-h-80 space-y-3 overflow-y-auto">
             {recentActivity.length === 0 ? (
-              <EmptyState title="No activity" />
+              <EmptyState title={translate('ui.noActivity')} />
             ) : (
               recentActivity.map((event) => {
                 const container = containers.find((c) => c.id === event.containerId)

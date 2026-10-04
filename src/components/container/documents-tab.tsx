@@ -2,6 +2,7 @@ import { Download, FileText } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import type { Container } from '@/types'
+import { translate } from '@/i18n'
 
 export function DocumentsTab({ container }: { container: Container }) {
   const docs = [
@@ -26,7 +27,7 @@ export function DocumentsTab({ container }: { container: Container }) {
               </div>
             </div>
             <Button size="sm" variant="secondary" disabled>
-              <Download size={14} /> Download
+              <Download size={14} /> {translate('ui.download')}
             </Button>
           </div>
         ))}

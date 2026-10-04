@@ -8,6 +8,7 @@ import { useDataStore } from '@/store/dataStore'
 import { EmptyState } from '@/components/shared/states'
 import { CargoFormModal } from './cargo-form-modal'
 import type { CargoLine, Container } from '@/types'
+import { translate } from '@/i18n'
 
 export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: Container }) {
   const currentUser = useAuthStore((s) => s.currentUser)
@@ -29,13 +30,13 @@ export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: 
               setFormOpen(true)
             }}
           >
-            <Plus size={14} /> Add Cargo Item
+            <Plus size={14} /> {translate('ui.addCargoItem')}
           </Button>
         </div>
       )}
 
       {cargo.length === 0 ? (
-        <EmptyState icon={Package} title="No cargo recorded" description="Cargo lines will appear here once stuffing is completed, or add one manually above." />
+        <EmptyState icon={Package} title={translate('ui.noCargoRecorded')} description={translate('ui.cargoLinesWillAppearHere')} />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {cargo.map((line) => {
@@ -74,13 +75,13 @@ export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: 
                 <CardContent className="space-y-1.5 text-sm">
                   {owned ? (
                     <>
-                      <Row label="Category" value={<CategoryBadge categoryId={line.categoryId} />} />
-                      <Row label="DO Number" value={line.doNumber} />
-                      <Row label="SKU" value={line.sku} />
-                      <Row label="Quantity" value={`${line.quantity.toLocaleString()} ${line.unit}`} />
-                      <Row label="Delivery Address" value={line.address} />
+                      <Row label={translate('ui.category')} value={<CategoryBadge categoryId={line.categoryId} />} />
+                      <Row label={translate('ui.doNumber')} value={line.doNumber} />
+                      <Row label={translate('ui.sku')} value={line.sku} />
+                      <Row label={translate('ui.quantity')} value={`${line.quantity.toLocaleString()} ${line.unit}`} />
+                      <Row label={translate('ui.deliveryAddress')} value={line.address} />
                       <Row
-                        label="Tagged Seal"
+                        label={translate('ui.taggedSeal')}
                         value={
                           line.sealId ? (
                             <span className="inline-flex items-center gap-1 text-brand-700">
@@ -88,7 +89,7 @@ export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: 
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 text-slate-400">
-                              <WifiOff size={12} /> Not sealed
+                              <WifiOff size={12} /> {translate('ui.notSealed2')}
                             </span>
                           )
                         }
@@ -96,7 +97,7 @@ export function CargoTab({ cargo, container }: { cargo: CargoLine[]; container: 
                     </>
                   ) : (
                     <p className="rounded-md bg-slate-50 p-3 text-xs text-slate-500">
-                      This cargo belongs to another client. Product, DO number, SKU, quantity and address are hidden per tenant data-isolation policy.
+                      {translate('ui.thisCargoBelongsToAnother')}
                     </p>
                   )}
                 </CardContent>

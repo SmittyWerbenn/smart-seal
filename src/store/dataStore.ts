@@ -4,6 +4,7 @@ import { buildInitialDataset } from '@/mock'
 import { pointOnRoute, portForCity } from '@/mock/geo'
 import { usePhotoStore } from './photoStore'
 import { buildItemCategorySeed, categoryIdFor } from '@/mock/products'
+import { seedDriverPortal } from '@/mock/drivers'
 import type {
   AlertItem,
   AlertStatus,
@@ -12,15 +13,21 @@ import type {
   BasicSealStockItem,
   CargoLine,
   Container,
+  Driver,
+  DriverAssignment,
+  DriverCheckpoint,
   ESealDevice,
   Geofence,
   ItemCategory,
   Port,
+  ProofOfDelivery,
   RouteDefinition,
   Shipment,
   TimelineEvent,
+  Vehicle,
   Vessel,
 } from '@/types'
+import { translate } from '@/i18n'
 
 let idCounter = 1
 function nextId(prefix: string) {
@@ -44,6 +51,11 @@ interface DataState {
   ports: Port[]
   warehouses: Record<string, { lat: number; lng: number }>
   basicSealStock: BasicSealStockItem[]
+  drivers: Driver[]
+  vehicles: Vehicle[]
+  driverAssignments: DriverAssignment[]
+  driverCheckpoints: DriverCheckpoint[]
+  proofOfDeliveries: ProofOfDelivery[]
   hydrated: boolean
 
   updateContainer: (id: string, patch: Partial<Container>) => void
@@ -65,25 +77,103 @@ interface DataState {
   addNotification: (n: Omit<AppNotification, 'id' | 'createdAt' | 'read'>) => void
   markNotificationRead: (id: string) => void
   markAllNotificationsRead: () => void
+  // Driver Portal raw mutations. Rules (sequence, permissions, validation) live in
+  // services/*; these only write state.
+  addDriver: (driver: Driver) => void
+  updateDriver: (id: string, patch: Partial<Driver>) => void
+  addDriverAssignment: (assignment: DriverAssignment) => void
+  updateDriverAssignment: (id: string, patch: Partial<DriverAssignment>) => void
+  addDriverCheckpoint: (checkpoint: DriverCheckpoint) => void
+  addProofOfDelivery: (pod: ProofOfDelivery) => void
+  updateShipment: (id: string, patch: Partial<Shipment>) => void
   resetAll: () => void
 }
 
 function validateCategory(list: ItemCategory[], input: { name: string; color: string }, selfId?: string): string | null {
   const name = input.name.trim()
-  if (!name) return 'Category name is required.'
-  if (list.some((c) => c.id !== selfId && c.name.trim().toLowerCase() === name.toLowerCase())) return 'Category name already exists.'
-  if (!/^#[0-9a-f]{6}$/i.test(input.color)) return 'Color must be a hex value like #dc2626.'
+  if (!name) return translate('msg.msg016')
+  if (list.some((c) => c.id !== selfId && c.name.trim().toLowerCase() === name.toLowerCase())) return translate('msg.msg017')
+  if (!/^#[0-9a-f]{6}$/i.test(input.color)) return translate('msg.msg018')
   return null
 }
 
 function seedState() {
   const data = buildInitialDataset()
+  const driver = seedDriverPortal({ containers: data.containers, shipments: data.shipments, routes: data.routes })
   return {
     ...data,
-    notifications: [] as AppNotification[],
+    containers: driver.containers,
+    shipments: driver.shipments,
+    timeline: [...driver.timeline, ...data.timeline],
+    auditLog: [...driver.auditLog, ...data.auditLog],
+    notifications: driver.notifications as AppNotification[],
     basicSealStock: [] as BasicSealStockItem[],
+    drivers: driver.drivers,
+    vehicles: driver.vehicles,
+    driverAssignments: driver.driverAssignments,
+    driverCheckpoints: driver.driverCheckpoints,
+    proofOfDeliveries: driver.proofOfDeliveries,
     hydrated: true,
   }
+}
+
+export function migrateDataState(persisted: unknown, version: number): DataState {
+  const state = (persisted ?? {}) as Record<string, unknown>
+  if (version < 1) {
+    const oldCargo = (Array.isArray(state.cargo) ? state.cargo : []) as (Record<string, unknown> & { category?: string })[]
+    state.itemCategories = buildItemCategorySeed(oldCargo.map((c) => String(c.category ?? '')))
+    state.cargo = oldCargo.map((c) => {
+      const { category, ...rest } = c
+      const name = String(category ?? '').trim()
+      return { ...rest, categoryId: name ? categoryIdFor(name) : null }
+    })
+  }
+  if (version < 2) {
+    const containers = (Array.isArray(state.containers) ? state.containers : []) as Container[]
+    const shipments = (Array.isArray(state.shipments) ? state.shipments : []) as Shipment[]
+    const routes = (Array.isArray(state.routes) ? state.routes : []) as RouteDefinition[]
+    const driver = seedDriverPortal({ containers, shipments, routes })
+    Object.assign(state, {
+      containers: driver.containers,
+      shipments: driver.shipments,
+      timeline: [...driver.timeline, ...((state.timeline as TimelineEvent[]) ?? [])],
+      auditLog: [...driver.auditLog, ...((state.auditLog as AuditLogEntry[]) ?? [])],
+      notifications: [...driver.notifications, ...((state.notifications as AppNotification[]) ?? [])],
+      drivers: driver.drivers,
+      vehicles: driver.vehicles,
+      driverAssignments: driver.driverAssignments,
+      driverCheckpoints: driver.driverCheckpoints,
+      proofOfDeliveries: driver.proofOfDeliveries,
+    })
+  }
+  if (version < 3) {
+    // v2 -> v3: adds the demo driver Agus Prasetyo (DRV-006) with an active assignment on SHP-0012.
+    // Only that driver's records are added, so progress of the other drivers is kept.
+    const containers = (Array.isArray(state.containers) ? state.containers : []) as Container[]
+    const shipments = (Array.isArray(state.shipments) ? state.shipments : []) as Shipment[]
+    const routes = (Array.isArray(state.routes) ? state.routes : []) as RouteDefinition[]
+    const existing = (Array.isArray(state.drivers) ? state.drivers : []) as Driver[]
+    if (!existing.some((d) => d.driverId === 'DRV-006')) {
+      const demo = seedDriverPortal({ containers, shipments, routes })
+      const agus = demo.drivers.find((d) => d.driverId === 'DRV-006')
+      const agusAssignments = demo.driverAssignments.filter((a) => a.driverId === agus?.id)
+      const agusContainerIds = new Set(agusAssignments.map((a) => a.containerId))
+      const agusShipmentIds = new Set(agusAssignments.map((a) => a.shipmentId))
+      const agusCheckpoints = demo.driverCheckpoints.filter((c) => c.driverId === agus?.id)
+      const agusNotifications = demo.notifications.filter((n) => n.driverId === agus?.id)
+      const agusAudit = demo.auditLog.filter((e) => e.description.includes('DRV-006'))
+      Object.assign(state, {
+        drivers: agus ? [...existing, agus] : existing,
+        driverAssignments: [...agusAssignments, ...((state.driverAssignments as DriverAssignment[]) ?? [])],
+        driverCheckpoints: [...agusCheckpoints, ...((state.driverCheckpoints as DriverCheckpoint[]) ?? [])],
+        notifications: [...agusNotifications, ...((state.notifications as AppNotification[]) ?? [])],
+        auditLog: [...agusAudit, ...((state.auditLog as AuditLogEntry[]) ?? [])],
+        containers: containers.map((c) => (agusContainerIds.has(c.id) ? demo.containers.find((x) => x.id === c.id) ?? c : c)),
+        shipments: shipments.map((x) => (agusShipmentIds.has(x.id) ? demo.shipments.find((y) => y.id === x.id) ?? x : x)),
+      })
+    }
+  }
+  return state as unknown as DataState
 }
 
 export const useDataStore = create<DataState>()(
@@ -287,6 +377,27 @@ export const useDataStore = create<DataState>()(
       markAllNotificationsRead: () =>
         set((state) => ({ notifications: state.notifications.map((n) => ({ ...n, read: true })) })),
 
+      addDriver: (driver) => set((state) => ({ drivers: [driver, ...state.drivers] })),
+
+      updateDriver: (id, patch) =>
+        set((state) => ({
+          drivers: state.drivers.map((d) => (d.id === id ? { ...d, ...patch, updatedAt: new Date().toISOString() } : d)),
+        })),
+
+      addDriverAssignment: (assignment) => set((state) => ({ driverAssignments: [assignment, ...state.driverAssignments] })),
+
+      updateDriverAssignment: (id, patch) =>
+        set((state) => ({
+          driverAssignments: state.driverAssignments.map((a) => (a.id === id ? { ...a, ...patch } : a)),
+        })),
+
+      addDriverCheckpoint: (checkpoint) => set((state) => ({ driverCheckpoints: [...state.driverCheckpoints, checkpoint] })),
+
+      addProofOfDelivery: (pod) => set((state) => ({ proofOfDeliveries: [pod, ...state.proofOfDeliveries] })),
+
+      updateShipment: (id, patch) =>
+        set((state) => ({ shipments: state.shipments.map((s) => (s.id === id ? { ...s, ...patch } : s)) })),
+
       resetAll: () => {
         idCounter = 1
         usePhotoStore.getState().clearAll() // photos reference seeded containers, so they reset together
@@ -295,22 +406,12 @@ export const useDataStore = create<DataState>()(
     }),
     {
       name: 'smartseal-data-v13',
-      version: 1,
+      version: 3,
       // v0 -> v1: cargo.category (free text) became cargo.categoryId -> itemCategories master.
       // Existing items keep their category (derived from the old text); empty text becomes null.
-      migrate: (persisted, version) => {
-        const state = (persisted ?? {}) as Record<string, unknown>
-        if (version < 1) {
-          const oldCargo = (Array.isArray(state.cargo) ? state.cargo : []) as (Record<string, unknown> & { category?: string })[]
-          state.itemCategories = buildItemCategorySeed(oldCargo.map((c) => String(c.category ?? '')))
-          state.cargo = oldCargo.map((c) => {
-            const { category, ...rest } = c
-            const name = String(category ?? '').trim()
-            return { ...rest, categoryId: name ? categoryIdFor(name) : null }
-          })
-        }
-        return state as unknown as DataState
-      },
+      // v1 -> v2: Driver Portal slices added. Seeds the driver demo on top of the saved data.
+      // v2 -> v3: demo driver Agus Prasetyo (DRV-006) added for the DRIVER role.
+      migrate: (persisted, version) => migrateDataState(persisted, version),
       partialize: (state) => {
         const { hydrated, ...rest } = state
         void hydrated

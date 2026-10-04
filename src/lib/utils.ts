@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { Container } from '@/types'
+import { LOCALE, currentLang, translate } from '@/i18n'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -19,28 +20,27 @@ export function securityModeLabel(mode: Container['securityMode']): string {
   return mode === 'BASIC_SEAL' ? 'Basic Seal' : 'Smart Seal'
 }
 
+// Dates follow the active UI language (en-GB / id-ID). Reads the language at call time.
 export function formatDateTime(iso: string): string {
-  const d = new Date(iso)
-  return d.toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleString(LOCALE[currentLang()], { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString(LOCALE[currentLang()], { hour: '2-digit', minute: '2-digit' })
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+  return new Date(iso).toLocaleDateString(LOCALE[currentLang()], { day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 export function timeAgo(iso: string): string {
   const diffMs = Date.now() - new Date(iso).getTime()
   const mins = Math.floor(diffMs / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins}m ago`
+  if (mins < 1) return translate('time.justNow')
+  if (mins < 60) return translate('time.minutesAgo', { n: mins })
   const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs}h ago`
-  const days = Math.floor(hrs / 24)
-  return `${days}d ago`
+  if (hrs < 24) return translate('time.hoursAgo', { n: hrs })
+  return translate('time.daysAgo', { n: Math.floor(hrs / 24) })
 }
 
 export function titleCase(value: string): string {

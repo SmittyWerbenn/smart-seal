@@ -8,8 +8,9 @@ import { Select } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { SeverityBadge } from '@/components/shared/status-badge'
 import { Badge } from '@/components/ui/badge'
-import { formatDateTime, sealIdFor, titleCase } from '@/lib/utils'
+import { formatDateTime, sealIdFor } from '@/lib/utils'
 import type { AlertItem, AlertSeverity, AlertStatus } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 export default function AlertsPage() {
   const alerts = useDataStore((s) => s.alerts)
@@ -23,11 +24,11 @@ export default function AlertsPage() {
   const filtered = alerts.filter((a) => (severity === 'ALL' || a.severity === severity) && (status === 'ALL' || a.status === status))
 
   const columns: Column<AlertItem>[] = [
-    { key: 'category', header: 'Category', render: (a) => titleCase(a.category) },
-    { key: 'severity', header: 'Severity', render: (a) => <SeverityBadge severity={a.severity} /> },
+    { key: 'category', get header() { return translate('ui.category') }, render: (a) => enumLabel('alertCategory', a.category) },
+    { key: 'severity', get header() { return translate('ui.severity') }, render: (a) => <SeverityBadge severity={a.severity} /> },
     {
       key: 'seal',
-      header: 'Seal',
+      get header() { return translate('ui.seal') },
       render: (a) => {
         const container = containers.find((c) => c.id === a.containerId)
         const seal = container ? sealIdFor(container) : null
@@ -39,22 +40,22 @@ export default function AlertsPage() {
         )
       },
     },
-    { key: 'message', header: 'Message', render: (a) => <span className="max-w-xs truncate">{a.message}</span> },
-    { key: 'status', header: 'Status', render: (a) => <Badge variant={a.status === 'OPEN' ? 'critical' : a.status === 'ACKNOWLEDGED' ? 'warning' : 'success'}>{a.status}</Badge> },
-    { key: 'created', header: 'Created', render: (a) => formatDateTime(a.createdAt) },
+    { key: 'message', get header() { return translate('ui.message') }, render: (a) => <span className="max-w-xs truncate">{a.message}</span> },
+    { key: 'status', get header() { return translate('ui.status') }, render: (a) => <Badge variant={a.status === 'OPEN' ? 'critical' : a.status === 'ACKNOWLEDGED' ? 'warning' : 'success'}>{a.status}</Badge> },
+    { key: 'created', get header() { return translate('ui.created') }, render: (a) => formatDateTime(a.createdAt) },
     {
       key: 'actions',
-      header: 'Actions',
+      get header() { return translate('ui.actions') },
       render: (a) => (
         <div className="flex gap-1.5" onClick={(e) => e.stopPropagation()}>
           {a.status === 'OPEN' && (
             <Button size="sm" variant="secondary" onClick={() => setAlertStatus(a.id, 'ACKNOWLEDGED')}>
-              Acknowledge
+              {translate('ui.acknowledge')}
             </Button>
           )}
           {a.status !== 'RESOLVED' && (
             <Button size="sm" variant="outline" onClick={() => setAlertStatus(a.id, 'RESOLVED')}>
-              Resolve
+              {translate('ui.resolve')}
             </Button>
           )}
         </div>
@@ -64,20 +65,20 @@ export default function AlertsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Alert Center" description={`${filtered.length} of ${alerts.length} alerts`} />
+      <PageHeader title={translate('ui.alertCenter')} description={`${filtered.length} of ${alerts.length} alerts`} />
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
           <Select value={severity} onChange={(e) => setSeverity(e.target.value as AlertSeverity | 'ALL')} className="w-40">
-            <option value="ALL">All severities</option>
-            <option value="CRITICAL">Critical</option>
-            <option value="WARNING">Warning</option>
-            <option value="INFO">Info</option>
+            <option value="ALL">{translate('ui.allSeverities')}</option>
+            <option value="CRITICAL">{translate('ui.critical')}</option>
+            <option value="WARNING">{translate('ui.warning')}</option>
+            <option value="INFO">{translate('ui.info')}</option>
           </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value as AlertStatus | 'ALL')} className="w-40">
-            <option value="ALL">All statuses</option>
-            <option value="OPEN">Open</option>
-            <option value="ACKNOWLEDGED">Acknowledged</option>
-            <option value="RESOLVED">Resolved</option>
+            <option value="ALL">{translate('ui.allStatuses')}</option>
+            <option value="OPEN">{translate('ui.open')}</option>
+            <option value="ACKNOWLEDGED">{translate('ui.acknowledged')}</option>
+            <option value="RESOLVED">{translate('ui.resolved')}</option>
           </Select>
         </div>
         <DataTable
@@ -85,7 +86,7 @@ export default function AlertsPage() {
           rows={filtered}
           rowKey={(a) => a.id}
           onRowClick={(a) => a.containerId && navigate(`/containers/${a.containerId}`)}
-          emptyTitle="No alerts match your filters"
+          emptyTitle={translate('ui.noAlertsMatchYourFilters')}
         />
       </Card>
     </div>

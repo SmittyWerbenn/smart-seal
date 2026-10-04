@@ -5,6 +5,7 @@ import { TrackingMap } from '@/components/map/tracking-map'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
+import { translate } from '@/i18n'
 
 export default function GeofencesPage() {
   const geofences = useDataStore((s) => s.geofences)
@@ -13,7 +14,7 @@ export default function GeofencesPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Geofences" description={`${geofences.length} configured zones`} />
+      <PageHeader title={translate('ui.geofences')} description={translate('ui.configuredZones', { n: geofences.length })} />
       <div className="grid grid-cols-1 gap-4 px-4 md:grid-cols-3 md:px-6">
         <Card className="md:col-span-2">
           <CardContent className="h-[520px] p-0">
@@ -23,7 +24,7 @@ export default function GeofencesPage() {
         <div className="space-y-3">
           <Card>
             <CardHeader>
-              <CardTitle>All Geofences</CardTitle>
+              <CardTitle>{translate('ui.allGeofences')}</CardTitle>
             </CardHeader>
             <CardContent className="max-h-64 space-y-1 overflow-y-auto p-2">
               {geofences.map((g) => (
@@ -33,7 +34,7 @@ export default function GeofencesPage() {
                   className={cn('flex w-full items-center justify-between rounded-md px-2.5 py-2 text-left text-sm hover:bg-slate-50', selectedId === g.id && 'bg-brand-50')}
                 >
                   <span className="font-medium text-navy-800">{g.name}</span>
-                  <Badge variant={g.type === 'PORT' ? 'brand' : 'success'}>{g.type}</Badge>
+                  <Badge variant={g.type === 'PORT' ? 'brand' : 'success'}>{translate('misc.' + ({ PORT: 'portType', WAREHOUSE: 'warehouseType', CUSTOMS: 'customsType', CITY: 'cityType' } as Record<string, string>)[g.type])}</Badge>
                 </button>
               ))}
             </CardContent>
@@ -41,13 +42,13 @@ export default function GeofencesPage() {
           {selected && (
             <Card>
               <CardHeader>
-                <CardTitle>Geofence Detail</CardTitle>
+                <CardTitle>{translate('ui.geofenceDetail')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
-                <Row label="Name" value={selected.name} />
-                <Row label="Type" value={selected.type} />
-                <Row label="Radius" value={`${(selected.radiusMeters / 1000).toFixed(1)} km`} />
-                <Row label="Status" value={selected.status} />
+                <Row label={translate('ui.name')} value={selected.name} />
+                <Row label={translate('ui.type')} value={selected.type} />
+                <Row label={translate('ui.radius')} value={`${(selected.radiusMeters / 1000).toFixed(1)} km`} />
+                <Row label={translate('ui.status')} value={selected.status} />
               </CardContent>
             </Card>
           )}

@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { CargoFormModal } from '@/components/container/cargo-form-modal'
 import type { CargoLine } from '@/types'
+import { translate } from '@/i18n'
 
 export default function CargoPage() {
   const cargo = useDataStore((s) => s.cargo)
@@ -47,25 +48,25 @@ export default function CargoPage() {
   })
 
   const columns: Column<CargoLine & { owned: boolean }>[] = [
-    { key: 'container', header: 'Container', render: (c) => containers.find((x) => x.id === c.containerId)?.number ?? c.containerId },
-    { key: 'product', header: 'Product', render: (c) => (c.owned ? <span className="font-medium text-navy-900">{c.productName}</span> : '—') },
-    { key: 'category', header: 'Category', render: (c) => <CategoryBadge categoryId={c.categoryId} /> },
+    { key: 'container', get header() { return translate('ui.container') }, render: (c) => containers.find((x) => x.id === c.containerId)?.number ?? c.containerId },
+    { key: 'product', get header() { return translate('ui.product') }, render: (c) => (c.owned ? <span className="font-medium text-navy-900">{c.productName}</span> : '—') },
+    { key: 'category', get header() { return translate('ui.category') }, render: (c) => <CategoryBadge categoryId={c.categoryId} /> },
     {
       key: 'client',
-      header: 'Client',
-      render: (c) => (c.owned ? c.clientName : <span className="flex items-center gap-1.5 text-slate-400"><Lock size={12} /> Consolidated Cargo</span>),
+      get header() { return translate('ui.client') },
+      render: (c) => (c.owned ? c.clientName : <span className="flex items-center gap-1.5 text-slate-400"><Lock size={12} /> {translate('ui.consolidatedCargo')}</span>),
     },
-    { key: 'do', header: 'DO Number', render: (c) => (c.owned ? c.doNumber : '—') },
-    { key: 'sku', header: 'SKU', render: (c) => (c.owned ? c.sku : '—') },
-    { key: 'qty', header: 'Quantity', render: (c) => (c.owned ? `${c.quantity.toLocaleString()} ${c.unit}` : '—') },
-    { key: 'seal', header: 'Tagged Seal', render: (c) => c.sealId ?? <span className="text-slate-400">Not sealed</span> },
+    { key: 'do', get header() { return translate('ui.doNumber') }, render: (c) => (c.owned ? c.doNumber : '—') },
+    { key: 'sku', get header() { return translate('ui.sku') }, render: (c) => (c.owned ? c.sku : '—') },
+    { key: 'qty', get header() { return translate('ui.quantity') }, render: (c) => (c.owned ? `${c.quantity.toLocaleString()} ${c.unit}` : '—') },
+    { key: 'seal', get header() { return translate('ui.taggedSeal') }, render: (c) => c.sealId ?? <span className="text-slate-400">{translate('ui.notSealed2')}</span> },
   ]
 
   return (
     <div className="pb-10">
       <PageHeader
-        title="Cargo / Delivery Orders"
-        description={`${filtered.length} cargo lines`}
+        title={translate('ui.cargoDeliveryOrders')}
+        description={translate('ui.cargoLinesCount', { n: filtered.length })}
         actions={
           canManage && (
             <Button
@@ -75,35 +76,35 @@ export default function CargoPage() {
                 setPickerOpen(true)
               }}
             >
-              <Plus size={14} /> Add Cargo
+              <Plus size={14} /> {translate('ui.addCargo')}
             </Button>
           )
         }
       />
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
-          <Input placeholder="Search container, product, client, DO…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-72" />
+          <Input placeholder={translate('ui.searchContainerProductClientDo')} value={query} onChange={(e) => setQuery(e.target.value)} className="w-72" />
           <Select value={category} onChange={(e) => setCategory(e.target.value)} className="w-52">
-            <option value="ALL">All categories</option>
+            <option value="ALL">{translate('ui.allCategories')}</option>
             {categories.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.name}
               </option>
             ))}
-            <option value="NONE">Uncategorized</option>
+            <option value="NONE">{translate('ui.uncategorized')}</option>
           </Select>
         </div>
-        <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.containerId}`)} emptyTitle="No cargo records" />
+        <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.containerId}`)} emptyTitle={translate('ui.noCargoRecords')} />
       </Card>
 
       <Modal
         open={pickerOpen}
         onClose={() => setPickerOpen(false)}
-        title="Add Cargo — Select Container"
+        title={translate('ui.addCargoSelectContainer')}
         footer={
           <>
             <Button variant="secondary" onClick={() => setPickerOpen(false)}>
-              Cancel
+              {translate('ui.cancel2')}
             </Button>
             <Button
               disabled={!pickedContainerId}
@@ -112,16 +113,16 @@ export default function CargoPage() {
                 setFormContainerId(pickedContainerId)
               }}
             >
-              Next
+              {translate('ui.next2')}
             </Button>
           </>
         }
       >
         {containers.length === 0 ? (
-          <p className="text-sm text-slate-500">No containers exist yet. Create one via New Stuffing first.</p>
+          <p className="text-sm text-slate-500">{translate('ui.noContainersExistYetCreate')}</p>
         ) : (
           <div>
-            <Label htmlFor="cargo-picker-container">Container</Label>
+            <Label htmlFor="cargo-picker-container">{translate('ui.container')}</Label>
             <Select id="cargo-picker-container" value={pickedContainerId} onChange={(e) => setPickedContainerId(e.target.value)}>
               {containers.map((c) => (
                 <option key={c.id} value={c.id}>

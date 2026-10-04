@@ -10,8 +10,9 @@ import { DeviceStatusBadge } from '@/components/shared/status-badge'
 import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { EmptyState } from '@/components/shared/states'
 import { UnlockPanel } from '@/components/container/unlock-panel'
-import { cn, formatDateTime, formatTime, titleCase } from '@/lib/utils'
+import { cn, formatDateTime, formatTime } from '@/lib/utils'
 import { simulateLowBattery, simulateOffline, simulateTamper } from '@/lib/actions'
+import { translate, enumLabel } from '@/i18n'
 
 function MiniChart({ data, color, unit }: { data: { timestamp: string; value: number }[]; color: string; unit: string }) {
   return (
@@ -50,14 +51,14 @@ export default function ESealDetailPage() {
   }, [timeline, device])
 
   if (!device) {
-    return <EmptyState title="Device not found" action={{ label: 'Back to Seal Inventory', onClick: () => navigate('/eseals') }} />
+    return <EmptyState title={translate('ui.deviceNotFound')} action={{ get label() { return translate('ui.backToSealInventory') }, onClick: () => navigate('/eseals') }} />
   }
 
   return (
     <div className="pb-10">
       <div className="border-b border-slate-200 bg-white px-4 pb-4 pt-4 md:px-6">
         <button onClick={() => navigate(-1)} className="mb-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-navy-800">
-          <ArrowLeft size={14} /> Back
+          <ArrowLeft size={14} /> {translate('ui.back')}
         </button>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -66,7 +67,7 @@ export default function ESealDetailPage() {
               <DeviceStatusBadge status={device.status} />
             </div>
             <p className="mt-1 text-sm text-slate-500">
-              {container ? `Attached to ${container.number}` : 'Not currently attached to a container'} · Firmware {device.firmware}
+              {container ? translate('ui.attachedTo', { number: container.number }) : translate('ui.notCurrentlyAttached')} · {translate('ui.firmwareLabel', { version: device.firmware })}
             </p>
           </div>
         </div>
@@ -75,19 +76,19 @@ export default function ESealDetailPage() {
       <div className="grid grid-cols-1 gap-4 p-4 md:grid-cols-3 md:p-6">
         <Card>
           <CardHeader>
-            <CardTitle>Device Info</CardTitle>
+            <CardTitle>{translate('ui.deviceInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
-            <Row label="Serial Number" value={device.serialNumber} />
-            <Row label="Barcode" value={<span className="font-mono text-xs">{device.barcode}</span>} />
-            <Row label="Firmware" value={device.firmware} />
-            <Row label="Battery" value={<BatteryIndicator value={device.battery} />} />
-            <Row label="Temperature" value={`${device.temperature}°C`} />
-            <Row label="Signal" value={<SignalIndicator value={device.signal} />} />
-            <Row label="Current Container" value={container?.number ?? '—'} />
-            <Row label="Location" value={`${device.location.lat.toFixed(3)}, ${device.location.lng.toFixed(3)}`} />
-            <Row label="Last Seen" value={formatDateTime(device.lastSeen)} />
-            <Row label="Lifecycle" value={titleCase(device.lifecycle)} />
+            <Row label={translate('ui.serialNumber')} value={device.serialNumber} />
+            <Row label={translate('ui.barcode')} value={<span className="font-mono text-xs">{device.barcode}</span>} />
+            <Row label={translate('ui.firmware')} value={device.firmware} />
+            <Row label={translate('ui.battery')} value={<BatteryIndicator value={device.battery} />} />
+            <Row label={translate('ui.temperature')} value={`${device.temperature}°C`} />
+            <Row label={translate('ui.signal')} value={<SignalIndicator value={device.signal} />} />
+            <Row label={translate('ui.currentContainer')} value={container?.number ?? '—'} />
+            <Row label={translate('ui.location')} value={`${device.location.lat.toFixed(3)}, ${device.location.lng.toFixed(3)}`} />
+            <Row label={translate('ui.lastSeen')} value={formatDateTime(device.lastSeen)} />
+            <Row label={translate('ui.lifecycle')} value={enumLabel('status', device.lifecycle)} />
             <div className="flex flex-col items-center border-t border-slate-100 pt-3">
               <BarcodeGraphic code={device.barcode} />
             </div>
@@ -96,17 +97,17 @@ export default function ESealDetailPage() {
 
         <Card className="md:col-span-2">
           <CardHeader>
-            <CardTitle>Simulation Controls</CardTitle>
+            <CardTitle>{translate('ui.simulationControls')}</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <Button variant="danger" size="sm" onClick={() => container && simulateTamper(container.id)} disabled={!container}>
-              <ShieldAlert size={14} /> Simulate Tamper
+              <ShieldAlert size={14} /> {translate('ui.simulateTamper')}
             </Button>
             <Button variant="outline" size="sm" onClick={() => container && simulateLowBattery(container.id)} disabled={!container}>
-              Simulate Low Battery
+              {translate('ui.simulateLowBattery')}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => container && simulateOffline(container.id)} disabled={!container}>
-              <WifiOff size={14} /> Simulate Offline
+              <WifiOff size={14} /> {translate('ui.simulateOffline')}
             </Button>
             <Button
               variant="secondary"
@@ -117,7 +118,7 @@ export default function ESealDetailPage() {
             </Button>
           </CardContent>
           <CardContent className="flex items-center gap-2 pt-0 text-xs text-slate-500">
-            <Radio size={14} /> Motion state: <span className="font-medium text-navy-700">{titleCase(device.motion)}</span>
+            <Radio size={14} /> {translate('ui.motionState')} <span className="font-medium text-navy-700">{enumLabel('status', device.motion)}</span>
           </CardContent>
         </Card>
 
@@ -129,7 +130,7 @@ export default function ESealDetailPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Battery History</CardTitle>
+            <CardTitle>{translate('ui.batteryHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             <MiniChart data={device.batteryHistory} color="#16a34a" unit="%" />
@@ -137,7 +138,7 @@ export default function ESealDetailPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Signal History</CardTitle>
+            <CardTitle>{translate('ui.signalHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             <MiniChart data={device.signalHistory} color="#2563eb" unit="%" />
@@ -145,7 +146,7 @@ export default function ESealDetailPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Temperature History</CardTitle>
+            <CardTitle>{translate('ui.temperatureHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             <MiniChart data={device.temperatureHistory} color="#d97706" unit="°C" />
@@ -154,11 +155,11 @@ export default function ESealDetailPage() {
 
         <Card className="md:col-span-3">
           <CardHeader>
-            <CardTitle>Seal History</CardTitle>
+            <CardTitle>{translate('ui.sealHistory')}</CardTitle>
           </CardHeader>
           <CardContent>
             {sealHistory.length === 0 ? (
-              <EmptyState title="No history yet" description="Attach and detach events for this seal will appear here as it's used across containers." />
+              <EmptyState title={translate('ui.noHistoryYet')} description={translate('ui.attachAndDetachEventsFor')} />
             ) : (
               <ol className="space-y-2">
                 {sealHistory.map((event) => {

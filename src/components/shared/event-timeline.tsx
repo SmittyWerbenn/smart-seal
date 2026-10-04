@@ -1,10 +1,11 @@
+import { translate } from '@/i18n'
 import { CheckCircle2 } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 import type { TimelineEvent } from '@/types'
 import { EmptyState } from './states'
 
 export function EventTimeline({ events, dense }: { events: TimelineEvent[]; dense?: boolean }) {
-  if (events.length === 0) return <EmptyState title="No events yet" description="Timeline events will appear here as this container progresses." />
+  if (events.length === 0) return <EmptyState title={translate('events.none')} description={translate('events.hint')} />
   return (
     <ol className="relative border-s border-slate-200 ps-4">
       {events.map((event) => (

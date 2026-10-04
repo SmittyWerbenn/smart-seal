@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Search, Tags, ShieldCheck, Sailboat } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { sealIdFor } from '@/lib/utils'
+import { translate, useT } from '@/i18n'
 
 interface SearchResult {
   id: string
@@ -15,6 +16,7 @@ interface SearchResult {
 const MAX_RESULTS = 8
 
 export function GlobalSearch() {
+  const t = useT()
   const containers = useDataStore((s) => s.containers)
   const devices = useDataStore((s) => s.devices)
   const vessels = useDataStore((s) => s.vessels)
@@ -31,14 +33,14 @@ export function GlobalSearch() {
     for (const c of containers) {
       const seal = sealIdFor(c)
       if (`${seal ?? ''} ${c.number}`.toLowerCase().includes(q)) {
-        out.push({ id: c.id, type: 'Seal', primary: seal ?? 'Not sealed', secondary: c.number, path: `/containers/${c.id}` })
+        out.push({ id: c.id, type: 'Seal', primary: seal ?? translate('search.notSealed'), secondary: c.number, path: `/containers/${c.id}` })
       }
       if (out.length >= MAX_RESULTS) return out
     }
     for (const d of devices) {
       if (`${d.id} ${d.barcode}`.toLowerCase().includes(q)) {
         const container = containers.find((c) => c.id === d.containerId)
-        out.push({ id: d.id, type: 'Device', primary: d.id, secondary: container ? `Attached to ${container.number}` : 'Not attached', path: `/eseals/${d.id}` })
+        out.push({ id: d.id, type: 'Device', primary: d.id, secondary: container ? translate('search.attachedTo', { number: container.number }) : translate('search.notAttached'), path: `/eseals/${d.id}` })
       }
       if (out.length >= MAX_RESULTS) return out
     }
@@ -72,7 +74,7 @@ export function GlobalSearch() {
     <div ref={rootRef} className="relative hidden items-center md:flex">
       <Search size={14} className="pointer-events-none absolute left-2.5 text-slate-400" />
       <input
-        placeholder="Search seal, container, device, vessel…"
+        placeholder={t('search.placeholder')}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value)
@@ -101,7 +103,7 @@ export function GlobalSearch() {
       {open && query.trim() && (
         <div className="absolute left-0 top-10 z-50 w-80 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
           {results.length === 0 ? (
-            <p className="px-2 py-3 text-center text-xs text-slate-400">No matches — press Enter to search Seal Monitoring.</p>
+            <p className="px-2 py-3 text-center text-xs text-slate-400">{t('search.noMatches')}</p>
           ) : (
             results.map((r) => (
               <button
@@ -114,7 +116,7 @@ export function GlobalSearch() {
                   <span className="block truncate text-sm font-medium text-navy-900">{r.primary}</span>
                   <span className="block truncate text-xs text-slate-500">{r.secondary}</span>
                 </span>
-                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">{r.type}</span>
+                <span className="shrink-0 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-slate-500">{t(r.type === 'Seal' ? 'search.typeSeal' : r.type === 'Device' ? 'search.typeDevice' : 'search.typeVessel')}</span>
               </button>
             ))
           )}

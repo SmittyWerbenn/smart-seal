@@ -1,7 +1,8 @@
 import { useDataStore } from '@/store/dataStore'
 import { SeverityBadge } from '@/components/shared/status-badge'
 import { EmptyState } from '@/components/shared/states'
-import { timeAgo, titleCase } from '@/lib/utils'
+import { timeAgo } from '@/lib/utils'
+import { translate, enumLabel } from '@/i18n'
 
 export default function FieldAlertsPage() {
   const alerts = useDataStore((s) => s.alerts)
@@ -10,16 +11,16 @@ export default function FieldAlertsPage() {
 
   return (
     <div className="p-4">
-      <h1 className="mb-1 text-lg font-semibold text-navy-900">Alerts</h1>
+      <h1 className="mb-1 text-lg font-semibold text-navy-900">{translate('ui.alerts')}</h1>
       <p className="mb-4 text-sm text-slate-500">{open.length} open alerts</p>
       {open.length === 0 ? (
-        <EmptyState title="No open alerts" />
+        <EmptyState title={translate('ui.noOpenAlerts')} />
       ) : (
         <div className="space-y-2">
           {open.map((a) => (
             <div key={a.id} className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-navy-900">{titleCase(a.category)}</span>
+                <span className="text-sm font-medium text-navy-900">{enumLabel('alertCategory', a.category)}</span>
                 <SeverityBadge severity={a.severity} />
               </div>
               <p className="mt-1 text-xs text-slate-500">{containers.find((c) => c.id === a.containerId)?.number} · {a.message}</p>

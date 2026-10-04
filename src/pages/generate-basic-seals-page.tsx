@@ -10,6 +10,7 @@ import { BarcodeGraphic } from '@/components/shared/barcode-graphic'
 import { barcodeFor } from '@/lib/barcode'
 import { exportBarcodesToPdf } from '@/lib/pdf-export'
 import { downloadCsv } from '@/lib/utils'
+import { translate } from '@/i18n'
 
 function nextBatch(startAt: number, quantity: number) {
   return Array.from({ length: quantity }, (_, i) => {
@@ -52,23 +53,23 @@ export default function GenerateBasicSealsPage() {
     <div className="pb-10">
       <div className="print:hidden">
         <button onClick={() => navigate('/eseals')} className="mb-1 ml-4 mt-4 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-navy-800 md:ml-6">
-          <ArrowLeft size={14} /> Back to Seal Inventory
+          <ArrowLeft size={14} /> {translate('ui.backToSealInventory')}
         </button>
         <PageHeader
-          title="Generate Basic Seal Barcodes"
-          description="Basic Seals are single-use — provision a new batch of unique barcodes to send to your seal manufacturer/vendor for printing."
+          title={translate('ui.generateBasicSealBarcodes')}
+          description={translate('ui.basicSealsAreSingleUse')}
         />
 
         <Card className="mx-4 mb-4 md:mx-6">
           <CardContent className="flex flex-wrap items-end gap-3 py-4">
             <div>
-              <Label htmlFor="qty">Quantity</Label>
+              <Label htmlFor="qty">{translate('ui.quantity')}</Label>
               <Input id="qty" type="number" min={1} max={500} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} className="w-32" />
             </div>
-            <p className="pb-2 text-xs text-slate-500">Next available: {`SEAL-${nextAvailable.toString().padStart(6, '0')}`}</p>
+            <p className="pb-2 text-xs text-slate-500">{translate('misc.nextAvailable', { code: `SEAL-${nextAvailable.toString().padStart(6, '0')}` })}</p>
             <div className="ml-auto flex gap-2">
               <Button onClick={generate}>
-                <RotateCcw size={14} /> Generate Batch
+                <RotateCcw size={14} /> {translate('ui.generateBatch')}
               </Button>
               {batch.length > 0 && (
                 <>
@@ -76,19 +77,19 @@ export default function GenerateBasicSealsPage() {
                     variant="secondary"
                     onClick={() => downloadCsv(`basic-seal-barcodes-${batch[0].id}-${batch[batch.length - 1].id}.csv`, batch.map((b) => ({ seal_id: b.id, barcode: b.barcode })))}
                   >
-                    <Download size={14} /> Export CSV
+                    <Download size={14} /> {translate('ui.exportCsv')}
                   </Button>
                   <Button
                     variant="secondary"
                     onClick={() => exportBarcodesToPdf(batch, `basic-seal-barcodes-${batch[0].id}-${batch[batch.length - 1].id}.pdf`)}
                   >
-                    <FileText size={14} /> Export PDF
+                    <FileText size={14} /> {translate('ui.exportPdf')}
                   </Button>
                   <Button variant="secondary" onClick={() => window.print()}>
-                    <Printer size={14} /> Print
+                    <Printer size={14} /> {translate('ui.print')}
                   </Button>
                   <Button onClick={() => navigate('/eseals?type=Basic')}>
-                    View in Seal Inventory <ArrowRight size={14} />
+                    {translate('ui.viewInSealInventory')} <ArrowRight size={14} />
                   </Button>
                 </>
               )}
@@ -98,7 +99,7 @@ export default function GenerateBasicSealsPage() {
       </div>
 
       {batch.length === 0 ? (
-        <p className="px-4 text-sm text-slate-500 md:px-6 print:hidden">Set a quantity and click Generate Batch to provision new Basic Seal barcodes.</p>
+        <p className="px-4 text-sm text-slate-500 md:px-6 print:hidden">{translate('ui.setAQuantityAndClick')}</p>
       ) : (
         <div className="px-4 md:px-6">
           <p className="mb-3 text-xs text-slate-400 print:hidden">

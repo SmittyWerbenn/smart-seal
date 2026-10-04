@@ -3,13 +3,15 @@ import { Home, PackagePlus, ScanLine, MapPin, BellRing, LogOut } from 'lucide-re
 import { useAuthStore } from '@/store/authStore'
 import { AppLogo } from '@/components/shared/logo'
 import { cn } from '@/lib/utils'
+import { LanguageToggle } from '@/components/shared/language-toggle'
+import { translate } from '@/i18n'
 
 const TABS = [
-  { path: '/field', label: 'Home', icon: Home, end: true },
-  { path: '/field/stuffing', label: 'Stuffing', icon: PackagePlus },
-  { path: '/field/scanner', label: 'Scanner', icon: ScanLine },
-  { path: '/field/tracking', label: 'Tracking', icon: MapPin },
-  { path: '/field/alerts', label: 'Alerts', icon: BellRing },
+  { path: '/field', get label() { return translate('ui.home') }, icon: Home, end: true },
+  { path: '/field/stuffing', get label() { return translate('ui.stuffing') }, icon: PackagePlus },
+  { path: '/field/scanner', get label() { return translate('ui.scanner') }, icon: ScanLine },
+  { path: '/field/tracking', get label() { return translate('ui.tracking') }, icon: MapPin },
+  { path: '/field/alerts', get label() { return translate('ui.alerts') }, icon: BellRing },
 ]
 
 export function FieldShell() {
@@ -21,6 +23,7 @@ export function FieldShell() {
       <header className="flex h-14 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4">
         <AppLogo iconOnly />
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           <span className="text-xs font-medium text-navy-700">{currentUser?.name}</span>
           <button
             onClick={() => {

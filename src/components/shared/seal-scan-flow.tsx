@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { CategoryBadge } from '@/components/shared/category-badge'
 import { ContainerStatusBadge } from './status-badge'
 import { findContainerBySealCode, type SealLookupResult } from '@/lib/seal-lookup'
+import { translate } from '@/i18n'
 
 interface SealScanFlowProps {
   onViewLiveTracking: (containerId: string) => void
@@ -54,9 +55,9 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
 
           {kind === 'regular' && (
             <div className="mt-3 space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">Contents</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{translate('ui.contents')}</p>
               {manifest.length === 0 ? (
-                <p className="text-xs text-slate-500">No cargo recorded for this container.</p>
+                <p className="text-xs text-slate-500">{translate('ui.noCargoRecordedForThis')}</p>
               ) : (
                 manifest.map((line) => {
                   const owned = !isClient || line.clientId === currentUser?.clientId
@@ -66,12 +67,12 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
                         <>
                           <p className="font-medium text-navy-800">{line.productName}</p>
                           <div className="mt-1 flex items-center gap-1.5">
-                            <span className="text-slate-400">Category:</span>
+                            <span className="text-slate-400">{translate('ui.category2')}</span>
                             <CategoryBadge categoryId={line.categoryId} />
                           </div>
                           <p className="mt-0.5 flex items-center gap-1 font-medium text-brand-700">
                             <Building2 size={12} className="shrink-0" />
-                            <span className="text-slate-400">Company:</span> {line.clientName?.trim() || '-'}
+                            <span className="text-slate-400">{translate('ui.company')}</span> {line.clientName?.trim() || '-'}
                           </p>
                           <p className="text-slate-500">
                             {line.sku} · {line.doNumber} · {line.quantity.toLocaleString()} {line.unit}
@@ -79,7 +80,7 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
                         </>
                       ) : (
                         <p className="flex items-center gap-1.5 text-slate-400">
-                          <Lock size={12} /> Consolidated cargo (other client)
+                          <Lock size={12} /> {translate('ui.consolidatedCargoOtherClient')}
                         </p>
                       )}
                     </div>
@@ -92,12 +93,12 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
           <div className="mt-4 flex flex-wrap gap-2">
             {kind === 'smart' && (
               <Button size="sm" onClick={() => onViewLiveTracking(container.id)}>
-                <MapPin size={14} /> View Live Tracking
+                <MapPin size={14} /> {translate('ui.viewLiveTracking')}
               </Button>
             )}
             {onViewContainer && (
               <Button size="sm" variant="secondary" onClick={() => onViewContainer(container.id)}>
-                View Container Detail
+                {translate('ui.viewContainerDetail')}
               </Button>
             )}
           </div>
@@ -110,7 +111,7 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
             setScannedCode(null)
           }}
         >
-          Scan Another Seal
+          {translate('ui.scanAnotherSeal')}
         </Button>
       </div>
     )
@@ -121,22 +122,22 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
       <Button size="lg" variant="secondary" className="w-full justify-start gap-3" onClick={() => setSmartOpen(true)}>
         <ShieldCheck size={20} className="text-brand-600" />
         <span className="flex flex-col items-start text-left">
-          <span className="text-sm font-semibold text-navy-900">Scan Smart Seal</span>
-          <span className="text-xs font-normal text-slate-500">Live GPS tracking</span>
+          <span className="text-sm font-semibold text-navy-900">{translate('ui.scanSmartSeal')}</span>
+          <span className="text-xs font-normal text-slate-500">{translate('ui.liveGpsTracking')}</span>
         </span>
       </Button>
       <Button size="lg" variant="secondary" className="w-full justify-start gap-3" onClick={() => setRegularOpen(true)}>
         <ScanLine size={20} className="text-slate-500" />
         <span className="flex flex-col items-start text-left">
-          <span className="text-sm font-semibold text-navy-900">Scan Basic Seal</span>
-          <span className="text-xs font-normal text-slate-500">No tracking — view contents only</span>
+          <span className="text-sm font-semibold text-navy-900">{translate('ui.scanBasicSeal')}</span>
+          <span className="text-xs font-normal text-slate-500">{translate('ui.noTrackingViewContentsOnly')}</span>
         </span>
       </Button>
 
       <ScannerModal
         open={smartOpen}
         onClose={() => setSmartOpen(false)}
-        title="Scan Smart Seal"
+        title={translate('ui.scanSmartSeal')}
         scannerType="QR"
         resultCode={smartSampleCode}
         onScanned={(code) => {
@@ -147,7 +148,7 @@ export function SealScanFlow({ onViewLiveTracking, onViewContainer }: SealScanFl
       <ScannerModal
         open={regularOpen}
         onClose={() => setRegularOpen(false)}
-        title="Scan Basic Seal"
+        title={translate('ui.scanBasicSeal')}
         scannerType="Barcode"
         resultCode={regularSampleCode}
         onScanned={(code) => {

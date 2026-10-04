@@ -11,8 +11,9 @@ import { Badge } from '@/components/ui/badge'
 import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
 import { DeviceStatusBadge } from '@/components/shared/status-badge'
 import { barcodeFor } from '@/lib/barcode'
-import { cn, formatDateTime, titleCase } from '@/lib/utils'
+import { cn, formatDateTime } from '@/lib/utils'
 import type { DeviceStatus } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 // Below this, ops should generate a new batch before stock runs out — a
 // typical batch is 50 (see generate-basic-seals-page.tsx default quantity).
@@ -55,10 +56,10 @@ export default function ESealsListPage() {
         battery: d.battery,
         signal: d.signal,
         deviceStatus: d.status,
-        statusLabel: titleCase(d.status),
+        statusLabel: enumLabel('status', d.status),
         location: d.location,
         lastSeen: d.lastSeen,
-        lifecycle: titleCase(d.lifecycle),
+        lifecycle: enumLabel('status', d.lifecycle),
       }
     })
     const basic: SealRow[] = containers
@@ -75,7 +76,7 @@ export default function ESealsListPage() {
         statusLabel: c.isUnlocked ? 'Unlocked' : 'Sealed',
         location: c.currentLocation,
         lastSeen: c.lastUpdate,
-        lifecycle: titleCase(c.status),
+        lifecycle: enumLabel('status', c.status),
       }))
     const stock: SealRow[] = basicSealStock.map((s) => ({
       id: s.id,
@@ -102,30 +103,30 @@ export default function ESealsListPage() {
   })
 
   const columns: Column<SealRow>[] = [
-    { key: 'id', header: 'Seal ID', render: (r) => <span className="font-medium text-navy-900">{r.id}</span> },
-    { key: 'type', header: 'Type', render: (r) => <Badge variant={r.type === 'Smart' ? 'brand' : 'offline'}>{r.type} Seal</Badge> },
-    { key: 'barcode', header: 'Barcode', render: (r) => <span className="font-mono text-xs text-slate-500">{r.barcode}</span> },
-    { key: 'container', header: 'Container', render: (r) => r.containerNumber ?? '—' },
-    { key: 'battery', header: 'Battery', render: (r) => (r.battery !== null ? <BatteryIndicator value={r.battery} /> : <span className="text-slate-300">—</span>) },
-    { key: 'signal', header: 'Signal', render: (r) => (r.signal !== null ? <SignalIndicator value={r.signal} /> : <span className="text-slate-300">—</span>) },
+    { key: 'id', get header() { return translate('ui.sealId') }, render: (r) => <span className="font-medium text-navy-900">{r.id}</span> },
+    { key: 'type', get header() { return translate('ui.type') }, render: (r) => <Badge variant={r.type === 'Smart' ? 'brand' : 'offline'}>{r.type} Seal</Badge> },
+    { key: 'barcode', get header() { return translate('ui.barcode') }, render: (r) => <span className="font-mono text-xs text-slate-500">{r.barcode}</span> },
+    { key: 'container', get header() { return translate('ui.container') }, render: (r) => r.containerNumber ?? '—' },
+    { key: 'battery', get header() { return translate('ui.battery') }, render: (r) => (r.battery !== null ? <BatteryIndicator value={r.battery} /> : <span className="text-slate-300">—</span>) },
+    { key: 'signal', get header() { return translate('ui.signal') }, render: (r) => (r.signal !== null ? <SignalIndicator value={r.signal} /> : <span className="text-slate-300">—</span>) },
     {
       key: 'status',
-      header: 'Status',
+      get header() { return translate('ui.status') },
       render: (r) => (r.deviceStatus ? <DeviceStatusBadge status={r.deviceStatus} /> : <Badge variant="outline">{r.statusLabel}</Badge>),
     },
-    { key: 'location', header: 'Location', render: (r) => (r.location ? `${r.location.lat.toFixed(2)}, ${r.location.lng.toFixed(2)}` : '—') },
-    { key: 'lastSeen', header: 'Last Seen', render: (r) => (r.lastSeen ? formatDateTime(r.lastSeen) : '—') },
-    { key: 'lifecycle', header: 'Lifecycle', render: (r) => r.lifecycle },
+    { key: 'location', get header() { return translate('ui.location') }, render: (r) => (r.location ? `${r.location.lat.toFixed(2)}, ${r.location.lng.toFixed(2)}` : '—') },
+    { key: 'lastSeen', get header() { return translate('ui.lastSeen') }, render: (r) => (r.lastSeen ? formatDateTime(r.lastSeen) : '—') },
+    { key: 'lifecycle', get header() { return translate('ui.lifecycle') }, render: (r) => r.lifecycle },
   ]
 
   return (
     <div className="pb-10">
       <PageHeader
-        title="Seal Inventory"
+        title={translate('ui.sealInventory')}
         description={`${filtered.length} of ${rows.length} seals (${rows.filter((r) => r.type === 'Smart').length} smart, ${rows.filter((r) => r.type === 'Basic').length} basic${basicSealStock.length ? `, ${basicSealStock.length} in stock` : ''})`}
         actions={
           <Button size="sm" variant="secondary" onClick={() => navigate('/eseals/generate')}>
-            <BarcodeIcon size={14} /> Generate Basic Seal Barcodes
+            <BarcodeIcon size={14} /> {translate('ui.generateBasicSealBarcodes')}
           </Button>
         }
       />
@@ -135,26 +136,26 @@ export default function ESealsListPage() {
           <div className={cn('flex items-center gap-2 text-sm', basicSealStock.length === 0 ? 'text-red-800' : 'text-amber-800')}>
             <TriangleAlert size={16} />
             {basicSealStock.length === 0
-              ? 'Basic Seal stock is depleted — no barcodes left to assign during stuffing.'
-              : `Basic Seal stock is running low — only ${basicSealStock.length} left.`}
+              ? translate('misc.stockDepleted')
+              : translate('misc.stockLow', { n: basicSealStock.length })}
           </div>
           <Button size="sm" onClick={() => navigate('/eseals/generate')}>
-            <BarcodeIcon size={14} /> Generate New Batch
+            <BarcodeIcon size={14} /> {translate('ui.generateNewBatch')}
           </Button>
         </div>
       )}
 
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap gap-2 border-b border-slate-100 p-3">
-          <Input placeholder="Search seal ID, barcode, container…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-64" />
+          <Input placeholder={translate('ui.searchSealIdBarcodeContainer')} value={query} onChange={(e) => setQuery(e.target.value)} className="w-64" />
           <Select value={type} onChange={(e) => setType(e.target.value as 'ALL' | 'Smart' | 'Basic')} className="w-44">
-            <option value="ALL">All seal types</option>
-            <option value="Smart">Smart Seal</option>
-            <option value="Basic">Basic Seal</option>
+            <option value="ALL">{translate('ui.allSealTypes')}</option>
+            <option value="Smart">{translate('ui.smartSeal')}</option>
+            <option value="Basic">{translate('ui.basicSeal')}</option>
           </Select>
           <Select value={battery} onChange={(e) => setBattery(e.target.value as 'ALL' | 'LOW')} className="w-40">
-            <option value="ALL">All battery levels</option>
-            <option value="LOW">Low Battery (&lt;30%)</option>
+            <option value="ALL">{translate('ui.allBatteryLevels')}</option>
+            <option value="LOW">{translate('ui.lowBattery30')}</option>
           </Select>
         </div>
         <DataTable
@@ -165,7 +166,7 @@ export default function ESealsListPage() {
             if (r.type === 'Smart') navigate(`/eseals/${r.id}`)
             else if (r.containerId) navigate(`/containers/${r.containerId}`)
           }}
-          emptyTitle="No seals found"
+          emptyTitle={translate('ui.noSealsFound')}
         />
       </Card>
     </div>

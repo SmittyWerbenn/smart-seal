@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Warehouse, Truck, Clock3, Wrench, XOctagon, RotateCcw } from 'lucide-react'
 import { titleCase } from '@/lib/utils'
 import type { ESealDevice } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 export default function ReverseLogisticsPage() {
   const devices = useDataStore((s) => s.devices)
@@ -31,12 +32,12 @@ export default function ReverseLogisticsPage() {
   const returnCandidates = devices.filter((d) => d.lifecycle === 'IDLE_AT_DESTINATION' || d.lifecycle === 'MAINTENANCE')
 
   const columns: Column<ESealDevice>[] = [
-    { key: 'device', header: 'Device', render: (d) => <span className="font-medium text-navy-900">{d.id}</span> },
-    { key: 'container', header: 'Last Container', render: (d) => containers.find((c) => c.eSealId === d.id)?.number ?? '—' },
-    { key: 'destination', header: 'Destination', render: (d) => containers.find((c) => c.eSealId === d.id)?.destinationCity ?? '—' },
-    { key: 'lifecycle', header: 'Status', render: (d) => <Badge variant={d.lifecycle === 'BROKEN' ? 'critical' : d.lifecycle === 'MAINTENANCE' ? 'warning' : 'brand'}>{titleCase(d.lifecycle)}</Badge> },
-    { key: 'idle', header: 'Days Idle', render: (d) => d.daysIdle },
-    { key: 'return', header: 'Return Status', render: (d) => <Badge variant={d.returnStatus === 'RETURNED' ? 'success' : 'neutral'}>{titleCase(d.returnStatus)}</Badge> },
+    { key: 'device', get header() { return translate('ui.device') }, render: (d) => <span className="font-medium text-navy-900">{d.id}</span> },
+    { key: 'container', get header() { return translate('ui.lastContainer') }, render: (d) => containers.find((c) => c.eSealId === d.id)?.number ?? '—' },
+    { key: 'destination', get header() { return translate('ui.destination') }, render: (d) => containers.find((c) => c.eSealId === d.id)?.destinationCity ?? '—' },
+    { key: 'lifecycle', get header() { return translate('ui.status') }, render: (d) => <Badge variant={d.lifecycle === 'BROKEN' ? 'critical' : d.lifecycle === 'MAINTENANCE' ? 'warning' : 'brand'}>{enumLabel('status', d.lifecycle)}</Badge> },
+    { key: 'idle', get header() { return translate('ui.daysIdle') }, render: (d) => d.daysIdle },
+    { key: 'return', get header() { return translate('ui.returnStatus') }, render: (d) => <Badge variant={d.returnStatus === 'RETURNED' ? 'success' : 'neutral'}>{enumLabel('status', d.returnStatus)}</Badge> },
     {
       key: 'action',
       header: '',
@@ -44,7 +45,7 @@ export default function ReverseLogisticsPage() {
         d.returnStatus !== 'RETURNED' &&
         d.returnStatus !== 'NOT_APPLICABLE' && (
           <Button size="sm" variant="secondary" onClick={() => updateDevice(d.id, { lifecycle: 'IN_WAREHOUSE', returnStatus: 'RETURNED', daysIdle: 0 })}>
-            <RotateCcw size={13} /> Mark Returned
+            <RotateCcw size={13} /> {translate('ui.markReturned')}
           </Button>
         ),
     },
@@ -52,17 +53,17 @@ export default function ReverseLogisticsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Reverse Logistics" description="Track idle devices and manage returns to warehouse." />
+      <PageHeader title={translate('ui.reverseLogistics')} description={translate('ui.trackIdleDevicesAndManage')} />
       <div className="grid grid-cols-2 gap-3 px-4 md:grid-cols-3 md:px-6 lg:grid-cols-6">
-        <KpiCard label="Total Devices" value={stats.total} icon={Warehouse} />
-        <KpiCard label="In Warehouse" value={stats.inWarehouse} icon={Warehouse} tone="brand" />
-        <KpiCard label="In Transit" value={stats.inTransit} icon={Truck} tone="default" />
-        <KpiCard label="Idle at Destination" value={stats.idle} icon={Clock3} tone="warning" />
-        <KpiCard label="Maintenance" value={stats.maintenance} icon={Wrench} tone="warning" />
-        <KpiCard label="Broken" value={stats.broken} icon={XOctagon} tone="critical" />
+        <KpiCard label={translate('ui.totalDevices')} value={stats.total} icon={Warehouse} />
+        <KpiCard label={translate('ui.inWarehouse')} value={stats.inWarehouse} icon={Warehouse} tone="brand" />
+        <KpiCard label={translate('ui.inTransit')} value={stats.inTransit} icon={Truck} tone="default" />
+        <KpiCard label={translate('ui.idleAtDestination')} value={stats.idle} icon={Clock3} tone="warning" />
+        <KpiCard label={translate('ui.maintenance')} value={stats.maintenance} icon={Wrench} tone="warning" />
+        <KpiCard label={translate('ui.broken')} value={stats.broken} icon={XOctagon} tone="critical" />
       </div>
       <Card className="mx-4 mt-4 md:mx-6">
-        <DataTable columns={columns} rows={returnCandidates} rowKey={(d) => d.id} emptyTitle="No devices pending return" />
+        <DataTable columns={columns} rows={returnCandidates} rowKey={(d) => d.id} emptyTitle={translate('ui.noDevicesPendingReturn')} />
       </Card>
     </div>
   )

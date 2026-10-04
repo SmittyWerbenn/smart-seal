@@ -1,3 +1,4 @@
+import { translate } from '@/i18n'
 import { cn } from '@/lib/utils'
 
 export function AppLogo({ className, iconOnly }: { className?: string; iconOnly?: boolean }) {
@@ -8,8 +9,8 @@ export function AppLogo({ className, iconOnly }: { className?: string; iconOnly?
       </span>
       {!iconOnly && (
         <span className="flex flex-col leading-none">
-          <span className="text-base font-bold tracking-tight text-navy-900">Smart Seal</span>
-          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">Container Tracking</span>
+          <span className="text-base font-bold tracking-tight text-navy-900">{translate('ui.smartSeal')}</span>
+          <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">{translate('brand.tagline')}</span>
         </span>
       )}
     </div>

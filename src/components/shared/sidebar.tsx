@@ -5,8 +5,10 @@ import { navForRole } from './nav-config'
 import { AppLogo } from './logo'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
+import { useT } from '@/i18n'
 
 export function Sidebar() {
+  const t = useT()
   const currentUser = useAuthStore((s) => s.currentUser)
   const { sidebarCollapsed, toggleSidebar, mobileNavOpen, setMobileNavOpen } = useUiStore()
   if (!currentUser) return null
@@ -27,7 +29,7 @@ export function Sidebar() {
           {items.map((item, i) => (
             <div key={item.path}>
               {item.group && items[i - 1]?.group !== item.group && (
-                sidebarCollapsed ? <div className="mx-3 my-2 border-t border-slate-100" /> : <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.group}</p>
+                sidebarCollapsed ? <div className="mx-3 my-2 border-t border-slate-100" /> : <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(item.group)}</p>
               )}
             <NavLink
               to={item.path}
@@ -39,7 +41,7 @@ export function Sidebar() {
               }
             >
               <item.icon size={17} className="shrink-0" />
-              {!sidebarCollapsed && <span className="truncate">{item.label}</span>}
+              {!sidebarCollapsed && <span className="truncate">{t(item.labelKey)}</span>}
             </NavLink>
             </div>
           ))}
@@ -48,7 +50,7 @@ export function Sidebar() {
           onClick={toggleSidebar}
           className="flex items-center gap-2 border-t border-slate-100 px-4 py-3 text-xs font-medium text-slate-400 hover:text-navy-700"
         >
-          {sidebarCollapsed ? <ChevronsRight size={16} /> : (<><ChevronsLeft size={16} /> Collapse</>)}
+          {sidebarCollapsed ? <ChevronsRight size={16} /> : (<><ChevronsLeft size={16} /> {t('common.collapse')}</>)}
         </button>
       </aside>
 
@@ -63,7 +65,7 @@ export function Sidebar() {
               {items.map((item, i) => (
                 <div key={item.path}>
                   {item.group && items[i - 1]?.group !== item.group && (
-                    <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{item.group}</p>
+                    <p className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t(item.group)}</p>
                   )}
                 <NavLink
                   to={item.path}
@@ -76,7 +78,7 @@ export function Sidebar() {
                   }
                 >
                   <item.icon size={17} />
-                  <span>{item.label}</span>
+                  <span>{t(item.labelKey)}</span>
                 </NavLink>
                 </div>
               ))}

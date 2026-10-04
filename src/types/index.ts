@@ -18,6 +18,7 @@ export interface DemoUser {
   email: string
   role: Role
   clientId?: string // for CLIENT role, restricts visible cargo
+  driverId?: string // for DRIVER role, links the login to a Driver record (DRV-001)
   avatarColor: string
 }
 
@@ -188,6 +189,9 @@ export interface Shipment {
   destinationCity: string
   status: ContainerStatus
   createdAt: string
+  driverId?: string // Driver.id of the active assignment (cleared when delivered or unassigned)
+  vehicleId?: string
+  exceptionApproved?: boolean // supervisor override for a blocked checkpoint (e.g. tamper)
 }
 
 export type VesselType = 'Container Ship' | 'RoRo' | 'Bulk Carrier' | 'Feeder'
@@ -286,6 +290,7 @@ export interface AppNotification {
   read: boolean
   linkType?: 'container' | 'device' | 'alert' | 'vessel'
   linkId?: string
+  driverId?: string // set = private to that driver's portal; unset = shown to staff in the topbar bell
 }
 
 export interface RouteDefinition {
@@ -312,4 +317,90 @@ export interface BasicSealStockItem {
   id: string
   barcode: string
   createdAt: string
+}
+
+// ---------------------------------------------------------------------------
+// Driver Portal & Driver Management
+// ---------------------------------------------------------------------------
+
+export type DriverStatus = 'AVAILABLE' | 'ON_DELIVERY' | 'OFFLINE' | 'SUSPENDED'
+
+export interface Vehicle {
+  id: string
+  plate: string // e.g. B 9123 XYZ
+  unitNumber: string
+  vehicleType: string // e.g. Truck Fuso
+  capacityTon: number
+}
+
+export interface Driver {
+  id: string // internal key
+  driverId: string // DRV-001
+  name: string
+  username: string // driver01
+  password: string // prototype only — plain text, never a production pattern
+  phone: string
+  email?: string
+  licenseNumber?: string
+  licenseExpiry?: string
+  emergencyContact?: string
+  vehicleId?: string
+  status: DriverStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export type CheckpointType =
+  | 'ASSIGNED'
+  | 'PICKUP'
+  | 'DEPARTED_ORIGIN'
+  | 'ARRIVED_ORIGIN_PORT'
+  | 'LOADED_VESSEL'
+  | 'IN_TRANSIT'
+  | 'ARRIVED_DESTINATION_PORT'
+  | 'DEPARTED_DESTINATION_PORT'
+  | 'ARRIVED_DESTINATION'
+  | 'DELIVERED'
+
+export interface DriverAssignment {
+  id: string
+  shipmentId: string
+  containerId: string
+  driverId: string // Driver.id
+  vehicleId: string
+  status: 'ACTIVE' | 'COMPLETED' | 'REASSIGNED'
+  assignedAt: string
+  assignedBy: string
+  completedAt?: string
+}
+
+export interface DriverCheckpoint {
+  id: string
+  assignmentId: string
+  shipmentId: string
+  containerId: string
+  driverId: string // Driver.id
+  type: CheckpointType
+  location: { lat: number; lng: number; name: string }
+  positionSource?: 'GPS' | 'SIMULATED' // GPS = device position at confirmation; SIMULATED = route waypoint fallback
+  accuracyM?: number // GPS accuracy radius in metres (GPS only)
+  timestamp: string
+  notes?: string
+}
+
+export interface ProofOfDelivery {
+  id: string
+  shipmentId: string
+  containerId: string
+  driverId: string // Driver.id
+  receiverName: string
+  receiverPhone?: string
+  notes?: string
+  cargoReceived: boolean
+  containerVerified: boolean
+  sealVerified: boolean
+  signature?: string // data URL from the signature pad
+  photoName?: string
+  photoDataUrl?: string
+  submittedAt: string
 }

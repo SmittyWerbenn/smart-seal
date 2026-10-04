@@ -1,5 +1,5 @@
 import { Badge } from '@/components/ui/badge'
-import { titleCase } from '@/lib/utils'
+import { enumLabel, useT } from '@/i18n'
 import type { AlertSeverity, ContainerStatus, DeviceStatus, MarkerState, RiskLevel } from '@/types'
 
 export function ContainerStatusBadge({ status }: { status: ContainerStatus }) {
@@ -11,28 +11,29 @@ export function ContainerStatusBadge({ status }: { status: ContainerStatus }) {
         : status === 'CREATED' || status === 'STUFFING'
           ? 'neutral'
           : 'outline'
-  return <Badge variant={variant}>{titleCase(status)}</Badge>
+  return <Badge variant={variant}>{enumLabel('status', status)}</Badge>
 }
 
 export function RiskBadge({ level }: { level: RiskLevel }) {
+  const t = useT()
   const variant = level === 'CRITICAL' ? 'critical' : level === 'HIGH' ? 'warning' : level === 'MEDIUM' ? 'brand' : 'success'
-  return <Badge variant={variant}>{titleCase(level)} RISK</Badge>
+  return <Badge variant={variant}>{t('status.riskLabel', { level: enumLabel('status', level) })}</Badge>
 }
 
 export function SeverityBadge({ severity }: { severity: AlertSeverity }) {
   const variant = severity === 'CRITICAL' ? 'critical' : severity === 'WARNING' ? 'warning' : 'brand'
-  return <Badge variant={variant}>{severity}</Badge>
+  return <Badge variant={variant}>{enumLabel('status', severity)}</Badge>
 }
 
 export function MarkerStateBadge({ state }: { state: MarkerState }) {
   const variant =
     state === 'CRITICAL' ? 'critical' : state === 'WARNING' ? 'warning' : state === 'OFFLINE' ? 'offline' : state === 'DELIVERED' ? 'success' : 'brand'
-  return <Badge variant={variant}>{titleCase(state)}</Badge>
+  return <Badge variant={variant}>{enumLabel('status', state)}</Badge>
 }
 
 export function DeviceStatusBadge({ status }: { status: DeviceStatus }) {
   const variant = status === 'TAMPER' ? 'critical' : status === 'OFFLINE' ? 'offline' : status === 'LOW_BATTERY' ? 'warning' : status === 'DEEP_SLEEP' ? 'neutral' : 'success'
-  return <Badge variant={variant}>{titleCase(status)}</Badge>
+  return <Badge variant={variant}>{enumLabel('status', status)}</Badge>
 }
 
 export const MARKER_COLOR: Record<MarkerState, string> = {

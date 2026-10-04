@@ -13,6 +13,7 @@ import { Modal } from '@/components/ui/modal'
 import { readableTextColor } from '@/lib/utils'
 import { FALLBACK_CATEGORY_COLORS } from '@/mock/products'
 import type { ItemCategory } from '@/types'
+import { translate } from '@/i18n'
 
 export default function ItemCategoriesPage() {
   const categories = useDataStore((s) => s.itemCategories)
@@ -59,10 +60,10 @@ export default function ItemCategoriesPage() {
   }
 
   const columns: Column<ItemCategory>[] = [
-    { key: 'name', header: 'Category', render: (c) => <CategoryBadge categoryId={c.id} /> },
+    { key: 'name', get header() { return translate('ui.category') }, render: (c) => <CategoryBadge categoryId={c.id} /> },
     {
       key: 'color',
-      header: 'Color',
+      get header() { return translate('ui.color') },
       render: (c) => (
         <span className="inline-flex items-center gap-2 text-xs text-slate-600">
           <span className="h-4 w-4 rounded border border-slate-200" style={{ backgroundColor: c.color }} />
@@ -70,8 +71,8 @@ export default function ItemCategoriesPage() {
         </span>
       ),
     },
-    { key: 'status', header: 'Status', render: (c) => <Badge variant={c.active ? 'success' : 'offline'}>{c.active ? 'Active' : 'Inactive'}</Badge> },
-    { key: 'used', header: 'Items', render: (c) => usage(c.id).toLocaleString() },
+    { key: 'status', get header() { return translate('ui.status') }, render: (c) => <Badge variant={c.active ? 'success' : 'offline'}>{c.active ? 'Active' : 'Inactive'}</Badge> },
+    { key: 'used', get header() { return translate('ui.items') }, render: (c) => usage(c.id).toLocaleString() },
     ...(canManage
       ? [
           {
@@ -105,42 +106,42 @@ export default function ItemCategoriesPage() {
   return (
     <div className="pb-10">
       <PageHeader
-        title="Master Kategori Barang"
-        description={`${categories.length} categories — names and colors defined here are used across the whole app`}
+        title={translate('ui.itemCategories')}
+        description={translate('ui.categoriesDesc', { n: categories.length })}
         actions={
           canManage && (
             <Button size="sm" onClick={() => openForm('new')}>
-              <Plus size={14} /> Add Category
+              <Plus size={14} /> {translate('ui.addCategory')}
             </Button>
           )
         }
       />
       <Card className="mx-4 mb-4 md:mx-6">
-        <DataTable columns={columns} rows={categories} rowKey={(c) => c.id} emptyTitle="No categories" emptyDescription="Add a category to classify cargo items." />
+        <DataTable columns={columns} rows={categories} rowKey={(c) => c.id} emptyTitle={translate('ui.noCategories')} emptyDescription={translate('ui.addACategoryToClassify')} />
       </Card>
 
       <Modal
         open={editing !== null}
         onClose={() => setEditing(null)}
-        title={editing === 'new' ? 'Add Category' : 'Edit Category'}
+        title={editing === 'new' ? translate('misc.addCategoryTitle') : translate('misc.editCategory')}
         footer={
           <>
             <Button variant="secondary" onClick={() => setEditing(null)}>
-              Cancel
+              {translate('ui.cancel2')}
             </Button>
             <Button onClick={save} disabled={!name.trim()}>
-              Save
+              {translate('ui.save')}
             </Button>
           </>
         }
       >
         <div className="space-y-3">
           <div>
-            <Label htmlFor="cat-name">Category Name</Label>
-            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Chemicals" />
+            <Label htmlFor="cat-name">{translate('ui.categoryName')}</Label>
+            <Input id="cat-name" value={name} onChange={(e) => setName(e.target.value)} placeholder={translate('ui.eGChemicals')} />
           </div>
           <div>
-            <Label htmlFor="cat-color">Color</Label>
+            <Label htmlFor="cat-color">{translate('ui.color')}</Label>
             <div className="flex items-center gap-2">
               <input
                 id="cat-color"
@@ -155,14 +156,14 @@ export default function ItemCategoriesPage() {
                   className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
                   style={{ backgroundColor: color, color: readableTextColor(color) }}
                 >
-                  Preview
+                  {translate('ui.preview')}
                 </span>
               </div>
             </div>
           </div>
           <label className="flex items-center gap-2 text-sm text-navy-800">
             <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} className="h-4 w-4 rounded border-slate-300" />
-            Active (selectable on new cargo items)
+            {translate('ui.activeSelectableOnNewCargo')}
           </label>
           {error && <p className="text-xs text-critical-500">{error}</p>}
         </div>
@@ -171,11 +172,11 @@ export default function ItemCategoriesPage() {
       <Modal
         open={deleting !== null}
         onClose={() => setDeleting(null)}
-        title="Delete Category"
+        title={translate('ui.deleteCategory')}
         footer={
           <>
             <Button variant="secondary" onClick={() => setDeleting(null)}>
-              Cancel
+              {translate('ui.cancel2')}
             </Button>
             <Button
               onClick={() => {
@@ -185,13 +186,13 @@ export default function ItemCategoriesPage() {
                 else setDeleteError(res.error ?? 'Unable to delete.')
               }}
             >
-              Delete
+              {translate('ui.delete')}
             </Button>
           </>
         }
       >
         <p className="text-sm text-slate-600">
-          Delete category <span className="font-medium text-navy-900">{deleting?.name}</span>? This cannot be undone.
+          {translate('ui.deleteCategory2')} <span className="font-medium text-navy-900">{deleting?.name}</span>{translate('ui.questionCannotUndo')}
         </p>
         {deleteError && <p className="mt-2 text-xs text-critical-500">{deleteError}</p>}
       </Modal>

@@ -11,18 +11,19 @@ import { useDataStore } from '@/store/dataStore'
 import { simulateLowBattery, simulateOffline, simulateTamper } from '@/lib/actions'
 import { UnlockPanel } from './unlock-panel'
 import type { Container, ESealDevice } from '@/types'
+import { translate } from '@/i18n'
 
 function RegularSealTab({ container }: { container: Container }) {
   return (
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Basic Seal</CardTitle>
+          <CardTitle>{translate('ui.basicSeal')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-center justify-between rounded-md border border-slate-100 p-3">
             <div>
-              <p className="font-medium text-navy-800">Basic Seal</p>
+              <p className="font-medium text-navy-800">{translate('ui.basicSeal')}</p>
               <p className="text-xs text-slate-500">{container.regularSealId ?? 'Not attached'}</p>
             </div>
             <Lock size={16} className="text-slate-400" />
@@ -55,24 +56,24 @@ export function SealsTab({ container, device }: { container: Container; device?:
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Seal Configuration</CardTitle>
+          <CardTitle>{translate('ui.sealConfiguration')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3 text-sm">
           <div className="flex items-center justify-between rounded-md border border-slate-100 p-3">
             <div>
-              <p className="font-medium text-navy-800">Smart E-Seal</p>
+              <p className="font-medium text-navy-800">{translate('ui.smartESeal')}</p>
               <p className="text-xs text-slate-500">{container.eSealId ?? 'Not attached'}</p>
             </div>
             {container.eSealId && (
               <Button size="sm" variant="secondary" onClick={() => navigate(`/eseals/${container.eSealId}`)}>
-                View device
+                {translate('ui.viewDevice')}
               </Button>
             )}
           </div>
           {container.securityMode === 'DUAL_SEAL' && (
             <div className="flex items-center justify-between rounded-md border border-slate-100 p-3">
               <div>
-                <p className="font-medium text-navy-800">Bolt Seal</p>
+                <p className="font-medium text-navy-800">{translate('ui.boltSeal')}</p>
                 <p className="text-xs text-slate-500">{container.boltSealId ?? 'Not attached'}</p>
               </div>
               <Lock size={16} className="text-slate-400" />
@@ -81,19 +82,19 @@ export function SealsTab({ container, device }: { container: Container; device?:
           {device && (
             <div className="grid grid-cols-2 gap-3 rounded-md bg-slate-50 p-3">
               <div>
-                <p className="text-xs text-slate-500">Battery</p>
+                <p className="text-xs text-slate-500">{translate('ui.battery')}</p>
                 <BatteryIndicator value={device.battery} />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Signal</p>
+                <p className="text-xs text-slate-500">{translate('ui.signal')}</p>
                 <SignalIndicator value={device.signal} />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Status</p>
+                <p className="text-xs text-slate-500">{translate('ui.status')}</p>
                 <DeviceStatusBadge status={device.status} />
               </div>
               <div>
-                <p className="text-xs text-slate-500">Lifecycle</p>
+                <p className="text-xs text-slate-500">{translate('ui.lifecycle')}</p>
                 <p className="text-xs font-medium text-navy-800">{device.lifecycle.replaceAll('_', ' ')}</p>
               </div>
             </div>
@@ -103,17 +104,17 @@ export function SealsTab({ container, device }: { container: Container; device?:
 
       <Card>
         <CardHeader>
-          <CardTitle>Device Simulation</CardTitle>
+          <CardTitle>{translate('ui.deviceSimulation')}</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <Button variant="danger" size="sm" onClick={() => simulateTamper(container.id)}>
-            <ShieldAlert size={14} /> Simulate Tamper
+            <ShieldAlert size={14} /> {translate('ui.simulateTamper')}
           </Button>
           <Button variant="outline" size="sm" onClick={() => simulateLowBattery(container.id)}>
-            Simulate Low Battery
+            {translate('ui.simulateLowBattery')}
           </Button>
           <Button variant="secondary" size="sm" onClick={() => simulateOffline(container.id)}>
-            <WifiOff size={14} /> Simulate Offline
+            <WifiOff size={14} /> {translate('ui.simulateOffline')}
           </Button>
         </CardContent>
       </Card>
@@ -132,8 +133,8 @@ function OfflineModeToggle({ enabled, onToggle }: { containerId: string; enabled
     <Card className="lg:col-span-2">
       <CardContent className="flex items-center justify-between py-3">
         <div>
-          <p className="text-sm font-medium text-navy-800">Offline Mode</p>
-          <p className="text-xs text-slate-500">Simulate a no-connectivity environment to test PIN-based unlock.</p>
+          <p className="text-sm font-medium text-navy-800">{translate('ui.offlineMode')}</p>
+          <p className="text-xs text-slate-500">{translate('ui.simulateANoConnectivityEnvironment')}</p>
         </div>
         <Switch checked={enabled} onChange={onToggle} />
       </CardContent>

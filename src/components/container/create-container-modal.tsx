@@ -5,6 +5,7 @@ import { Input, Label } from '@/components/ui/input'
 import { useDataStore } from '@/store/dataStore'
 import { CITIES, PORTS } from '@/mock/geo'
 import type { Container } from '@/types'
+import { translate } from '@/i18n'
 
 const ISO_TYPES = ['20GP', '40GP', '40HC', '20RF']
 // Suggestions only — origin/destination are free text, not locked to this list.
@@ -62,7 +63,7 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
         reset()
         onClose()
       }}
-      title="Create New Container"
+      title={translate('ui.createNewContainer')}
       footer={
         <>
           <Button
@@ -72,33 +73,33 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
               onClose()
             }}
           >
-            Cancel
+            {translate('ui.cancel2')}
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit}>
-            Create Container
+            {translate('ui.createContainer')}
           </Button>
         </>
       }
     >
       <div className="space-y-3">
         <div>
-          <Label htmlFor="new-cnt-number">Container Number</Label>
+          <Label htmlFor="new-cnt-number">{translate('ui.containerNumber')}</Label>
           <Input
             id="new-cnt-number"
             value={number}
             onChange={(e) => setNumber(e.target.value.toUpperCase())}
-            placeholder="e.g. MSCU1234567"
+            placeholder={translate('ui.eGMscu1234567')}
             className="uppercase"
           />
           {number.trim().length > 0 && !numberValid && (
-            <p className="mt-1 text-xs text-critical-500">Format: 4 letters + 6–7 digits (e.g. MSCU1234567)</p>
+            <p className="mt-1 text-xs text-critical-500">{translate('ui.format4Letters67')}</p>
           )}
-          {numberValid && numberTaken && <p className="mt-1 text-xs text-critical-500">This container number is already in use.</p>}
+          {numberValid && numberTaken && <p className="mt-1 text-xs text-critical-500">{translate('ui.thisContainerNumberIsAlready')}</p>}
         </div>
 
         <div>
-          <Label htmlFor="new-cnt-iso">ISO Type</Label>
-          <Input id="new-cnt-iso" list="iso-type-suggestions" value={isoType} onChange={(e) => setIsoType(e.target.value)} placeholder="e.g. 20GP" />
+          <Label htmlFor="new-cnt-iso">{translate('ui.isoType')}</Label>
+          <Input id="new-cnt-iso" list="iso-type-suggestions" value={isoType} onChange={(e) => setIsoType(e.target.value)} placeholder={translate('ui.eG20gp')} />
           <datalist id="iso-type-suggestions">
             {ISO_TYPES.map((t) => (
               <option key={t} value={t} />
@@ -108,17 +109,17 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="new-cnt-origin">Origin City</Label>
-            <Input id="new-cnt-origin" list="city-suggestions" value={originCity} onChange={(e) => setOriginCity(e.target.value)} placeholder="e.g. Jakarta" />
+            <Label htmlFor="new-cnt-origin">{translate('ui.originCity')}</Label>
+            <Input id="new-cnt-origin" list="city-suggestions" value={originCity} onChange={(e) => setOriginCity(e.target.value)} placeholder={translate('ui.eGJakarta')} />
           </div>
           <div>
-            <Label htmlFor="new-cnt-destination">Destination City</Label>
+            <Label htmlFor="new-cnt-destination">{translate('ui.destinationCity')}</Label>
             <Input
               id="new-cnt-destination"
               list="city-suggestions"
               value={destinationCity}
               onChange={(e) => setDestinationCity(e.target.value)}
-              placeholder="e.g. Surabaya"
+              placeholder={translate('ui.eGSurabaya')}
             />
           </div>
           <datalist id="city-suggestions">
@@ -129,12 +130,12 @@ export function CreateContainerModal({ open, onClose, onCreated }: CreateContain
         </div>
 
         <div>
-          <Label htmlFor="new-cnt-shipper">Shipper</Label>
-          <Input id="new-cnt-shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} placeholder="e.g. PT Sumber Makmur Elektronik" />
+          <Label htmlFor="new-cnt-shipper">{translate('ui.shipper')}</Label>
+          <Input id="new-cnt-shipper" value={shipper} onChange={(e) => setShipper(e.target.value)} placeholder={translate('ui.eGPtSumberMakmur')} />
         </div>
         <div>
-          <Label htmlFor="new-cnt-consignee">Consignee</Label>
-          <Input id="new-cnt-consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} placeholder="e.g. PT Mitra Distribusi Nusantara" />
+          <Label htmlFor="new-cnt-consignee">{translate('ui.consignee')}</Label>
+          <Input id="new-cnt-consignee" value={consignee} onChange={(e) => setConsignee(e.target.value)} placeholder={translate('ui.eGPtMitraDistribusi')} />
         </div>
       </div>
     </Modal>

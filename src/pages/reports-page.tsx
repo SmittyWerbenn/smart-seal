@@ -5,16 +5,17 @@ import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/input'
-import { downloadCsv, securityModeLabel, titleCase } from '@/lib/utils'
+import { downloadCsv, securityModeLabel } from '@/lib/utils'
+import { translate, enumLabel } from '@/i18n'
 
 // Trimmed to the reports that actually matter for a seal-first ops team —
 // what devices are out there and their health, how seals are being used, and
 // security incidents — rather than every possible export.
 const REPORTS = [
-  { key: 'device-summary', name: 'Device Summary', description: 'Every Smart Seal device: battery, signal, status, lifecycle and current container.' },
-  { key: 'seal-usage', name: 'Seal Usage', description: 'Which containers are sealed, with which seal type, and which seal IDs are attached.' },
-  { key: 'tamper-incident', name: 'Tamper Incident', description: 'Tamper alerts raised on smart seal devices, with status.' },
-  { key: 'device-return', name: 'Device Return', description: 'Detached Smart Seal devices pending or completed return to warehouse.' },
+  { key: 'device-summary', name: 'Device Summary', get description() { return translate('ui.everySmartSealDeviceBattery') } },
+  { key: 'seal-usage', name: 'Seal Usage', get description() { return translate('ui.whichContainersAreSealedWith') } },
+  { key: 'tamper-incident', name: 'Tamper Incident', get description() { return translate('ui.tamperAlertsRaisedOnSmart') } },
+  { key: 'device-return', name: 'Device Return', get description() { return translate('ui.detachedSmartSealDevicesPending') } },
 ]
 
 export default function ReportsPage() {
@@ -47,13 +48,13 @@ export default function ReportsPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Reports" description="Generate and export operational reports for stakeholders." />
+      <PageHeader title={translate('ui.reports')} description={translate('ui.generateAndExportOperationalReports')} />
       <Card className="mx-4 mb-4 flex flex-wrap gap-2 p-3 md:mx-6">
         <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className="w-44" />
         <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
-          <option value="ALL">All statuses</option>
-          <option value="OPEN">Open</option>
-          <option value="RESOLVED">Resolved</option>
+          <option value="ALL">{translate('ui.allStatuses')}</option>
+          <option value="OPEN">{translate('ui.open')}</option>
+          <option value="RESOLVED">{translate('ui.resolved')}</option>
         </Select>
       </Card>
       <div className="grid grid-cols-1 gap-3 px-4 md:grid-cols-2 md:px-6">
@@ -71,13 +72,13 @@ export default function ReportsPage() {
                 </div>
               </div>
               <Button size="sm" variant="secondary" className="shrink-0" onClick={() => downloadCsv(`${r.key}.csv`, buildRows(r.key))}>
-                <Download size={14} /> CSV
+                <Download size={14} /> {translate('ui.csv')}
               </Button>
             </CardContent>
           </Card>
         ))}
       </div>
-      <p className="px-4 pt-4 text-xs text-slate-400 md:px-6">{titleCase(status)} filter and date-from {dateFrom || 'any'} apply visually in this prototype; export reflects full dataset.</p>
+      <p className="px-4 pt-4 text-xs text-slate-400 md:px-6">{translate('ui.reportsFilterNote', { status: status === 'ALL' ? translate('common.all') : enumLabel('status', status), date: dateFrom || translate('ui.any') })}</p>
     </div>
   )
 }

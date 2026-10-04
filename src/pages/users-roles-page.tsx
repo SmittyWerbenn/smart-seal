@@ -5,6 +5,7 @@ import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { translate } from '@/i18n'
 
 export default function UsersRolesPage() {
   const { currentUser, switchRole } = useAuthStore()
@@ -12,7 +13,7 @@ export default function UsersRolesPage() {
 
   return (
     <div className="pb-10">
-      <PageHeader title="Users &amp; Roles" description="Frontend-only demo role management. Switching a role immediately changes the accessible UI." />
+      <PageHeader title={translate('ui.usersRoles')} description={translate('ui.frontendOnlyDemoRoleManagement')} />
       <div className="grid grid-cols-1 gap-3 px-4 md:grid-cols-2 md:px-6 lg:grid-cols-3">
         {ALL_ROLES.map((r) => (
           <Card key={r.role} className={cn(currentUser?.role === r.role && 'ring-2 ring-brand-500')}>
@@ -26,10 +27,10 @@ export default function UsersRolesPage() {
                 variant={currentUser?.role === r.role ? 'secondary' : 'primary'}
                 onClick={() => {
                   switchRole(r.role)
-                  navigate(r.role === 'DRIVER' ? '/field' : '/dashboard')
+                  navigate(r.role === 'DRIVER' ? '/driver' : '/dashboard')
                 }}
               >
-                {currentUser?.role === r.role ? 'Current Role' : 'Switch to this role'}
+                {currentUser?.role === r.role ? translate('misc.currentRole') : translate('misc.switchToRole')}
               </Button>
             </CardContent>
           </Card>

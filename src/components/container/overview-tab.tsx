@@ -8,11 +8,12 @@ import { RiskBadge } from '@/components/shared/status-badge'
 import { BatteryIndicator, SignalIndicator } from '@/components/shared/indicators'
 import { EmptyState } from '@/components/shared/states'
 import { useAuthStore } from '@/store/authStore'
-import { formatDateTime, securityModeLabel, titleCase } from '@/lib/utils'
+import { formatDateTime, securityModeLabel } from '@/lib/utils'
 import { CargoFormModal } from './cargo-form-modal'
 import { UnlockPanel } from './unlock-panel'
 import { PhotoDocsSection } from './photo-docs-section'
 import type { CargoLine, Container, ESealDevice } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 function Field({ label, value }: { label: string; value: ReactNode }) {
   return (
@@ -33,29 +34,29 @@ export function OverviewTab({ container, device, cargo }: { container: Container
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Container Details</CardTitle>
+          <CardTitle>{translate('ui.containerDetails')}</CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-x-8 sm:grid-cols-2">
           <div>
-            <Field label="Container Number" value={container.number} />
-            <Field label="ISO Type" value={container.isoType} />
-            <Field label="Origin" value={`${container.originCity} (${container.originPort})`} />
-            <Field label="Destination" value={`${container.destinationCity} (${container.destinationPort})`} />
-            <Field label="Current Status" value={titleCase(container.status)} />
+            <Field label={translate('ui.containerNumber')} value={container.number} />
+            <Field label={translate('ui.isoType')} value={container.isoType} />
+            <Field label={translate('ui.origin')} value={`${container.originCity} (${container.originPort})`} />
+            <Field label={translate('ui.destination')} value={`${container.destinationCity} (${container.destinationPort})`} />
+            <Field label={translate('ui.currentStatus')} value={enumLabel('status', container.status)} />
           </div>
           <div>
-            <Field label="Current Location" value={`${container.currentLocation.lat.toFixed(3)}, ${container.currentLocation.lng.toFixed(3)}`} />
+            <Field label={translate('ui.currentLocation')} value={`${container.currentLocation.lat.toFixed(3)}, ${container.currentLocation.lng.toFixed(3)}`} />
             <Field
-              label="Tracking Mode"
+              label={translate('ui.trackingMode')}
               value={container.trackingMode === 'AIS' ? 'AIS (Vessel)' : container.trackingMode === 'IOT_GPS' ? 'IoT GPS' : 'Not Trackable'}
             />
-            <Field label="Security Mode" value={securityModeLabel(container.securityMode)} />
+            <Field label={translate('ui.securityMode')} value={securityModeLabel(container.securityMode)} />
             {container.securityMode === 'BASIC_SEAL' ? (
-              <Field label="Basic Seal" value={container.regularSealId ?? '—'} />
+              <Field label={translate('ui.basicSeal')} value={container.regularSealId ?? '—'} />
             ) : (
               <>
-                <Field label="Smart E-Seal" value={container.eSealId ?? '—'} />
-                {container.securityMode === 'DUAL_SEAL' && <Field label="Bolt Seal" value={container.boltSealId ?? '—'} />}
+                <Field label={translate('ui.smartESeal')} value={container.eSealId ?? '—'} />
+                {container.securityMode === 'DUAL_SEAL' && <Field label={translate('ui.boltSeal')} value={container.boltSealId ?? '—'} />}
               </>
             )}
           </div>
@@ -69,19 +70,19 @@ export function OverviewTab({ container, device, cargo }: { container: Container
 
       <Card className="lg:col-span-3">
         <CardHeader>
-          <CardTitle>Cargo Contents</CardTitle>
+          <CardTitle>{translate('ui.cargoContents')}</CardTitle>
           <div className="flex items-center gap-3">
             <span className="text-xs text-slate-400">{cargo.length} {cargo.length === 1 ? 'line' : 'lines'}</span>
             {canManage && (
               <Button size="sm" variant="secondary" onClick={() => setFormOpen(true)}>
-                <Plus size={13} /> Add
+                <Plus size={13} /> {translate('ui.add')}
               </Button>
             )}
           </div>
         </CardHeader>
         <CardContent>
           {cargo.length === 0 ? (
-            <EmptyState icon={Package} title="No cargo recorded" description="Cargo lines will appear here once stuffing is completed." />
+            <EmptyState icon={Package} title={translate('ui.noCargoRecorded')} description={translate('ui.cargoLinesWillAppearHere2')} />
           ) : (
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {cargo.map((line) => {
@@ -102,7 +103,7 @@ export function OverviewTab({ container, device, cargo }: { container: Container
                       </div>
                     ) : (
                       <p className="flex items-center gap-1.5 text-xs text-slate-400">
-                        <Lock size={12} /> Consolidated cargo (other client)
+                        <Lock size={12} /> {translate('ui.consolidatedCargoOtherClient')}
                       </p>
                     )}
                   </div>
@@ -124,7 +125,7 @@ export function OverviewTab({ container, device, cargo }: { container: Container
 
       <Card>
         <CardHeader>
-          <CardTitle>Risk Level</CardTitle>
+          <CardTitle>{translate('ui.riskLevel')}</CardTitle>
         </CardHeader>
         <CardContent>
           <RiskBadge level={container.riskLevel} />
@@ -138,22 +139,22 @@ export function OverviewTab({ container, device, cargo }: { container: Container
               ))}
             </ul>
           ) : (
-            <p className="mt-3 text-xs text-slate-500">No active risk factors detected for this container.</p>
+            <p className="mt-3 text-xs text-slate-500">{translate('ui.noActiveRiskFactorsDetected')}</p>
           )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Device Telemetry</CardTitle>
+          <CardTitle>{translate('ui.deviceTelemetry')}</CardTitle>
         </CardHeader>
         <CardContent>
           {device ? (
             <>
-              <Field label="Battery" value={<BatteryIndicator value={device.battery} />} />
-              <Field label="Signal" value={<SignalIndicator value={device.signal} />} />
-              <Field label="Temperature" value={`${device.temperature}°C`} />
-              <Field label="Last Update" value={formatDateTime(device.lastSeen)} />
+              <Field label={translate('ui.battery')} value={<BatteryIndicator value={device.battery} />} />
+              <Field label={translate('ui.signal')} value={<SignalIndicator value={device.signal} />} />
+              <Field label={translate('ui.temperature')} value={`${device.temperature}°C`} />
+              <Field label={translate('ui.lastUpdate')} value={formatDateTime(device.lastSeen)} />
             </>
           ) : (
             <p className="text-xs text-slate-500">
@@ -165,12 +166,12 @@ export function OverviewTab({ container, device, cargo }: { container: Container
 
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Shipment</CardTitle>
+          <CardTitle>{translate('ui.shipment')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <Field label="Last Update" value={formatDateTime(container.lastUpdate)} />
-          <Field label="ETA" value={formatDateTime(container.eta)} />
-          <Field label="Offline Mode" value={container.offlineMode ? 'Enabled' : 'Disabled'} />
+          <Field label={translate('ui.lastUpdate')} value={formatDateTime(container.lastUpdate)} />
+          <Field label={translate('ui.eta')} value={formatDateTime(container.eta)} />
+          <Field label={translate('ui.offlineMode')} value={container.offlineMode ? 'Enabled' : 'Disabled'} />
         </CardContent>
       </Card>
 

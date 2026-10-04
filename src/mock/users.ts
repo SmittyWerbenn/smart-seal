@@ -20,6 +20,7 @@ export const DEMO_USERS: DemoUser[] = [
     name: 'Agus Prasetyo',
     email: 'driver@smartseal.demo',
     role: 'DRIVER',
+    driverId: 'drv-006', // Driver.id of DRV-006 (has an active assignment)
     avatarColor: '#16a34a',
   },
   {

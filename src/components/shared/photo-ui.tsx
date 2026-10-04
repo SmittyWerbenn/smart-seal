@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { cn, formatDateTime } from '@/lib/utils'
 import { fileToCompressedDataUrl } from '@/lib/image'
+import { translate } from '@/i18n'
 
 /** One required photo. Value is a compressed data URL (null until taken). */
 export function PhotoSlot({
@@ -30,7 +31,7 @@ export function PhotoSlot({
     try {
       onChange(await fileToCompressedDataUrl(file))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Gagal memproses foto.')
+      setError(e instanceof Error ? e.message : translate('ui.failedToProcessPhoto'))
     } finally {
       setBusy(false)
       if (input.current) input.current.value = ''
@@ -46,10 +47,10 @@ export function PhotoSlot({
         </p>
         {value ? (
           <Badge variant="success">
-            <CheckCircle2 size={12} /> Foto Siap
+            <CheckCircle2 size={12} /> {translate('ui.photoReady')}
           </Badge>
         ) : (
-          <Badge variant="warning">Foto Wajib</Badge>
+          <Badge variant="warning">{translate('ui.photoRequired')}</Badge>
         )}
       </div>
       {hint && <p className="mb-2 text-xs text-slate-500">{hint}</p>}
@@ -84,7 +85,7 @@ export function MultiPhotoPicker({ value, onChange }: { value: string[]; onChang
       try {
         added.push(await fileToCompressedDataUrl(f))
       } catch (e) {
-        setError(e instanceof Error ? e.message : 'Sebagian foto gagal diproses.')
+        setError(e instanceof Error ? e.message : translate('ui.somePhotosFailedToProcess'))
       }
     }
     onChange([...value, ...added])
@@ -100,7 +101,7 @@ export function MultiPhotoPicker({ value, onChange }: { value: string[]; onChang
             <img src={url} alt={`Foto kendala ${i + 1}`} className="h-full w-full object-cover" />
             <button
               type="button"
-              aria-label={`Hapus foto ${i + 1}`}
+              aria-label={translate('ui.deletePhotoAria', { n: i + 1 })}
               onClick={() => onChange(value.filter((_, idx) => idx !== i))}
               className="absolute right-1 top-1 rounded-full bg-navy-950/70 p-1 text-white hover:bg-navy-950"
             >
@@ -181,7 +182,7 @@ function Lightbox({ photos, index, onIndex, onClose }: { photos: GalleryPhoto[];
             {photo.activity} · {formatDateTime(photo.takenAt)} · {photo.takenBy}
           </p>
         </div>
-        <button onClick={onClose} aria-label="Tutup" className="rounded-md p-1.5 hover:bg-white/10">
+        <button onClick={onClose} aria-label={translate('ui.close2')} className="rounded-md p-1.5 hover:bg-white/10">
           <X size={20} />
         </button>
       </div>
@@ -189,10 +190,10 @@ function Lightbox({ photos, index, onIndex, onClose }: { photos: GalleryPhoto[];
         <img src={photo.src} alt={photo.label} onClick={(e) => e.stopPropagation()} className="max-h-full max-w-full rounded-md object-contain" />
         {photos.length > 1 && (
           <>
-            <button onClick={(e) => { e.stopPropagation(); prev() }} aria-label="Sebelumnya" className="absolute left-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+            <button onClick={(e) => { e.stopPropagation(); prev() }} aria-label={translate('ui.previous')} className="absolute left-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
               <ChevronLeft size={22} />
             </button>
-            <button onClick={(e) => { e.stopPropagation(); next() }} aria-label="Berikutnya" className="absolute right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
+            <button onClick={(e) => { e.stopPropagation(); next() }} aria-label={translate('ui.next')} className="absolute right-0 rounded-full bg-white/10 p-2 text-white hover:bg-white/20">
               <ChevronRight size={22} />
             </button>
           </>

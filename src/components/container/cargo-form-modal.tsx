@@ -7,6 +7,7 @@ import { useDataStore } from '@/store/dataStore'
 import { CLIENT_NAMES, clientIdFor } from '@/mock/clients'
 import { PRODUCT_CATALOG, categoryIdFor, skuFromProduct } from '@/mock/products'
 import type { CargoLine, Container } from '@/types'
+import { translate } from '@/i18n'
 
 interface CargoFormModalProps {
   open: boolean
@@ -72,7 +73,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
-            Cancel
+            {translate('ui.cancel2')}
           </Button>
           <Button onClick={handleSubmit} disabled={!productName.trim() || !clientName.trim()}>
             {existing ? 'Save Changes' : 'Add Cargo'}
@@ -87,7 +88,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
         </div>
 
         <div>
-          <Label htmlFor="cargo-product">Product Name</Label>
+          <Label htmlFor="cargo-product">{translate('ui.productName')}</Label>
           <Input
             id="cargo-product"
             list="product-suggestions"
@@ -102,7 +103,7 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
                 setUnit(match.unit)
               }
             }}
-            placeholder="e.g. iPhone 15 Pro"
+            placeholder={translate('ui.eGIphone15Pro')}
           />
           <datalist id="product-suggestions">
             {PRODUCT_CATALOG.map((p) => (
@@ -113,9 +114,9 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="cargo-category">Category</Label>
+            <Label htmlFor="cargo-category">{translate('ui.category')}</Label>
             <Select id="cargo-category" value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">— Uncategorized —</option>
+              <option value="">{translate('ui.uncategorized2')}</option>
               {categories
                 .filter((c) => c.active || c.id === category)
                 .map((c) => (
@@ -127,8 +128,8 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
             </Select>
           </div>
           <div>
-            <Label htmlFor="cargo-client">Client</Label>
-            <Input id="cargo-client" list="client-suggestions" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="e.g. PT Sinar Nusantara" />
+            <Label htmlFor="cargo-client">{translate('ui.client')}</Label>
+            <Input id="cargo-client" list="client-suggestions" value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder={translate('ui.eGPtSinarNusantara')} />
             <datalist id="client-suggestions">
               {CLIENT_NAMES.map((name) => (
                 <option key={name} value={name} />
@@ -139,23 +140,23 @@ export function CargoFormModal({ open, onClose, container, existing }: CargoForm
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <Label htmlFor="cargo-do">DO Number</Label>
+            <Label htmlFor="cargo-do">{translate('ui.doNumber')}</Label>
             <Input id="cargo-do" value={doNumber} onChange={(e) => setDoNumber(e.target.value)} />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <Label htmlFor="cargo-qty">Quantity</Label>
+              <Label htmlFor="cargo-qty">{translate('ui.quantity')}</Label>
               <Input id="cargo-qty" type="number" min={1} value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} />
             </div>
             <div>
-              <Label htmlFor="cargo-unit">Unit</Label>
+              <Label htmlFor="cargo-unit">{translate('ui.unit')}</Label>
               <Input id="cargo-unit" value={unit} onChange={(e) => setUnit(e.target.value)} />
             </div>
           </div>
         </div>
 
         <div>
-          <Label htmlFor="cargo-address">Delivery Address</Label>
+          <Label htmlFor="cargo-address">{translate('ui.deliveryAddress')}</Label>
           <Input id="cargo-address" value={address} onChange={(e) => setAddress(e.target.value)} />
         </div>
       </div>

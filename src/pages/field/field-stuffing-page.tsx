@@ -6,10 +6,11 @@ import { Button } from '@/components/ui/button'
 import { ScannerModal } from '@/components/shared/scanner-modal'
 import { PhotoSlot } from '@/components/shared/photo-ui'
 import { IssueReportModal } from '@/components/shared/issue-report-modal'
-import { saveSealPhotos, SEAL_PHOTO_TEXT } from '@/lib/documentation'
+import { saveSealPhotos, sealPhotoText } from '@/lib/documentation'
 import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
+import { translate } from '@/i18n'
 
 type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'success'
 
@@ -55,7 +56,7 @@ export default function FieldStuffingPage() {
       regularSealId: isRegular ? regularCode : null,
       isArmed: true,
     })
-    addTimelineEvent({ containerId: container.id, type: 'CONTAINER_ARMED', label: 'Container armed & sealed', actor: 'Driver' })
+    addTimelineEvent({ containerId: container.id, type: 'CONTAINER_ARMED', get label() { return translate('ui.containerArmedSealed2') }, actor: 'Driver' })
     addAuditLogEntry({ user: 'Driver', action: 'CONTAINER_ARMED', entity: container.number, description: `${container.number} armed via field app` })
     setStep('success')
   }
@@ -63,9 +64,9 @@ export default function FieldStuffingPage() {
   if (step === 'container') {
     return (
       <div className="p-4">
-        <h1 className="mb-3 text-lg font-semibold text-navy-900">Select Container</h1>
+        <h1 className="mb-3 text-lg font-semibold text-navy-900">{translate('ui.selectContainer')}</h1>
         {eligible.length === 0 ? (
-          <EmptyState title="No containers available" />
+          <EmptyState title={translate('ui.noContainersAvailable')} />
         ) : (
           <div className="space-y-2">
             {eligible.slice(0, 8).map((c) => (
@@ -87,13 +88,13 @@ export default function FieldStuffingPage() {
     )
   }
 
-  if (!container) return <EmptyState title="Container not found" />
+  if (!container) return <EmptyState title={translate('ui.containerNotFound')} />
 
   if (step === 'security') {
     return (
       <div className="p-4">
         <h1 className="mb-3 text-lg font-semibold text-navy-900">{container.number}</h1>
-        <p className="mb-4 text-sm text-slate-500">Select security mode</p>
+        <p className="mb-4 text-sm text-slate-500">{translate('ui.selectSecurityMode')}</p>
         <div className="space-y-3">
           {(['SINGLE_SEAL', 'BASIC_SEAL'] as SecurityMode[]).map((mode) => (
             <button
@@ -117,15 +118,15 @@ export default function FieldStuffingPage() {
     return (
       <div className="p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-navy-900">Foto Barang Sebelum Seal</h1>
-          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+          <h1 className="text-lg font-semibold text-navy-900">{translate('ui.cargoPhotoBeforeSeal')}</h1>
+          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{translate('ui.photoRequired')}</span>
         </div>
         <div className="mb-3 rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
-          <span className="font-semibold">Seal membutuhkan 2 foto.</span> {SEAL_PHOTO_TEXT}
+          <span className="font-semibold">{translate('ui.theSealStepNeeds2')}</span> {sealPhotoText()}
         </div>
-        <PhotoSlot step={1} label="Foto Barang di Dalam Container (Sebelum Seal)" value={photoBefore} onChange={setPhotoBefore} />
+        <PhotoSlot step={1} label={translate('ui.cargoInsideContainerBeforeSeal')} value={photoBefore} onChange={setPhotoBefore} />
         <Button size="lg" className="mt-4 w-full" disabled={!photoBefore} onClick={() => setStep('scan')}>
-          Lanjut ke Pasang Seal
+          {translate('ui.continueToAttachSeal')}
         </Button>
       </div>
     )
@@ -135,16 +136,16 @@ export default function FieldStuffingPage() {
     return (
       <div className="p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h1 className="text-lg font-semibold text-navy-900">Foto Container Setelah Seal</h1>
-          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+          <h1 className="text-lg font-semibold text-navy-900">{translate('ui.containerPhotoAfterSeal')}</h1>
+          <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{translate('ui.photoRequired')}</span>
         </div>
-        <PhotoSlot step={2} label="Foto Container Setelah Seal Terpasang" value={photoAfter} onChange={setPhotoAfter} />
+        <PhotoSlot step={2} label={translate('ui.containerPhotoAfterSealFitted')} value={photoAfter} onChange={setPhotoAfter} />
         {photoError && <p className="mt-2 text-xs text-critical-500">{photoError}</p>}
         <Button size="lg" className="mt-4 w-full" disabled={!photoBefore || !photoAfter} onClick={arm}>
-          <ShieldCheck size={16} /> ARM CONTAINER
+          <ShieldCheck size={16} /> {translate('ui.armContainer')}
         </Button>
         <button type="button" onClick={() => setIssueOpen(true)} className="mt-3 flex w-full items-center justify-center gap-1.5 text-sm font-medium text-amber-700">
-          <AlertTriangle size={14} /> Ada Kendala
+          <AlertTriangle size={14} /> {translate('ui.issueReported')}
         </button>
         <IssueReportModal open={issueOpen} onClose={() => setIssueOpen(false)} container={container} context="SEAL" />
       </div>
@@ -155,20 +156,20 @@ export default function FieldStuffingPage() {
     const regularResultCode = container.regularSealId ?? `SEAL-${container.id.replace('CNT-', '')}`
     return (
       <div className="p-4">
-        <h1 className="mb-4 text-lg font-semibold text-navy-900">Scan Basic Seal</h1>
+        <h1 className="mb-4 text-lg font-semibold text-navy-900">{translate('ui.scanBasicSeal')}</h1>
         <div className="space-y-3">
           <Button size="lg" className="w-full justify-between" variant={regularCode ? 'secondary' : 'primary'} onClick={() => setRegularScanOpen(true)}>
-            {regularCode ? `Seal Scanned: ${regularCode}` : 'Scan Basic Seal'}
+            {regularCode ? translate('ui.sealScannedLabel', { code: regularCode }) : translate('ui.scanBasicSeal')}
             {regularCode && <CheckCircle2 size={18} />}
           </Button>
           <div className="flex items-center gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
-            <WifiOff size={16} /> No battery check needed — this seal has no IoT device.
+            <WifiOff size={16} /> {translate('ui.noBatteryCheckNeededThis')}
           </div>
           <Button size="lg" className="w-full" disabled={!sealsComplete} onClick={() => setStep('photo-after')}>
-            Continue to Foto Container
+            {translate('ui.continueToContainerPhoto')}
           </Button>
         </div>
-        <ScannerModal open={regularScanOpen} onClose={() => setRegularScanOpen(false)} title="Scan Basic Seal" resultCode={regularResultCode} onScanned={setRegularCode} />
+        <ScannerModal open={regularScanOpen} onClose={() => setRegularScanOpen(false)} title={translate('ui.scanBasicSeal')} resultCode={regularResultCode} onScanned={setRegularCode} />
       </div>
     )
   }
@@ -177,17 +178,17 @@ export default function FieldStuffingPage() {
     const esealResultCode = container.eSealId ?? `ESEAL-${container.id.replace('CNT-', '')}`
     return (
       <div className="p-4">
-        <h1 className="mb-4 text-lg font-semibold text-navy-900">Scan Smart Seal</h1>
+        <h1 className="mb-4 text-lg font-semibold text-navy-900">{translate('ui.scanSmartSeal')}</h1>
         <div className="space-y-3">
           <Button size="lg" className="w-full justify-between" variant={esealCode ? 'secondary' : 'primary'} onClick={() => setEsealScanOpen(true)}>
-            {esealCode ? `Smart E-Seal Scanned: ${esealCode}` : 'Scan Smart E-Seal'}
+            {esealCode ? translate('ui.smartESealScannedLabel', { code: esealCode }) : translate('ui.scanSmartESeal')}
             {esealCode && <CheckCircle2 size={18} />}
           </Button>
           <Button size="lg" className="w-full" disabled={!sealsComplete} onClick={() => setStep('battery')}>
-            Continue
+            {translate('ui.continue')}
           </Button>
         </div>
-        <ScannerModal open={esealScanOpen} onClose={() => setEsealScanOpen(false)} title="Scan Smart E-Seal" scannerType="QR" resultCode={esealResultCode} onScanned={setEsealCode} />
+        <ScannerModal open={esealScanOpen} onClose={() => setEsealScanOpen(false)} title={translate('ui.scanSmartESeal')} scannerType="QR" resultCode={esealResultCode} onScanned={setEsealCode} />
       </div>
     )
   }
@@ -196,18 +197,18 @@ export default function FieldStuffingPage() {
     const ok = battery >= 80
     return (
       <div className="p-4">
-        <h1 className="mb-4 text-lg font-semibold text-navy-900">Battery Check</h1>
+        <h1 className="mb-4 text-lg font-semibold text-navy-900">{translate('ui.batteryCheck')}</h1>
         <div className="rounded-lg border border-slate-200 bg-white p-5 text-center shadow-sm">
           <p className={cn('text-4xl font-bold', ok ? 'text-success-500' : 'text-critical-500')}>{battery}%</p>
           <input type="range" min={10} max={100} value={battery} onChange={(e) => setBattery(Number(e.target.value))} className="mt-4 w-full accent-brand-600" />
         </div>
         {!ok && (
           <div className="mt-3 flex items-center gap-2 rounded-md bg-critical-100 p-3 text-sm text-red-800">
-            <BatteryWarning size={18} /> Battery low — recharge before arming.
+            <BatteryWarning size={18} /> {translate('ui.batteryLowRechargeBeforeArming')}
           </div>
         )}
         <Button size="lg" className="mt-4 w-full" disabled={!ok} onClick={() => setStep('photo-after')}>
-          Continue to Foto Container
+          {translate('ui.continueToContainerPhoto')}
         </Button>
       </div>
     )
@@ -218,10 +219,10 @@ export default function FieldStuffingPage() {
       <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 text-success-500">
         <CheckCircle2 size={32} />
       </span>
-      <h1 className="text-lg font-semibold text-navy-900">Container Armed</h1>
+      <h1 className="text-lg font-semibold text-navy-900">{translate('ui.containerArmed')}</h1>
       <p className="text-sm text-slate-500">{container.number} is sealed and ready for departure.</p>
       <Button className="w-full" onClick={() => navigate('/field')}>
-        Back to Home
+        {translate('ui.backToHome')}
       </Button>
     </div>
   )

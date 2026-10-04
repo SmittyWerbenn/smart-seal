@@ -6,11 +6,12 @@ import { Button } from '@/components/ui/button'
 import { Modal } from '@/components/ui/modal'
 import { Input, Label } from '@/components/ui/input'
 import { offlineUnlock, requestAndConfirmUnlock } from '@/lib/actions'
-import { saveUnlockPhotos, UNLOCK_PHOTO_TEXT } from '@/lib/documentation'
+import { saveUnlockPhotos, unlockPhotoText } from '@/lib/documentation'
 import { PhotoSlot } from '@/components/shared/photo-ui'
 import { IssueReportModal } from '@/components/shared/issue-report-modal'
 import { useAuthStore } from '@/store/authStore'
 import type { Container } from '@/types'
+import { translate } from '@/i18n'
 
 const OFFLINE_PIN = '123456'
 
@@ -53,13 +54,13 @@ export function UnlockPanel({ container }: { container: Container }) {
   const photoBlock = (
     <div className="space-y-2.5">
       <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
-        <span className="font-semibold">Unlock membutuhkan 2 foto.</span> {UNLOCK_PHOTO_TEXT}
+        <span className="font-semibold">{translate('ui.unlockNeeds2Photos')}</span> {unlockPhotoText()}
       </div>
-      <PhotoSlot step={1} label="Foto Container Sebelum Seal Dibuka" value={photoBefore} onChange={setPhotoBefore} />
-      <PhotoSlot step={2} label="Foto Barang di Dalam Container Setelah Seal Dibuka" value={photoAfter} onChange={setPhotoAfter} />
+      <PhotoSlot step={1} label={translate('ui.containerPhotoBeforeSealOpened')} value={photoBefore} onChange={setPhotoBefore} />
+      <PhotoSlot step={2} label={translate('ui.cargoInsideContainerAfterSeal')} value={photoAfter} onChange={setPhotoAfter} />
       {photoError && <p className="text-xs text-critical-500">{photoError}</p>}
       <button type="button" onClick={() => setIssueOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:underline">
-        <AlertTriangle size={13} /> Ada Kendala
+        <AlertTriangle size={13} /> {translate('ui.issueReported')}
       </button>
     </div>
   )
@@ -71,17 +72,17 @@ export function UnlockPanel({ container }: { container: Container }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Manual Unlock</CardTitle>
+          <CardTitle>{translate('ui.manualUnlock')}</CardTitle>
         </CardHeader>
         <CardContent>
           {isUnlocked ? (
             <div className="space-y-2">
               <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
-                <Unlock size={16} /> Container unlocked (manual supervisor override).
+                <Unlock size={16} /> {translate('ui.containerUnlockedManualSupervisorOverrid')}
               </div>
               <div className="flex items-start gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
                 <Lock size={14} className="mt-0.5 shrink-0" />
-                Basic Seal {container.regularSealId} flagged as <span className="font-medium text-navy-700">unsealed</span> — it's a single-use
+                Basic Seal {container.regularSealId} flagged as <span className="font-medium text-navy-700">{translate('ui.unsealed')}</span> — it's a single-use
                 tag with no electronics, so it cannot be reused on another container.
               </div>
             </div>
@@ -92,7 +93,7 @@ export function UnlockPanel({ container }: { container: Container }) {
                 manually confirm the container has reached its destination.
               </p>
               <Button onClick={() => setConfirmOpen(true)}>
-                <ShieldCheck size={14} /> Manual Unlock (Supervisor Override)
+                <ShieldCheck size={14} /> {translate('ui.manualUnlockSupervisorOverride')}
               </Button>
             </>
           )}
@@ -105,7 +106,7 @@ export function UnlockPanel({ container }: { container: Container }) {
             resetPhotos()
           }}
           className="max-h-[90vh] overflow-y-auto"
-          title="Confirm Manual Unlock"
+          title={translate('ui.confirmManualUnlock')}
           footer={
             <>
               <Button
@@ -115,7 +116,7 @@ export function UnlockPanel({ container }: { container: Container }) {
                   resetPhotos()
                 }}
               >
-                Cancel
+                {translate('ui.cancel2')}
               </Button>
               <Button
                 disabled={!photosReady}
@@ -123,23 +124,23 @@ export function UnlockPanel({ container }: { container: Container }) {
                   if (unlockWithPhotos((id) => requestAndConfirmUnlock(id))) setConfirmOpen(false)
                 }}
               >
-                Confirm Unlock
+                {translate('ui.confirmUnlock')}
               </Button>
             </>
           }
         >
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-slate-500">Container</dt>
+              <dt className="text-slate-500">{translate('ui.container')}</dt>
               <dd className="font-medium">{container.number}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Seal</dt>
+              <dt className="text-slate-500">{translate('ui.seal')}</dt>
               <dd className="font-medium">{container.regularSealId ?? '—'}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-slate-500">Verification</dt>
-              <dd className="font-medium">Manual (no GPS available)</dd>
+              <dt className="text-slate-500">{translate('ui.verification')}</dt>
+              <dd className="font-medium">{translate('ui.manualNoGpsAvailable')}</dd>
             </div>
           </dl>
           <div className="mt-4 border-t border-slate-100 pt-3">{photoBlock}</div>
@@ -152,7 +153,7 @@ export function UnlockPanel({ container }: { container: Container }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Destination Unlock</CardTitle>
+        <CardTitle>{translate('ui.destinationUnlock')}</CardTitle>
       </CardHeader>
       <CardContent>
         {isUnlocked ? (
@@ -162,10 +163,10 @@ export function UnlockPanel({ container }: { container: Container }) {
             </div>
             <div className="flex items-start gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
               <ShieldCheck size={14} className="mt-0.5 shrink-0" />
-              Smart Seal {container.eSealId} has been <span className="font-medium text-navy-700">detached and returned to the available pool</span>{' '}
+              Smart Seal {container.eSealId} has been <span className="font-medium text-navy-700">{translate('ui.detachedAndReturnedToThe')}</span>{' '}
               for reuse — track its pickup in{' '}
               <button onClick={() => navigate('/reverse-logistics')} className="font-medium text-brand-600 hover:underline">
-                Reverse Logistics
+                {translate('ui.reverseLogistics')}
               </button>
               .
             </div>
@@ -180,10 +181,10 @@ export function UnlockPanel({ container }: { container: Container }) {
             </div>
             <div className="flex flex-wrap gap-2">
               <Button disabled={!canUnlock} onClick={() => setRequestOpen(true)}>
-                <Unlock size={14} /> Request Unlock
+                <Unlock size={14} /> {translate('ui.requestUnlock')}
               </Button>
               <Button variant="outline" onClick={() => setOfflineOpen(true)}>
-                <WifiOff size={14} /> Offline Unlock
+                <WifiOff size={14} /> {translate('ui.offlineUnlock')}
               </Button>
             </div>
           </>
@@ -197,7 +198,7 @@ export function UnlockPanel({ container }: { container: Container }) {
           resetPhotos()
         }}
         className="max-h-[90vh] overflow-y-auto"
-        title="Confirm Unlock"
+        title={translate('ui.confirmUnlock')}
         footer={
           <>
             <Button
@@ -207,7 +208,7 @@ export function UnlockPanel({ container }: { container: Container }) {
                 resetPhotos()
               }}
             >
-              Cancel
+              {translate('ui.cancel2')}
             </Button>
             <Button
               disabled={!photosReady}
@@ -215,28 +216,28 @@ export function UnlockPanel({ container }: { container: Container }) {
                 if (unlockWithPhotos((id) => requestAndConfirmUnlock(id))) setRequestOpen(false)
               }}
             >
-              Confirm Unlock
+              {translate('ui.confirmUnlock')}
             </Button>
           </>
         }
       >
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between">
-            <dt className="text-slate-500">Container</dt>
+            <dt className="text-slate-500">{translate('ui.container')}</dt>
             <dd className="font-medium">{container.number}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-500">Current location</dt>
+            <dt className="text-slate-500">{translate('ui.currentLocation2')}</dt>
             <dd className="font-medium">
               {container.currentLocation.lat.toFixed(3)}, {container.currentLocation.lng.toFixed(3)}
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-500">Geofence status</dt>
-            <dd className="font-medium text-green-700">Inside destination geofence</dd>
+            <dt className="text-slate-500">{translate('ui.geofenceStatus')}</dt>
+            <dd className="font-medium text-green-700">{translate('ui.insideDestinationGeofence')}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-slate-500">Seal status</dt>
+            <dt className="text-slate-500">{translate('ui.sealStatus')}</dt>
             <dd className="font-medium">{container.eSealId ?? '—'} armed</dd>
           </div>
         </dl>
@@ -253,17 +254,17 @@ export function UnlockPanel({ container }: { container: Container }) {
           resetPhotos()
         }}
         className="max-h-[90vh] overflow-y-auto"
-        title="Offline Unlock"
+        title={translate('ui.offlineUnlock')}
       >
         {offlineSuccess ? (
-          <div className="rounded-md bg-success-100 p-3 text-sm text-green-800">Offline Unlock Successful.</div>
+          <div className="rounded-md bg-success-100 p-3 text-sm text-green-800">{translate('ui.offlineUnlockSuccessful')}</div>
         ) : (
           <div className="space-y-3">
             <div className="flex items-center gap-2 rounded-md bg-slate-100 p-3 text-sm text-slate-600">
-              <WifiOff size={16} /> No Internet Connection
+              <WifiOff size={16} /> {translate('ui.noInternetConnection')}
             </div>
             <div>
-              <Label htmlFor="pin">Enter static PIN</Label>
+              <Label htmlFor="pin">{translate('ui.enterStaticPin')}</Label>
               <Input
                 id="pin"
                 value={pin}
@@ -271,7 +272,7 @@ export function UnlockPanel({ container }: { container: Container }) {
                   setPin(e.target.value)
                   setPinError('')
                 }}
-                placeholder="6-digit PIN"
+                placeholder={translate('ui.pinPlaceholder')}
                 maxLength={6}
               />
               {pinError && <p className="mt-1 text-xs text-critical-500">{pinError}</p>}
@@ -289,7 +290,7 @@ export function UnlockPanel({ container }: { container: Container }) {
                 }
               }}
             >
-              Unlock
+              {translate('ui.unlock')}
             </Button>
           </div>
         )}

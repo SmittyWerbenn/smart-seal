@@ -1,8 +1,11 @@
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useSimulationEngine } from '@/hooks/useSimulationEngine'
+import { useUiStore } from '@/store/uiStore'
+import { can, type Permission } from '@/lib/permissions'
 import { AppShell } from '@/components/shared/app-shell'
 import { FieldShell } from '@/pages/field/field-shell'
+import { DriverShell } from '@/pages/driver/driver-shell'
 
 import LoginPage from '@/pages/login-page'
 import DashboardPage from '@/pages/dashboard-page'
@@ -34,11 +37,36 @@ import FieldTrackingPage from '@/pages/field/field-tracking-page'
 import FieldAlertsPage from '@/pages/field/field-alerts-page'
 import FieldScannerPage from '@/pages/field/field-scanner-page'
 
+import DriverHomePage from '@/pages/driver/driver-home-page'
+import DriverShipmentsPage from '@/pages/driver/driver-shipments-page'
+import DriverShipmentDetailPage from '@/pages/driver/driver-shipment-detail-page'
+import DriverScanPage from '@/pages/driver/driver-scan-page'
+import DriverAlertsPage from '@/pages/driver/driver-alerts-page'
+import DriverProfilePage from '@/pages/driver/driver-profile-page'
+import DriverManagementPage from '@/pages/admin/driver-management-page'
+import DriverDetailPage from '@/pages/admin/driver-detail-page'
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const currentUser = useAuthStore((s) => s.currentUser)
   if (!isAuthenticated || !currentUser) return <Navigate to="/login" replace />
-  if (currentUser.role === 'DRIVER') return <Navigate to="/field" replace />
+  if (currentUser.role === 'DRIVER') return <Navigate to="/driver" replace />
+  return <>{children}</>
+}
+
+// Driver Portal: drivers only. Staff are sent back to the dashboard.
+function RequireDriver({ children }: { children: React.ReactNode }) {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
+  const currentUser = useAuthStore((s) => s.currentUser)
+  if (!isAuthenticated || !currentUser) return <Navigate to="/login" replace />
+  if (currentUser.role !== 'DRIVER') return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
+// Route-level permission check (not just a hidden menu item).
+function RequirePermission({ permission, children }: { permission: Permission; children: React.ReactNode }) {
+  const role = useAuthStore((s) => s.currentUser?.role)
+  if (!can(role, permission)) return <Navigate to="/dashboard" replace />
   return <>{children}</>
 }
 
@@ -50,6 +78,8 @@ function RequireFieldAuth({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   useSimulationEngine()
+  // Subscribing at the root re-renders the whole tree on language change, without remounting pages (state is kept).
+  useUiStore((s) => s.lang)
 
   return (
     <HashRouter>
@@ -88,6 +118,24 @@ export default function App() {
           <Route path="/users" element={<UsersRolesPage />} />
           <Route path="/simulation" element={<SimulationPage />} />
           <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/admin/drivers" element={<RequirePermission permission="driver.view_all"><DriverManagementPage /></RequirePermission>} />
+          <Route path="/admin/drivers/:id" element={<RequirePermission permission="driver.view_all"><DriverDetailPage /></RequirePermission>} />
+        </Route>
+
+        <Route
+          path="/driver"
+          element={
+            <RequireDriver>
+              <DriverShell />
+            </RequireDriver>
+          }
+        >
+          <Route index element={<DriverHomePage />} />
+          <Route path="shipments" element={<DriverShipmentsPage />} />
+          <Route path="shipments/:id" element={<DriverShipmentDetailPage />} />
+          <Route path="scan" element={<DriverScanPage />} />
+          <Route path="alerts" element={<DriverAlertsPage />} />
+          <Route path="profile" element={<DriverProfilePage />} />
         </Route>
 
         <Route

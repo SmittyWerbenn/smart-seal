@@ -14,14 +14,15 @@ import { CargoTab } from '@/components/container/cargo-tab'
 import { SealsTab } from '@/components/container/seals-tab'
 import { EventsTab } from '@/components/container/events-tab'
 import { DocumentsTab } from '@/components/container/documents-tab'
+import { translate } from '@/i18n'
 
 const TABS = [
-  { key: 'overview', label: 'Overview' },
-  { key: 'tracking', label: 'Tracking' },
-  { key: 'cargo', label: 'Cargo' },
-  { key: 'seals', label: 'Seals' },
-  { key: 'events', label: 'Events' },
-  { key: 'documents', label: 'Documents' },
+  { key: 'overview', get label() { return translate('ui.overview') } },
+  { key: 'tracking', get label() { return translate('ui.tracking') } },
+  { key: 'cargo', get label() { return translate('ui.cargo') } },
+  { key: 'seals', get label() { return translate('ui.seals') } },
+  { key: 'events', get label() { return translate('ui.events') } },
+  { key: 'documents', get label() { return translate('ui.documents') } },
 ]
 
 export default function ContainerDetailPage() {
@@ -43,14 +44,14 @@ export default function ContainerDetailPage() {
     containerCargo.length === 0
       ? 'No cargo recorded yet'
       : visibleCargo.length === 0
-        ? `${containerCargo.length} consolidated cargo ${containerCargo.length === 1 ? 'line' : 'lines'}`
+        ? translate('ui.consolidatedCargoLines', { n: containerCargo.length })
         : visibleCargo
             .slice(0, 2)
             .map((c) => c.productName)
             .join(', ') + (containerCargo.length > 2 ? ` +${containerCargo.length - 2} more` : '')
 
   if (!container) {
-    return <EmptyState title="Seal not found" description="It may have been reset. Try going back to the seal list." action={{ label: 'Back to seals', onClick: () => navigate('/containers') }} />
+    return <EmptyState title={translate('ui.sealNotFound')} description={translate('ui.itMayHaveBeenReset')} action={{ get label() { return translate('ui.backToSeals') }, onClick: () => navigate('/containers') }} />
   }
 
   const sealId = sealIdFor(container)
@@ -59,7 +60,7 @@ export default function ContainerDetailPage() {
     <div className="pb-10">
       <div className="border-b border-slate-200 bg-white px-4 pb-4 pt-4 md:px-6">
         <button onClick={() => navigate(-1)} className="mb-2 flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-navy-800">
-          <ArrowLeft size={14} /> Back
+          <ArrowLeft size={14} /> {translate('ui.back')}
         </button>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -78,17 +79,17 @@ export default function ContainerDetailPage() {
           </div>
           <div className="flex flex-wrap items-center gap-4 text-sm">
             <div>
-              <p className="text-xs text-slate-400">Security Mode</p>
+              <p className="text-xs text-slate-400">{translate('ui.securityMode')}</p>
               <p className="font-medium text-navy-800">{securityModeLabel(container.securityMode)}</p>
             </div>
             <div>
-              <p className="text-xs text-slate-400">ETA</p>
+              <p className="text-xs text-slate-400">{translate('ui.eta')}</p>
               <p className="font-medium text-navy-800">{formatDateTime(container.eta)}</p>
             </div>
             <RiskBadge level={container.riskLevel} />
             {!container.isArmed && (
               <Button size="sm" onClick={() => navigate(`/containers/${container.id}/stuffing`)}>
-                Start Stuffing
+                {translate('ui.startStuffing2')}
               </Button>
             )}
           </div>

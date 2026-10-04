@@ -14,8 +14,9 @@ import { Badge } from '@/components/ui/badge'
 import { ContainerStatusBadge, MarkerStateBadge, RiskBadge } from '@/components/shared/status-badge'
 import { SealScanFlow } from '@/components/shared/seal-scan-flow'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { cn, downloadCsv, formatDateTime, sealIdFor, securityModeLabel, titleCase } from '@/lib/utils'
+import { cn, downloadCsv, formatDateTime, sealIdFor, securityModeLabel } from '@/lib/utils'
 import type { Container } from '@/types'
+import { translate, enumLabel } from '@/i18n'
 
 // Matches dashboard KPI clicks that represent a group of statuses (e.g. "In
 // Transit") rather than one exact status — keyed by the `statuses` URL param
@@ -89,12 +90,12 @@ export default function ContainersListPage() {
   const columns: Column<Container>[] = [
     {
       key: 'seal',
-      header: 'Seal ID',
+      get header() { return translate('ui.sealId') },
       render: (c) => {
         const seal = sealIdFor(c)
         return (
           <div className="flex flex-col">
-            <span className={seal ? 'font-medium text-navy-900' : 'font-medium text-slate-400'}>{seal ?? 'Not sealed'}</span>
+            <span className={seal ? 'font-medium text-navy-900' : 'font-medium text-slate-400'}>{seal ?? translate('misc.notSealedLabel')}</span>
             <span className="text-[11px] text-slate-400">{c.number}</span>
           </div>
         )
@@ -102,33 +103,33 @@ export default function ContainersListPage() {
     },
     {
       key: 'sealType',
-      header: 'Seal Type',
+      get header() { return translate('ui.sealType') },
       render: (c) =>
         c.eSealId ? (
-          <Badge variant="brand">Smart Seal</Badge>
+          <Badge variant="brand">{translate('ui.smartSeal')}</Badge>
         ) : c.regularSealId ? (
-          <Badge variant="offline">Basic Seal</Badge>
+          <Badge variant="offline">{translate('ui.basicSeal')}</Badge>
         ) : (
-          <Badge variant="neutral">Not Sealed</Badge>
+          <Badge variant="neutral">{translate('ui.notSealed')}</Badge>
         ),
     },
-    { key: 'route', header: 'Route', render: (c) => `${c.originCity} → ${c.destinationCity}` },
-    { key: 'status', header: 'Status', render: (c) => <ContainerStatusBadge status={c.status} /> },
-    { key: 'security', header: 'Security', render: (c) => securityModeLabel(c.securityMode) },
+    { key: 'route', get header() { return translate('ui.route') }, render: (c) => `${c.originCity} → ${c.destinationCity}` },
+    { key: 'status', get header() { return translate('ui.status') }, render: (c) => <ContainerStatusBadge status={c.status} /> },
+    { key: 'security', get header() { return translate('ui.security') }, render: (c) => securityModeLabel(c.securityMode) },
     {
       key: 'tracking',
-      header: 'Tracking',
-      render: (c) => (c.trackingMode === 'AIS' ? 'AIS' : c.trackingMode === 'IOT_GPS' ? 'IoT GPS' : <span className="text-slate-400">No Tracking</span>),
+      get header() { return translate('ui.tracking') },
+      render: (c) => (c.trackingMode === 'AIS' ? 'AIS' : c.trackingMode === 'IOT_GPS' ? 'IoT GPS' : <span className="text-slate-400">{translate('ui.noTracking')}</span>),
     },
-    { key: 'risk', header: 'Risk', render: (c) => <RiskBadge level={c.riskLevel} /> },
-    { key: 'marker', header: 'Signal', render: (c) => <MarkerStateBadge state={c.markerState} /> },
-    { key: 'eta', header: 'ETA', render: (c) => formatDateTime(c.eta) },
+    { key: 'risk', get header() { return translate('ui.risk') }, render: (c) => <RiskBadge level={c.riskLevel} /> },
+    { key: 'marker', get header() { return translate('ui.signal') }, render: (c) => <MarkerStateBadge state={c.markerState} /> },
+    { key: 'eta', get header() { return translate('ui.eta') }, render: (c) => formatDateTime(c.eta) },
   ]
 
   return (
     <div className="pb-10">
       <PageHeader
-        title="Seal Monitoring"
+        title={translate('ui.sealMonitoring')}
         description={`${filtered.length} of ${scoped.length} seals`}
         below={
           groupFilter && (
@@ -143,7 +144,7 @@ export default function ContainersListPage() {
         actions={
           <>
             <Button variant="secondary" size="sm" onClick={() => setScanOpen(true)}>
-              <ScanLine size={14} /> Scan Seal
+              <ScanLine size={14} /> {translate('ui.scanSeal')}
             </Button>
             <Button
               variant="secondary"
@@ -153,7 +154,7 @@ export default function ContainersListPage() {
                   'seals.csv',
                   filtered.map((c) => ({
                     sealId: sealIdFor(c) ?? '',
-                    sealType: c.eSealId ? 'Smart Seal' : c.regularSealId ? 'Basic Seal' : 'Not Sealed',
+                    sealType: c.eSealId ? 'Smart Seal' : c.regularSealId ? 'Basic Seal' : translate('misc.notSealedBadge'),
                     container: c.number,
                     status: c.status,
                     origin: c.originCity,
@@ -163,18 +164,18 @@ export default function ContainersListPage() {
                 )
               }
             >
-              <Download size={14} /> Export CSV
+              <Download size={14} /> {translate('ui.exportCsv')}
             </Button>
             {currentUser?.role !== 'CLIENT' && currentUser?.role !== 'AUDITOR' && (
               <Button size="sm" onClick={() => navigate('/stuffing')}>
-                <Plus size={14} /> New Stuffing
+                <Plus size={14} /> {translate('ui.newStuffing')}
               </Button>
             )}
           </>
         }
       />
 
-      <Modal open={scanOpen} onClose={() => setScanOpen(false)} title="Scan Seal">
+      <Modal open={scanOpen} onClose={() => setScanOpen(false)} title={translate('ui.scanSeal')}>
         <SealScanFlow
           onViewLiveTracking={(id) => {
             setScanOpen(false)
@@ -189,15 +190,15 @@ export default function ContainersListPage() {
 
       <Card className="mx-4 mb-4 md:mx-6">
         <CardHeader>
-          <CardTitle>Live Map</CardTitle>
+          <CardTitle>{translate('ui.liveMap')}</CardTitle>
           <Button variant="secondary" size="sm" onClick={() => setMapExpanded((v) => !v)}>
             {mapExpanded ? (
               <>
-                <Minimize2 size={14} /> Collapse Map
+                <Minimize2 size={14} /> {translate('ui.collapseMap')}
               </>
             ) : (
               <>
-                <Maximize2 size={14} /> Full Map
+                <Maximize2 size={14} /> {translate('ui.fullMap')}
               </>
             )}
           </Button>
@@ -222,38 +223,38 @@ export default function ContainersListPage() {
 
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">
-          <Input placeholder="Search seal ID, container, city…" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56" />
+          <Input placeholder={translate('ui.searchSealIdContainerCity')} value={query} onChange={(e) => setQuery(e.target.value)} className="w-56" />
           <Select value={sealType} onChange={(e) => setSealType(e.target.value as typeof sealType)} className="w-40">
-            <option value="ALL">All seal types</option>
-            <option value="SMART">Smart Seal</option>
-            <option value="BASIC">Basic Seal</option>
-            <option value="NONE">Not Sealed</option>
+            <option value="ALL">{translate('ui.allSealTypes')}</option>
+            <option value="SMART">{translate('ui.smartSeal')}</option>
+            <option value="BASIC">{translate('ui.basicSeal')}</option>
+            <option value="NONE">{translate('ui.notSealed')}</option>
           </Select>
           <Select value={status} onChange={(e) => setStatus(e.target.value)} className="w-44">
-            <option value="ALL">All statuses</option>
+            <option value="ALL">{translate('ui.allStatuses')}</option>
             {['CREATED', 'STUFFING', 'SEALED', 'IN_TRANSIT_ORIGIN', 'AT_ORIGIN_PORT', 'LOADED_ON_BOARD', 'OCEAN_TRANSIT', 'ARRIVED_DESTINATION_PORT', 'AT_DESTINATION', 'UNLOCKED', 'DELIVERED'].map((s) => (
               <option key={s} value={s}>
-                {titleCase(s)}
+                {enumLabel('status', s)}
               </option>
             ))}
           </Select>
           <Select value={risk} onChange={(e) => setRisk(e.target.value)} className="w-40">
-            <option value="ALL">All risk levels</option>
+            <option value="ALL">{translate('ui.allRiskLevels')}</option>
             {['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'].map((r) => (
               <option key={r} value={r}>
-                {titleCase(r)}
+                {enumLabel('status', r)}
               </option>
             ))}
           </Select>
           <Select value={tracking} onChange={(e) => setTracking(e.target.value as typeof tracking)} className="w-40">
-            <option value="ALL">All tracking</option>
-            <option value="LIVE">Live Tracked</option>
-            <option value="AIS">AIS Tracked</option>
-            <option value="IOT_GPS">IoT GPS Tracked</option>
-            <option value="NONE">No Tracking</option>
+            <option value="ALL">{translate('ui.allTracking')}</option>
+            <option value="LIVE">{translate('ui.liveTracked')}</option>
+            <option value="AIS">{translate('ui.aisTracked')}</option>
+            <option value="IOT_GPS">{translate('ui.iotGpsTracked')}</option>
+            <option value="NONE">{translate('ui.noTracking')}</option>
           </Select>
         </div>
-        <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.id}`)} emptyTitle="No containers match your filters" />
+        <DataTable columns={columns} rows={filtered} rowKey={(c) => c.id} onRowClick={(c) => navigate(`/containers/${c.id}`)} emptyTitle={translate('ui.noContainersMatchYourFilters')} />
       </Card>
     </div>
   )

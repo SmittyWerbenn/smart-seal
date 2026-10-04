@@ -7,6 +7,7 @@ import { ContainerStatusBadge } from '@/components/shared/status-badge'
 import { BatteryIndicator } from '@/components/shared/indicators'
 import { EmptyState } from '@/components/shared/states'
 import { securityModeLabel } from '@/lib/utils'
+import { translate } from '@/i18n'
 
 export default function FieldHomePage() {
   const containers = useDataStore((s) => s.containers)
@@ -20,11 +21,11 @@ export default function FieldHomePage() {
 
   return (
     <div className="p-4">
-      <h1 className="text-lg font-semibold text-navy-900">Assigned Containers</h1>
+      <h1 className="text-lg font-semibold text-navy-900">{translate('ui.assignedContainers')}</h1>
       <p className="mb-4 text-sm text-slate-500">{assigned.length} containers need your attention today</p>
 
       {assigned.length === 0 ? (
-        <EmptyState icon={ContainerIcon} title="No assignments right now" />
+        <EmptyState icon={ContainerIcon} title={translate('ui.noAssignmentsRightNow')} />
       ) : (
         <div className="space-y-3">
           {assigned.map((c) => {
@@ -42,11 +43,11 @@ export default function FieldHomePage() {
                 </div>
                 {!c.isArmed ? (
                   <Button className="mt-3 w-full" onClick={() => navigate(`/field/stuffing/${c.id}`)}>
-                    START STUFFING <ArrowRight size={14} />
+                    {translate('ui.startStuffing')} <ArrowRight size={14} />
                   </Button>
                 ) : (
                   <Button className="mt-3 w-full" variant="secondary" onClick={() => navigate('/field/tracking')}>
-                    View Tracking
+                    {translate('ui.viewTracking')}
                   </Button>
                 )}
               </div>

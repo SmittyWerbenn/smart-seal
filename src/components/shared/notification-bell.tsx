@@ -1,13 +1,17 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
 import { cn, timeAgo } from '@/lib/utils'
+import { useT } from '@/i18n'
 import { EmptyState } from './states'
 
 export function NotificationBell() {
+  const t = useT()
   const [open, setOpen] = useState(false)
-  const notifications = useDataStore((s) => s.notifications)
+  // Driver-addressed notifications belong to the Driver Portal, not the staff bell.
+  const allNotifications = useDataStore((s) => s.notifications)
+  const notifications = useMemo(() => allNotifications.filter((n) => !n.driverId), [allNotifications])
   const markRead = useDataStore((s) => s.markNotificationRead)
   const markAllRead = useDataStore((s) => s.markAllNotificationsRead)
   const navigate = useNavigate()
@@ -40,16 +44,16 @@ export function NotificationBell() {
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
           <div className="absolute right-0 z-40 mt-2 w-80 rounded-lg border border-slate-200 bg-white shadow-lg">
             <div className="flex items-center justify-between border-b border-slate-100 px-4 py-2.5">
-              <span className="text-sm font-semibold text-navy-900">Notifications</span>
+              <span className="text-sm font-semibold text-navy-900">{t('header.notifications')}</span>
               {unread > 0 && (
                 <button onClick={markAllRead} className="text-xs font-medium text-brand-600 hover:underline">
-                  Mark all read
+                  {t('header.markAllRead')}
                 </button>
               )}
             </div>
             <div className="max-h-96 overflow-y-auto">
               {notifications.length === 0 ? (
-                <EmptyState title="No notifications" description="You're all caught up." />
+                <EmptyState title={t('header.noNotifications')} description={t('header.caughtUp')} />
               ) : (
                 notifications.map((n) => (
                   <button

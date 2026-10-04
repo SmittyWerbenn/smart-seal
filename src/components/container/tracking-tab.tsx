@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/shared/states'
 import { pointOnRoute } from '@/mock/geo'
 import { formatDateTime } from '@/lib/utils'
 import type { Container, RouteDefinition } from '@/types'
+import { translate } from '@/i18n'
 
 export function TrackingTab({ container, route }: { container: Container; route?: RouteDefinition }) {
   const [playing, setPlaying] = useState(false)
@@ -41,15 +42,15 @@ export function TrackingTab({ container, route }: { container: Container; route?
         <CardContent>
           <EmptyState
             icon={WifiOff}
-            title="Not Trackable"
-            description="This container uses a basic seal with no IoT device attached, so live GPS tracking is not available. Scan the seal on-site or check the Cargo tab to verify its contents."
+            title={translate('ui.notTrackable')}
+            description={translate('ui.thisContainerUsesABasic')}
           />
         </CardContent>
       </Card>
     )
   }
 
-  if (!route) return <p className="text-sm text-slate-500">No route data available for this container.</p>
+  if (!route) return <p className="text-sm text-slate-500">{translate('ui.noRouteDataAvailableFor')}</p>
 
   const displayProgress = playing ? animatedProgress : container.routeProgress
   const { point } = pointOnRoute(route.waypoints, displayProgress)
@@ -67,15 +68,15 @@ export function TrackingTab({ container, route }: { container: Container; route?
     <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card className="lg:col-span-2">
         <CardHeader>
-          <CardTitle>Live Map</CardTitle>
+          <CardTitle>{translate('ui.liveMap')}</CardTitle>
           <Button size="sm" variant={playing ? 'secondary' : 'primary'} onClick={() => setPlaying((p) => !p)}>
             {playing ? (
               <>
-                <Square size={14} /> Stop
+                <Square size={14} /> {translate('ui.stop')}
               </>
             ) : (
               <>
-                <Play size={14} /> Play Route
+                <Play size={14} /> {translate('ui.playRoute')}
               </>
             )}
           </Button>
@@ -87,19 +88,19 @@ export function TrackingTab({ container, route }: { container: Container; route?
 
       <Card>
         <CardHeader>
-          <CardTitle>Tracking Info</CardTitle>
+          <CardTitle>{translate('ui.trackingInfo')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-slate-500">Mode</span><span className="font-medium">{container.trackingMode === 'AIS' ? 'AIS (Vessel)' : 'IoT GPS'}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">Route</span><span className="font-medium">{route.name}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">Progress</span><span className="font-medium">{Math.round(container.routeProgress * 100)}%</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">Coordinates</span><span className="font-medium">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">{translate('ui.mode')}</span><span className="font-medium">{container.trackingMode === 'AIS' ? 'AIS (Vessel)' : 'IoT GPS'}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">{translate('ui.route')}</span><span className="font-medium">{route.name}</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">{translate('ui.progress')}</span><span className="font-medium">{Math.round(container.routeProgress * 100)}%</span></div>
+          <div className="flex justify-between"><span className="text-slate-500">{translate('ui.coordinates')}</span><span className="font-medium">{point.lat.toFixed(4)}, {point.lng.toFixed(4)}</span></div>
         </CardContent>
       </Card>
 
       <Card className="lg:col-span-3">
         <CardHeader>
-          <CardTitle>Route History &amp; GPS Points</CardTitle>
+          <CardTitle>{translate('ui.routeHistoryGpsPoints')}</CardTitle>
         </CardHeader>
         <CardContent>
           <ol className="relative flex flex-col gap-3 border-s border-slate-200 ps-4">

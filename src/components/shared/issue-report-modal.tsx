@@ -7,6 +7,7 @@ import { MultiPhotoPicker } from './photo-ui'
 import { reportIssue } from '@/lib/documentation'
 import { useAuthStore } from '@/store/authStore'
 import type { Container, IssueContext } from '@/types'
+import { translate } from '@/i18n'
 
 const CONTEXT_LABEL: Record<IssueContext, string> = { SEAL: 'proses Seal', UNLOCK: 'proses Unlock', GENERAL: 'container ini' }
 
@@ -37,15 +38,15 @@ export function IssueReportModal({ open, onClose, container, context }: { open: 
     <Modal
       open={open}
       onClose={close}
-      title="Ada Kendala"
+      title={translate('ui.issueReported')}
       className="max-h-[90vh] max-w-lg overflow-y-auto"
       footer={
         <>
           <Button variant="secondary" onClick={close}>
-            Batal
+            {translate('ui.cancel')}
           </Button>
           <Button onClick={submit} disabled={photos.length === 0}>
-            Simpan Dokumentasi
+            {translate('ui.saveDocumentation')}
           </Button>
         </>
       }
@@ -54,18 +55,18 @@ export function IssueReportModal({ open, onClose, container, context }: { open: 
         <div className="flex items-start gap-2 rounded-md bg-warning-100 p-2.5 text-xs text-amber-800">
           <AlertTriangle size={14} className="mt-0.5 shrink-0" />
           <span>
-            Kendala pada {CONTEXT_LABEL[context]} — <span className="font-medium">{container.number}</span>. Dokumentasi kendala dapat menggunakan <span className="font-medium">beberapa foto</span>.
+            Kendala pada {CONTEXT_LABEL[context]} — <span className="font-medium">{container.number}</span>. {translate('ui.issueDocsSentence')} <span className="font-medium">{translate('ui.severalPhotos')}</span>.
           </span>
         </div>
         <div>
           <Label>
-            Foto Kendala <span className="text-critical-500">*</span> <span className="font-normal text-slate-400">(minimal 1, boleh lebih)</span>
+            {translate('ui.issuePhoto')} <span className="text-critical-500">*</span> <span className="font-normal text-slate-400">{translate('ui.minOnePhotos')}</span>
           </Label>
           <MultiPhotoPicker value={photos} onChange={setPhotos} />
         </div>
         <div>
-          <Label htmlFor="issue-note">Catatan Kendala</Label>
-          <Textarea id="issue-note" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Jelaskan kendala yang terjadi (opsional)" />
+          <Label htmlFor="issue-note">{translate('ui.issueNotes')}</Label>
+          <Textarea id="issue-note" rows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder={translate('ui.describeTheIssueOptional')} />
         </div>
         {error && <p className="text-xs text-critical-500">{error}</p>}
       </div>

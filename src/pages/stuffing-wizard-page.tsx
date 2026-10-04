@@ -8,11 +8,12 @@ import { Button } from '@/components/ui/button'
 import { ScannerModal } from '@/components/shared/scanner-modal'
 import { PhotoSlot } from '@/components/shared/photo-ui'
 import { IssueReportModal } from '@/components/shared/issue-report-modal'
-import { saveSealPhotos, SEAL_PHOTO_TEXT } from '@/lib/documentation'
+import { saveSealPhotos, sealPhotoText } from '@/lib/documentation'
 import { CreateContainerModal } from '@/components/container/create-container-modal'
 import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
+import { translate } from '@/i18n'
 
 type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'confirm' | 'success'
 
@@ -83,7 +84,7 @@ export default function StuffingWizardPage() {
       const device = devices.find((d) => d.id === esealCode)
       if (device) updateDevice(device.id, { containerId: container.id, battery, lifecycle: 'IN_TRANSIT' })
     }
-    addTimelineEvent({ containerId: container.id, type: 'CARGO_STUFFED', label: 'Cargo stuffed', actor: 'Warehouse Operator' })
+    addTimelineEvent({ containerId: container.id, type: 'CARGO_STUFFED', get label() { return translate('ui.cargoStuffed') }, actor: 'Warehouse Operator' })
     addTimelineEvent({
       containerId: container.id,
       type: 'SEAL_ATTACHED',
@@ -91,25 +92,25 @@ export default function StuffingWizardPage() {
       actor: 'Warehouse Operator',
       sealId: (isRegular ? regularCode : esealCode) ?? undefined,
     })
-    addTimelineEvent({ containerId: container.id, type: 'CONTAINER_ARMED', label: 'Container armed & sealed', actor: 'Warehouse Operator' })
+    addTimelineEvent({ containerId: container.id, type: 'CONTAINER_ARMED', get label() { return translate('ui.containerArmedSealed2') }, actor: 'Warehouse Operator' })
     addAuditLogEntry({ user: 'Warehouse Operator', action: 'CONTAINER_ARMED', entity: container.number, description: `${container.number} armed and sealed (${securityMode})` })
     setStep('success')
   }
 
   const steps: { key: Step; label: string }[] = [
-    { key: 'container', label: 'Container' },
-    { key: 'security', label: 'Security Mode' },
-    { key: 'photo-before', label: 'Foto Barang' },
-    { key: 'scan', label: 'Scan Seals' },
-    ...(securityMode === 'BASIC_SEAL' ? [] : [{ key: 'battery' as Step, label: 'Battery Check' }]),
-    { key: 'photo-after', label: 'Foto Container' },
-    { key: 'confirm', label: 'Arm Container' },
+    { key: 'container', get label() { return translate('ui.container') } },
+    { key: 'security', get label() { return translate('ui.securityMode') } },
+    { key: 'photo-before', get label() { return translate('ui.cargoPhoto') } },
+    { key: 'scan', get label() { return translate('ui.scanSeals') } },
+    ...(securityMode === 'BASIC_SEAL' ? [] : [{ key: 'battery' as Step, get label() { return translate('ui.batteryCheck') } }]),
+    { key: 'photo-after', get label() { return translate('ui.containerPhoto') } },
+    { key: 'confirm', get label() { return translate('ui.armContainer2') } },
   ]
   const no = (key: Step) => steps.findIndex((s) => s.key === key) + 1
 
   return (
     <div className="mx-auto max-w-3xl pb-16">
-      <PageHeader title="New Stuffing Workflow" description="Attach seals and arm a container before it departs the warehouse." />
+      <PageHeader title={translate('ui.newStuffingWorkflow')} description={translate('ui.attachSealsAndArmA')} />
 
       {step !== 'success' && (
         <div className="mb-6 flex items-center gap-1 px-4 md:px-6">
@@ -134,14 +135,14 @@ export default function StuffingWizardPage() {
         {step === 'container' && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 1 — Select Container</CardTitle>
+              <CardTitle>{translate('ui.step1SelectContainer')}</CardTitle>
               <Button size="sm" variant="secondary" onClick={() => setCreateOpen(true)}>
-                <Plus size={14} /> Create New Container
+                <Plus size={14} /> {translate('ui.createNewContainer')}
               </Button>
             </CardHeader>
             <CardContent>
               {eligible.length === 0 ? (
-                <EmptyState title="No containers available" description="Create a new container to start stuffing." />
+                <EmptyState title={translate('ui.noContainersAvailable')} description={translate('ui.createANewContainerTo')} />
               ) : (
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   {eligible.slice(0, 12).map((c) => (
@@ -179,7 +180,7 @@ export default function StuffingWizardPage() {
         {step === 'security' && container && (
           <Card>
             <CardHeader>
-              <CardTitle>Step 2 — Select Security Mode</CardTitle>
+              <CardTitle>{translate('ui.step2SelectSecurityMode')}</CardTitle>
             </CardHeader>
             <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {(['SINGLE_SEAL', 'BASIC_SEAL'] as SecurityMode[]).map((mode) => (
@@ -194,7 +195,7 @@ export default function StuffingWizardPage() {
                   {mode === 'BASIC_SEAL' ? <WifiOff size={20} className="text-slate-500" /> : <ShieldCheck size={20} className="text-brand-600" />}
                   <span className="text-sm font-semibold text-navy-900">{mode === 'SINGLE_SEAL' ? 'Smart Seal' : 'Basic Seal'}</span>
                   <span className="text-xs text-slate-500">
-                    {mode === 'SINGLE_SEAL' ? 'IoT e-seal — live GPS/AIS tracked.' : 'No electronics — not trackable, scan-only.'}
+                    {mode === 'SINGLE_SEAL' ? translate('misc.smartSealDesc') : translate('misc.basicSealDesc')}
                   </span>
                 </button>
               ))}
@@ -206,15 +207,15 @@ export default function StuffingWizardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Step {no('photo-before')} — Foto Barang Sebelum Seal</CardTitle>
-              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{translate('ui.photoRequired')}</span>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">
-                <span className="font-semibold">Seal membutuhkan 2 foto.</span> {SEAL_PHOTO_TEXT} Ambil foto pertama sekarang, sebelum seal dipasang.
+                <span className="font-semibold">{translate('ui.theSealStepNeeds2')}</span> {sealPhotoText()} Ambil foto pertama sekarang, sebelum seal dipasang.
               </div>
-              <PhotoSlot step={1} label="Foto Barang di Dalam Container (Sebelum Seal)" hint="Pastikan kondisi barang di dalam container terlihat jelas." value={photoBefore} onChange={setPhotoBefore} />
+              <PhotoSlot step={1} label={translate('ui.cargoInsideContainerBeforeSeal')} hint={translate('ui.makeSureTheCargoInside')} value={photoBefore} onChange={setPhotoBefore} />
               <Button className="w-full" disabled={!photoBefore} onClick={() => setStep('scan')}>
-                Lanjut ke Pasang Seal
+                {translate('ui.continueToAttachSeal')}
               </Button>
             </CardContent>
           </Card>
@@ -224,17 +225,17 @@ export default function StuffingWizardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Step {no('photo-after')} — Foto Container Setelah Seal</CardTitle>
-              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">Foto Wajib</span>
+              <span className="rounded-full bg-warning-100 px-2 py-0.5 text-[11px] font-medium text-amber-800">{translate('ui.photoRequired')}</span>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">Seal sudah terpasang. Ambil foto kedua: kondisi container setelah seal terpasang.</div>
-              <PhotoSlot step={2} label="Foto Container Setelah Seal Terpasang" hint="Seal harus terlihat terpasang pada pintu container." value={photoAfter} onChange={setPhotoAfter} />
+              <div className="rounded-md bg-brand-50 p-2.5 text-xs text-brand-700">{translate('ui.sealIsFittedTakeThe')}</div>
+              <PhotoSlot step={2} label={translate('ui.containerPhotoAfterSealFitted')} hint={translate('ui.theSealMustBeVisibly')} value={photoAfter} onChange={setPhotoAfter} />
               <div className="flex items-center justify-between gap-2">
                 <button type="button" onClick={() => setIssueOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:underline">
-                  <AlertTriangle size={13} /> Ada Kendala
+                  <AlertTriangle size={13} /> {translate('ui.issueReported')}
                 </button>
                 <Button disabled={!photoAfter} onClick={() => setStep('confirm')}>
-                  Lanjut ke Arm Container
+                  {translate('ui.continueToArmContainer')}
                 </Button>
               </div>
             </CardContent>
@@ -247,14 +248,14 @@ export default function StuffingWizardPage() {
               <CardTitle>Step {no('scan')} — Scan Basic Seal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ScanRow label="Scan Basic Seal" done={!!regularCode} code={regularCode} onScan={() => setRegularScanOpen(true)} />
-              <StepRow label="Arm Container" done={false} pending />
+              <ScanRow label={translate('ui.scanBasicSeal')} done={!!regularCode} code={regularCode} onScan={() => setRegularScanOpen(true)} />
+              <StepRow label={translate('ui.armContainer2')} done={false} pending />
               <div className="flex items-start gap-2 rounded-md bg-slate-100 p-3 text-xs text-slate-600">
                 <WifiOff size={16} className="mt-0.5 shrink-0" />
-                No battery check needed — this seal has no electronics or IoT device.
+                {translate('ui.noBatteryCheckNeededThis2')}
               </div>
               <Button className="mt-2 w-full" disabled={!sealsComplete} onClick={() => setStep('photo-after')}>
-                Continue to Foto Container
+                {translate('ui.continueToContainerPhoto')}
               </Button>
             </CardContent>
           </Card>
@@ -266,12 +267,12 @@ export default function StuffingWizardPage() {
               <CardTitle>Step {no('scan')} — Scan Smart Seal</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <ScanRow label="Scan Smart E-Seal" done={!!esealCode} code={esealCode} onScan={() => setEsealScanOpen(true)} />
-              <StepRow label="Battery Check" done={false} pending />
-              <StepRow label="Arm Container" done={false} pending />
+              <ScanRow label={translate('ui.scanSmartESeal')} done={!!esealCode} code={esealCode} onScan={() => setEsealScanOpen(true)} />
+              <StepRow label={translate('ui.batteryCheck')} done={false} pending />
+              <StepRow label={translate('ui.armContainer2')} done={false} pending />
 
               <Button className="mt-2 w-full" disabled={!sealsComplete} onClick={() => setStep('battery')}>
-                Continue to Battery Check
+                {translate('ui.continueToBatteryCheck')}
               </Button>
             </CardContent>
           </Card>
@@ -284,28 +285,28 @@ export default function StuffingWizardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Smart E-Seal Battery</span>
+                <span className="text-sm text-slate-600">{translate('ui.smartESealBattery')}</span>
                 <span className={cn('text-lg font-semibold', batteryOk ? 'text-success-500' : 'text-critical-500')}>{battery}%</span>
               </div>
               <input type="range" min={10} max={100} value={battery} onChange={(e) => setBattery(Number(e.target.value))} className="w-full accent-brand-600" />
-              <p className="text-xs text-slate-400">Simulation control — drag to change the device's reported battery level.</p>
+              <p className="text-xs text-slate-400">{translate('ui.simulationControlDragToChange')}</p>
 
               {!batteryOk ? (
                 <div className="flex items-start gap-2 rounded-md bg-critical-100 p-3 text-sm text-red-800">
                   <BatteryWarning size={18} className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="font-medium">BATTERY LOW</p>
-                    <p className="text-xs">Please recharge the Smart E-Seal before arming.</p>
+                    <p className="font-medium">{translate('ui.batteryLow')}</p>
+                    <p className="text-xs">{translate('ui.pleaseRechargeTheSmartE')}</p>
                   </div>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 rounded-md bg-success-100 p-3 text-sm text-green-800">
-                  <CheckCircle2 size={18} /> Battery sufficient for arming.
+                  <CheckCircle2 size={18} /> {translate('ui.batterySufficientForArming')}
                 </div>
               )}
 
               <Button className="w-full" disabled={!batteryOk} onClick={() => setStep('photo-after')}>
-                Continue to Foto Container
+                {translate('ui.continueToContainerPhoto')}
               </Button>
             </CardContent>
           </Card>
@@ -318,21 +319,21 @@ export default function StuffingWizardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <dl className="space-y-2 text-sm">
-                <Row label="Container" value={container.number} />
+                <Row label={translate('ui.container')} value={container.number} />
                 {securityMode === 'BASIC_SEAL' ? (
-                  <Row label="Basic Seal" value={regularCode ?? '—'} />
+                  <Row label={translate('ui.basicSeal')} value={regularCode ?? '—'} />
                 ) : (
                   <>
-                    <Row label="Smart E-Seal" value={esealCode ?? '—'} />
-                    <Row label="Battery" value={`${battery}%`} />
+                    <Row label={translate('ui.smartESeal')} value={esealCode ?? '—'} />
+                    <Row label={translate('ui.battery')} value={`${battery}%`} />
                   </>
                 )}
-                <Row label="Security Mode" value={securityMode === 'SINGLE_SEAL' ? 'Smart Seal' : 'Basic Seal'} />
-                <Row label="Dokumentasi Foto" value={photoBefore && photoAfter ? 'Dokumentasi Selesai (2 foto)' : '2 Foto Diperlukan'} />
+                <Row label={translate('ui.securityMode')} value={securityMode === 'SINGLE_SEAL' ? 'Smart Seal' : 'Basic Seal'} />
+                <Row label={translate('ui.photoDocumentation')} value={photoBefore && photoAfter ? 'Dokumentasi Selesai (2 foto)' : '2 Foto Diperlukan'} />
               </dl>
               {photoError && <p className="text-xs text-critical-500">{photoError}</p>}
               <Button className="w-full" size="lg" disabled={!photoBefore || !photoAfter} onClick={armContainerNow}>
-                <ShieldCheck size={16} /> ARM CONTAINER
+                <ShieldCheck size={16} /> {translate('ui.armContainer')}
               </Button>
             </CardContent>
           </Card>
@@ -344,13 +345,13 @@ export default function StuffingWizardPage() {
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-success-100 text-success-500">
                 <PackageCheck size={30} />
               </span>
-              <h2 className="text-lg font-semibold text-navy-900">Container Armed &amp; Sealed</h2>
+              <h2 className="text-lg font-semibold text-navy-900">{translate('ui.containerArmedSealed')}</h2>
               <p className="max-w-sm text-sm text-slate-500">{container.number} is now SEALED and ready for departure.</p>
               <div className="mt-4 flex gap-2">
                 <Button variant="secondary" onClick={() => navigate(`/containers/${container.id}`)}>
-                  View Container
+                  {translate('ui.viewContainer')}
                 </Button>
-                <Button onClick={reset}>Start Another Stuffing</Button>
+                <Button onClick={reset}>{translate('ui.startAnotherStuffing')}</Button>
               </div>
             </CardContent>
           </Card>
@@ -362,7 +363,7 @@ export default function StuffingWizardPage() {
       <ScannerModal
         open={esealScanOpen}
         onClose={() => setEsealScanOpen(false)}
-        title="Scan Smart E-Seal"
+        title={translate('ui.scanSmartESeal')}
         scannerType="QR"
         resultCode={esealResultCode}
         onScanned={(code) => setEsealCode(code)}
@@ -370,7 +371,7 @@ export default function StuffingWizardPage() {
       <ScannerModal
         open={regularScanOpen}
         onClose={() => setRegularScanOpen(false)}
-        title="Scan Basic Seal"
+        title={translate('ui.scanBasicSeal')}
         scannerType="Barcode"
         resultCode={regularResultCode}
         onScanned={(code) => setRegularCode(code)}
@@ -390,7 +391,7 @@ function ScanRow({ label, done, code, onScan, disabled }: { label: string; done:
         </div>
       </div>
       <Button size="sm" variant={done ? 'secondary' : 'primary'} disabled={disabled} onClick={onScan}>
-        {done ? 'Re-scan' : 'Open Scanner'}
+        {done ? translate('misc.rescan') : translate('misc.openScanner')}
       </Button>
     </div>
   )
@@ -401,7 +402,7 @@ function StepRow({ label, pending }: { label: string; done: boolean; pending?: b
     <div className="flex items-center gap-2 rounded-md border border-dashed border-slate-200 p-3 text-slate-400">
       <span className="h-4 w-4 rounded-full border-2 border-slate-300" />
       <p className="text-sm">{label}</p>
-      {pending && <span className="ml-auto text-[11px] uppercase tracking-wide">Pending</span>}
+      {pending && <span className="ml-auto text-[11px] uppercase tracking-wide">{translate('ui.pending')}</span>}
     </div>
   )
 }
