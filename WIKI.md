@@ -23,15 +23,18 @@
 | `src/components/shared/` | App shell, sidebar/topbar, `nav-config.ts`, data-table, scanner-modal, seal-scan-flow, barcode-graphic, status/category badge, notifikasi, global search, `photo-ui.tsx` (picker & grid foto), `issue-report-modal.tsx` |
 | `src/components/driver/` | Komponen Driver Portal: checkpoint wizard, panel verifikasi segel, form POD, signature pad, journey steps |
 | `src/components/container/` | Tab detail kontainer (overview, tracking, cargo, seals, events, documents), `photo-docs-section.tsx`, unlock-panel, form cargo, modal create |
-| `src/components/map/` | Peta Leaflet (`tracking-map.tsx`), marker icon |
+| `src/components/map/` | Peta Leaflet (`tracking-map.tsx`), marker icon, `container-track-layer.tsx` (animasi kontainer), `container-track-panel.tsx` (panel tracking), `recenter-button.tsx` |
+| `src/components/shared/language-toggle.tsx` | Toggle EN/ID, dipakai di topbar, login, Driver Portal dan Field App |
+| `src/components/container/assign-driver-step.tsx` | Step "Assign Driver" di wizard stuffing |
+| `src/components/driver/shipment-update-form.tsx` | Form pembaruan pengiriman oleh driver |
 | `src/store/` | Zustand: `authStore`, `dataStore` (termasuk slice driver), `photoStore`, `simulationStore`, `uiStore` |
 | `src/services/` | Layer "API" palsu berbasis Promise di atas store (`delay.ts` menambah latensi). Driver: `driverService`, `driverAssignmentService`, `checkpointService`, `proofOfDeliveryService`, `driverNotificationService`, `common.ts` (permission & hasil) |
 | `src/mock/` | Generator dataset awal deterministik (`rng.ts`, `generators.ts`, `geo.ts` rute/pelabuhan, `users.ts`, `clients.ts`, `products.ts` katalog produk & kategori, `drivers.ts` driver/kendaraan/assignment demo) |
-| `src/lib/` | `actions.ts` (mutasi langsung), `seal-lookup.ts`, `barcode.ts`, `pdf-export.ts`, `documentation.ts` (aturan dokumentasi foto), `image.ts` (kompresi foto), `i18n.ts` (label ID/EN), `driver-workflow.ts` (urutan checkpoint, pemetaan status, lokasi simulasi), `driver-view.ts`, `permissions.ts` (matriks permission), `utils.ts` |
+| `src/lib/` | `actions.ts` (mutasi langsung), `seal-lookup.ts`, `barcode.ts`, `pdf-export.ts`, `documentation.ts` (aturan dokumentasi foto), `image.ts` (kompresi foto), `driver-workflow.ts` (urutan checkpoint, pemetaan status, lokasi simulasi), `driver-view.ts`, `permissions.ts` (matriks permission), `utils.ts` |
 | `src/hooks/` (tambahan) | `useCurrentDriver` (Driver record dari user yang login) |
 | `src/hooks/` | `useAsync`, `useSimulationEngine` |
 | `src/types/index.ts` | Semua tipe domain |
-| `src/i18n/index.ts` | **Tidak ter-track git dan tidak di-import** siapa pun. Kemungkinan sisa eksperimen; yang dipakai adalah `src/lib/i18n.ts` |
+| `src/i18n/` | Dictionary bahasa: `en.ts` (sumber kunci), `id.ts` (wajib memiliki kunci yang sama, dicek TypeScript), `index.ts` (`translate`, `useT`, `enumLabel`) |
 | `public/CNAME` | Custom domain `smart-seal.frel.cloud` |
 | `.github/workflows/deploy.yml` | CI/CD GitHub Pages |
 | `WIKI.md` | Dokumen ini |
@@ -74,7 +77,8 @@ Browser (SPA, HashRouter)
 | `/audit-logs`, `/users`, `/settings`, `/simulation` | | |
 | `/control-tower` | Redirect ke `/containers` | Sisa dari fitur yang digabung |
 | `/field/*` | Field App (mobile lama): home, stuffing (`/field/stuffing/:id`), scanner, tracking, alerts | Dapat dibuka driver dari Profile |
-| `/driver` | Driver Portal: home (kendaraan, shipment aktif), `shipments`, `shipments/:id` (overview, journey, tracking, cargo, seal, events), `scan`, `alerts`, `profile` | Hanya role DRIVER (`RequireDriver`) |
+| `/driver` | Login Driver (halaman terpisah, username + password). Jika sudah login diarahkan ke `/driver/dashboard` | `DriverPortalLayout` (`App.tsx`) |
+| `/driver/dashboard`, `/driver/shipments`, `/driver/shipments/:id` (overview + form pembaruan pengiriman, journey, tracking, cargo, seal, events), `/driver/scan`, `/driver/alerts`, `/driver/profile` | Driver Portal. Tanpa sesi driver kembali ke `/driver`; staff/role lain tidak bisa masuk |
 | `/admin/drivers`, `/admin/drivers/:id` | Driver Management (list, KPI, filter, tambah/edit, assign, suspend, reset password; detail dengan tab) | `driver.view_all` (`RequirePermission`) |
 
 Menu per role ada di `shared/nav-config.ts` (`navForRole`).
@@ -83,15 +87,18 @@ Menu per role ada di `shared/nav-config.ts` (`navForRole`).
 
 Semuanya in-memory / localStorage:
 
-1. **Login** (`login-page.tsx`) → `authStore.login(role)` → `userForRole`. DRIVER diarahkan ke `/field`.
-2. **Stuffing** (`stuffing-wizard-page.tsx`, `field-stuffing-page.tsx`): pilih kontainer → mode (SINGLE/DUAL/BASIC) → scan seal → cek baterai (smart seal saja) → `armContainer` (`lib/actions.ts`). Dokumentasi foto Seal diminta di tahap ini (§6).
+1. **Login staff** (`login-page.tsx`) → `authStore.login(role)` → `userForRole`. Login utama tidak menampilkan login driver. Driver masuk lewat `/driver`.
+2. **Stuffing** (`stuffing-wizard-page.tsx`, `field-stuffing-page.tsx`): pilih kontainer → mode (SINGLE/DUAL/BASIC) → foto barang → scan seal → cek baterai (smart seal saja) → foto container setelah seal → **Assign Driver** (opsional, bisa dilewati; `driverAssignmentService.assign`, butuh permission `driver.assign`, dimiliki WAREHOUSE) → `armContainer` (`lib/actions.ts`). Dokumentasi foto Seal diminta di tahap ini (§6).
 3. **Simulasi perjalanan** (`simulationStore.ts`): `startJourney` → GATE_IN/origin port → `loadOnVessel` (handoff IOT_GPS→AIS) → `startOceanTransit` → `arriveDestinationPort` (handoff AIS→IOT_GPS) → `startDestinationDelivery` → `enterDestinationGeofence` → `enableUnlock` → `requestAndConfirmUnlock` → `completeDelivery` (+ `simulateDeviceReturn`). `runFullDemo` merangkai 16 langkah otomatis. Posisi dihitung dari `routeProgress` (0..1) pada waypoint rute (`mock/geo.ts: pointOnRoute`).
 4. **Unlock**: geofence tujuan → konfirmasi supervisor (`requestAndConfirmUnlock`), atau offline PIN (`offlineUnlock`, PIN demo hard-coded di `components/container/unlock-panel.tsx`). Dokumentasi foto Unlock diminta sebelum seal dibuka (§6). Smart Seal dilepas ke pool reuse (Reverse Logistics); Basic Seal ditandai sekali-pakai (audit `SEAL_FLAGGED_UNSEALED`).
 5. **Scan seal** (`lib/seal-lookup.ts`): kode → cari `eSealId`/`boltSealId` (smart → tracking live) atau `regularSealId` (basic → isi cargo saja). Tersedia publik di `/scan`, `/scan-barcode`, dan di Field App.
 6. **Gangguan simulasi**: tamper / low battery / offline → update device + alert + timeline + notifikasi. Kendala lapangan bisa dilaporkan lewat `issue-report-modal`.
 7. **Generate Basic Seal Barcodes** (`generate-basic-seals-page.tsx`): `addBasicSealBatch` → stok di `dataStore.basicSealStock`; ekspor PDF via `lib/pdf-export.ts` (jsPDF). Barcode = angka 13 digit deterministik dari hash (`lib/barcode.ts`, bukan simbologi barcode asli).
 8. Setiap aksi menulis timeline event + audit log ke `dataStore`.
-9. **Driver Portal** (`/driver`): login driver (username + password demo) → admin meng-assign shipment (`driverAssignmentService.assign`) → driver melakukan checkpoint berurutan (`checkpointService.confirmCheckpoint`) → checkpoint `ARRIVED_DESTINATION` & `DELIVERED` wajib verifikasi segel → `DELIVERED` wajib Proof of Delivery → assignment COMPLETED, driver kembali AVAILABLE.
+9. **Driver Portal** (`/driver`): login driver (username + password demo) → assignment dari Driver Management atau dari stuffing → driver melakukan checkpoint berurutan (`checkpointService.confirmCheckpoint`) → checkpoint `ARRIVED_DESTINATION` & `DELIVERED` wajib verifikasi segel → `DELIVERED` wajib Proof of Delivery → assignment COMPLETED, driver kembali AVAILABLE.
+   - Pembaruan pengiriman (`shipmentUpdateService`): status sesuai jadwal / terlambat / ada kendala, ETA baru, dan catatan (wajib untuk kendala). Tersimpan ke shipment dan ETA kontainer, dengan timeline, audit, dan notifikasi staff.
+   - Posisi checkpoint memakai GPS perangkat (`useGpsPosition`, `navigator.geolocation`) jika diizinkan. Jika tidak, dipakai titik rute simulasi, dan sumbernya disimpan (`positionSource`).
+10. **Tracking di peta monitoring** (Seal Monitoring): klik marker kontainer → peta zoom ke kontainer, Follow aktif, dan simulasi berjalan di rute (`simulationStore.playRoute`). Marker dianimasikan dengan `requestAnimationFrame` dan selalu di tengah saat Follow aktif. Rute dibagi jadi bagian yang sudah dilewati dan sisanya. Panel menampilkan posisi, progres, sisa jarak, dan detail seal. Full Map memenuhi layar (panel jadi bottom sheet di HP, kartu di desktop; Escape untuk keluar). Tombol Pusatkan muncul saat Follow mati.
    - Aturan urutan: hanya checkpoint berikutnya (`nextCheckpoint`) yang bisa dikonfirmasi; checkpoint tidak dapat dilompati.
    - Setiap checkpoint: menulis `driverCheckpoints`, memperbarui container (status, progres, posisi simulasi, marker), timeline event, audit `CHECKPOINT_UPDATED`. Checkpoint kedatangan & delivery juga membuat notifikasi untuk staff (topbar bell).
    - **Posisi GPS:** wizard meminta `navigator.geolocation` saat dibuka. Jika berhasil, koordinat perangkat dipakai sebagai posisi checkpoint dan posisi kontainer (`positionSource: 'GPS'`, `accuracyM`). Jika ditolak, gagal, atau tidak didukung, dipakai titik rute simulasi (`positionSource: 'SIMULATED'`) dan layar menampilkan alasannya. Nama lokasi tetap dari titik rute. Butuh HTTPS atau localhost, dan izin lokasi dari browser.
@@ -141,7 +148,7 @@ Enum penting: `ContainerStatus`, `SecurityMode` (SINGLE_SEAL/DUAL_SEAL/BASIC_SEA
 
 | Store | Key localStorage | Isi | Versi / migrasi |
 |---|---|---|---|
-| `dataStore` | `smartseal-data-v13` | Entitas utama + kategori + slice driver (`drivers`, `vehicles`, `driverAssignments`, `driverCheckpoints`, `proofOfDeliveries`) | `version: 2`; `migrateDataState` (`store/dataStore.ts`): v0→v1 kategori; v1→v2 menambah data driver demo di atas data tersimpan (kontainer & shipment ikut diperbarui sesuai checkpoint demo) |
+| `dataStore` | `smartseal-data-v13` | Entitas utama + kategori + slice driver (`drivers`, `vehicles`, `driverAssignments`, `driverCheckpoints`, `proofOfDeliveries`) | `version: 3`; `migrateDataState` (`store/dataStore.ts`): v0→v1 kategori; v1→v2 data driver demo; v2→v3 menambah driver demo Agus Prasetyo (DRV-006) dengan assignment aktif, tanpa menimpa progres driver lain |
 | `photoStore` | `smartseal-photos-v1` | Foto & laporan kendala | `version: 1`; key terpisah agar kuota penuh tidak merusak data utama |
 | `authStore` | `smartseal-auth-v1` | Sesi demo | Tidak ada token |
 | `uiStore` | `smartseal-ui-v1` | `selectedContainerId`, `sidebarCollapsed`, `lang` | Hanya field itu yang dipersist |
@@ -152,18 +159,21 @@ Enum penting: `ContainerStatus`, `SecurityMode` (SINGLE_SEAL/DUAL_SEAL/BASIC_SEA
 
 ## 10. Bahasa (i18n)
 
-- Pilihan bahasa disimpan di `uiStore.lang` (default `id`). Toggle ada di `topbar.tsx`.
-- Label ada di `src/lib/i18n.ts` (`LABELS`, ID dan EN). Saat ini yang memakai hanya bagian yang sudah diterjemahkan (mis. menu, label kategori, dokumentasi foto di dashboard).
-- Banyak teks UI masih hard-coded dalam bahasa Indonesia atau Inggris. Cakupan penuh **Perlu verifikasi**.
-- `src/i18n/index.ts` tidak dipakai dan tidak ter-track; bisa dihapus setelah dipastikan.
+- Bahasa aktif disimpan di `uiStore.lang` (`'en'` default, `'id'`), tersimpan di localStorage (`smartseal-ui-v1`). Pilihan tetap setelah refresh dan logout.
+- Toggle EN/ID ada di topbar, halaman login, header Driver Portal, dan header Field App (`LanguageToggle`).
+- Teks UI memakai kunci dari `src/i18n/en.ts`. `id.ts` memakai tipe yang sama, jadi kunci yang belum diterjemahkan langsung error di TypeScript.
+- Komponen memakai `translate('ui.xxx')` (`src/i18n/index.ts`). Di dalam komponen, App-root berlangganan bahasa, jadi seluruh tree di-render ulang tanpa reload dan state halaman tetap.
+- Label enum (status, checkpoint, kategori alert) lewat `enumLabel`. Nilai internal tidak diubah, hanya tampilannya.
+- Format tanggal mengikuti bahasa (`en-GB` / `id-ID`), dan waktu relatif lewat kunci `time.*`.
+- Cakupan: teks UI di halaman, komponen, pesan validasi, dan pesan error service sudah diterjemahkan. Yang belum: pesan audit log, timeline, notifikasi, dan alert yang di-generate sebagai data (ditulis dalam bahasa saat event terjadi, atau masih English dari mock).
 
 ## 11. Authentication & Authorization
 
 - Login staff: **demo saja**, tanpa password/kredensial; satu-klik pilih role (`authStore.login(role)`), user dari `mock/users.ts`. Role bisa diganti via `switchRole` (topbar / Users & Roles).
-- Login driver: username + password dicek terhadap record `Driver` (`driverService.authenticate`). Akun demo `driver01`…`driver06`, password `driver123`. Role DRIVER di Users & Roles / tombol Driver login sebagai Agus Prasetyo (DRV-006, `user-driver`), yang punya shipment aktif SHP-0012 sehingga bisa langsung update status dan checkpoint. Driver SUSPENDED tidak bisa masuk. Sesi driver disimpan dengan `loginDriver` (`currentUser.driverId`).
+- Login driver di `/driver`: username + password dicek terhadap record `Driver` (`driverService.authenticate`, sumber data Driver Management). Akun demo `driver01`…`driver06`, password `driver123`. Gagal login memberi kode `INVALID_CREDENTIALS`. Akun `SUSPENDED` ditolak dengan kode `SUSPENDED`. Status `OFFLINE` tidak memblokir login. Sesi disimpan di `authStore` (`loginDriver`: `driverId`, `username`, `name`, role DRIVER). Akun demo role DRIVER (`user-driver`) adalah Agus Prasetyo (DRV-006), yang punya shipment aktif SHP-0012. Login utama dan pemilih role tidak lagi menampilkan role DRIVER.
 - Matriks permission: `src/lib/permissions.ts`. SUPER_ADMIN: kelola driver, suspend, reset password, assign, lihat semua, approve exception. SUPERVISOR: lihat semua, assign, approve exception. DRIVER: portal & checkpoint (hanya shipment miliknya). Dipakai di route guard, sidebar, tombol, dan service (bukan hanya menu).
 - Role (`ALL_ROLES`): SUPER_ADMIN, CONTROL_TOWER, WAREHOUSE, DRIVER, SUPERVISOR, CLIENT, AUDITOR. Yang punya akun demo: CONTROL_TOWER, WAREHOUSE, DRIVER, CLIENT.
-- Guard (`App.tsx`): `RequireAuth` (harus login; DRIVER → `/field`), `RequireFieldAuth` (harus login). `/login`, `/scan`, `/scan-barcode` publik.
+- Guard (`App.tsx`): `RequireAuth` (harus login; DRIVER → `/driver/dashboard`), `DriverPortalLayout` (`/driver` = login, sesi driver untuk path lain), `RequirePermission` (route admin), `RequireFieldAuth` (harus login). `/login`, `/driver`, `/scan`, `/scan-barcode` publik.
 - Permission: menu difilter per role di `shared/nav-config.ts`. Guard route per role **hanya** untuk DRIVER; role lain bisa membuka URL halaman yang tak ada di menu (Perlu verifikasi di tiap halaman). Semua ini client-side, tidak aman sebagai kontrol akses nyata.
 - Role CLIENT hanya melihat kargo miliknya. Kargo lain tampil sebagai "Consolidated Cargo" (`cargo-tab.tsx`, `overview-tab.tsx`, `seal-scan-flow.tsx`).
 
@@ -211,7 +221,10 @@ Prasyarat: Node (CI memakai 22). Test: **Tidak ditemukan** (tidak ada script/fil
 | Aset 404 di deploy | `base` harus `'/'` untuk custom domain (`vite.config.ts`) |
 | Peta tidak tampil | Butuh akses ke `tile.openstreetmap.org`; z-index peta pernah diperbaiki (commit `2e271f3`) |
 | Barcode kosong saat cetak | Pernah diperbaiki di commit `14aa2e0` (`barcode-graphic`/print) |
-| Driver tak bisa buka dashboard | Disengaja: driver diarahkan ke `/driver` (`App.tsx`); staff yang membuka `/driver` diarahkan ke dashboard |
+| Driver tak bisa buka dashboard | Disengaja: driver diarahkan ke `/driver/dashboard`; tanpa sesi driver, path `/driver/*` kembali ke `/driver` |
+| Kontainer di peta tidak bergerak | Kontainer yang sudah Delivered (routeProgress 1) memang berhenti. Tidak ada animasi untuk status ini |
+| Layar tidak responsif saat tracking | Tombol Pusatkan ada di peta saat Follow mati |
+| Lokasi GPS tidak dipakai di checkpoint | Izin lokasi ditolak atau bukan HTTPS/localhost. Wizard memakai titik rute simulasi dan menampilkan alasannya |
 | Checkpoint ditolak "harus berurutan" | Sesuai aturan. Checkpoint berikutnya ditampilkan di tombol Update Checkpoint |
 | Checkpoint ditolak "Tamper terdeteksi" | Segel tamper. Supervisor/Super Admin menekan Approve Exception di Driver Management → detail driver |
 | Login driver gagal "Akun ditangguhkan" | Driver berstatus SUSPENDED. Aktifkan lagi di Driver Management |
@@ -230,3 +243,7 @@ Prasyarat: Node (CI memakai 22). Test: **Tidak ditemukan** (tidak ada script/fil
 - Simulasi (`simulationStore`) dan checkpoint driver sama-sama menulis posisi/status container. Jika RUN FULL DEMO sedang berjalan pada kontainer yang sama, nilai simulasi bisa menimpa hasil checkpoint. **Perlu verifikasi.**
 - Belum ada: grafik Recharts di Driver Management, filter status/checkpoint di daftar shipment driver, CRUD kendaraan (kendaraan fixed 5 demo), dan reminder checkpoint berbasis waktu (hanya data seed).
 - Barcode adalah angka palsu deterministik (`lib/barcode.ts`), bukan Code128/EAN asli.
+- Tracking di peta: klik marker mengubah sumber simulasi (`activeContainerId`) dan menjalankan kontainer tsb. Halaman Simulasi akan menampilkan kontainer yang sama. Pause saat meninggalkan halaman hanya untuk playback yang dimulai dari halaman monitoring.
+- Wizard stuffing masih menawarkan kontainer yang shipment-nya sudah terkirim (data seed). Assign driver akan ditolak untuk kasus itu. **Belum diperbaiki.**
+- Pesan yang tersimpan (audit, timeline, notifikasi, alert) dan beberapa data mock masih dalam bahasa Inggris atau Indonesia sesuai saat dibuat (lihat §10).
+- Layar tracking menampilkan kecepatan sebagai pengali simulasi (×1/×5/×20), bukan km/h.
