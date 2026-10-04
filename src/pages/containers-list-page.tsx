@@ -43,6 +43,7 @@ export default function ContainersListPage() {
   const { selectedContainerId, setSelectedContainer } = useUiStore()
   const followContainer = useUiStore((s) => s.followContainer)
   const setActiveContainer = useSimulationStore((s) => s.setActiveContainer)
+  const playRoute = useSimulationStore((s) => s.playRoute)
   const setFollowContainer = useUiStore((s) => s.setFollowContainer)
   // Set when this page starts playback, so leaving the page only stops what it started.
   const playedHere = useRef(false)
@@ -227,9 +228,12 @@ export default function ContainersListPage() {
               geofences={geofences}
               selectedContainerId={selectedContainerId}
               onSelectContainer={(id) => {
-                // Clicking a marker opens its tracking panel on the map; the detail page is one click away.
+                // Like starting navigation: select, follow the vehicle and start the run on the route.
                 setSelectedContainer(id)
                 setActiveContainer(id)
+                setFollowContainer(true)
+                playRoute()
+                playedHere.current = true
               }}
               center={[-3.5, 108]}
               zoom={5}

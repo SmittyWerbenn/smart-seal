@@ -10,6 +10,7 @@ import { useSimulationStore } from '@/store/simulationStore'
 import { useUiStore } from '@/store/uiStore'
 import { enumLabel, useT } from '@/i18n'
 import { formatDateTime, cn } from '@/lib/utils'
+import { distanceMeters } from '@/mock/geo'
 import type { Container } from '@/types'
 
 interface ContainerTrackPanelProps {
@@ -45,6 +46,10 @@ export function ContainerTrackPanel({ container, onPlayed }: ContainerTrackPanel
   const playing = isActive && sim.isPlaying
   const progress = container.routeProgress
   const tampered = device?.status === 'TAMPER'
+  const routes = useDataStore((s) => s.routes)
+  const route = routes.find((r) => r.id === container.routeId)
+  const routeKm = route ? route.waypoints.slice(1).reduce((sum, p, i) => sum + distanceMeters(route.waypoints[i], p), 0) / 1000 : 0
+  const remainingKm = Math.max(0, routeKm * (1 - container.routeProgress))
   const pct = Math.round(progress * 100)
 
   // Engine is shared: making this container active is what lets Play/Pause/Reset act on it.
@@ -105,6 +110,7 @@ export function ContainerTrackPanel({ container, onPlayed }: ContainerTrackPanel
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm md:grid-cols-4">
           <Info label={t('track.currentPosition')} value={`${container.currentLocation.lat.toFixed(4)}, ${container.currentLocation.lng.toFixed(4)}`} mono />
           <Info label={t('track.speed')} value={`×${sim.speed}${playing ? '' : ` · ${t('track.idleNote')}`}`} />
+          <Info label={t('track.remainingDistance')} value={`${remainingKm.toFixed(0)} km`} />
           <Info label={t('ui.status')} value={enumLabel('status', container.status)} />
           <Info label={t('ui.eta')} value={formatDateTime(container.eta)} />
           <Info label={t('ui.battery')} value={device ? <BatteryIndicator value={device.battery} /> : t('track.noDevice')} />

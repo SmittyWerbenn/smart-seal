@@ -1073,6 +1073,7 @@ export const en = {
     selectOnMap: 'Click a container marker on the map to track it.',
     progressPct: '{pct}%',
     idleNote: 'Stopped at this position.',
+    remainingDistance: 'Remaining distance',
   },
   driverLogin: {
     brand: 'Smart Seal',

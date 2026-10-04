@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import L from 'leaflet'
 import { useMap } from 'react-leaflet'
 import { buildMarkerIcon } from './marker-icon'
-import { bearing, pointOnRoute } from '@/mock/geo'
+import { bearing, distanceMeters, pointOnRoute } from '@/mock/geo'
 import type { Container, GeoPoint, RouteDefinition } from '@/types'
 
 interface ContainerTrackLayerProps {
@@ -13,6 +13,7 @@ interface ContainerTrackLayerProps {
 }
 
 const SAMPLES = 24
+const NAV_ZOOM = 10 // navigation-style close view on the tracked container
 
 /** Points along the route between two progress values (0..1), used to draw completed/remaining lines. */
 function routeSlice(waypoints: GeoPoint[], from: number, to: number): [number, number][] {
@@ -36,6 +37,7 @@ export function ContainerTrackLayer({ container, route, follow, onUserMove }: Co
   const followRef = useRef(follow)
   followRef.current = follow
   const layers = useRef<{ marker: L.Marker; done: L.Polyline; todo: L.Polyline } | null>(null)
+  const flying = useRef(false) // camera is animating to the container; follow waits for it
 
   // Engine position → animation target (no React state, so the loop never re-renders the page).
   useEffect(() => {
@@ -43,6 +45,19 @@ export function ContainerTrackLayer({ container, route, follow, onUserMove }: Co
     target.current = { lat: container.currentLocation.lat, lng: container.currentLocation.lng }
     progress.current = container.routeProgress
   }, [container?.currentLocation.lat, container?.currentLocation.lng, container?.routeProgress, container])
+
+  // Like starting navigation: zoom in on the container when it becomes the tracked one.
+  const trackedId = container?.id
+  useEffect(() => {
+    if (!trackedId) return
+    const c = target.current
+    if (!c) return
+    flying.current = true
+    map.flyTo([c.lat, c.lng], NAV_ZOOM, { duration: 1.4 })
+    map.once('moveend', () => {
+      flying.current = false
+    })
+  }, [map, trackedId])
 
   // Create / destroy the Leaflet layers for the selected container.
   useEffect(() => {
@@ -96,11 +111,8 @@ export function ContainerTrackLayer({ container, route, follow, onUserMove }: Co
           l.done.setLatLngs(routeSlice(route.waypoints, 0, drawnProgress))
           l.todo.setLatLngs(routeSlice(route.waypoints, drawnProgress, 1))
         }
-        if (followRef.current && moved) {
-          const ll = L.latLng(drawn.lat, drawn.lng)
-          // Keep the camera calm: only pan once the marker leaves the inner part of the view.
-          if (!map.getBounds().pad(-0.25).contains(ll)) map.panTo(ll, { animate: true, duration: 0.6 })
-        }
+        // Navigation-style camera: keep the marker centred every frame while Follow is on.
+        if (followRef.current && !flying.current && moved) map.panTo(L.latLng(drawn.lat, drawn.lng), { animate: false })
       }
       raf = requestAnimationFrame(frame)
     }

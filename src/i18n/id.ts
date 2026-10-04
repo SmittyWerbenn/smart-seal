@@ -1074,6 +1074,7 @@ export const id: Dict = {
     selectOnMap: 'Klik marker kontainer di peta untuk melacaknya.',
     progressPct: '{pct}%',
     idleNote: 'Berhenti di posisi ini.',
+    remainingDistance: 'Sisa jarak',
   },
   driverLogin: {
     brand: 'Smart Seal',
