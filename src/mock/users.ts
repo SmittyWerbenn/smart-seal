@@ -43,6 +43,9 @@ export const ALL_ROLES: { role: Role; label: string; description: string }[] = [
   { role: 'AUDITOR', label: 'Auditor', description: 'Read-only access to audit trail & reports' },
 ]
 
+// Staff roles offered in the topbar and Users & Roles. Drivers sign in only through /driver.
+export const STAFF_ROLES = ALL_ROLES.filter((r) => r.role !== 'DRIVER')
+
 export function userForRole(role: Role): DemoUser {
   return DEMO_USERS.find((u) => u.role === role) ?? { ...DEMO_USERS[0], role }
 }

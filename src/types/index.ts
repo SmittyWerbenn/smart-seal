@@ -19,6 +19,7 @@ export interface DemoUser {
   role: Role
   clientId?: string // for CLIENT role, restricts visible cargo
   driverId?: string // for DRIVER role, links the login to a Driver record (DRV-001)
+  username?: string // DRIVER role: login username from the Driver record
   avatarColor: string
 }
 

@@ -1,4 +1,4 @@
-import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { HashRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
 import { useSimulationEngine } from '@/hooks/useSimulationEngine'
 import { useUiStore } from '@/store/uiStore'
@@ -37,6 +37,7 @@ import FieldTrackingPage from '@/pages/field/field-tracking-page'
 import FieldAlertsPage from '@/pages/field/field-alerts-page'
 import FieldScannerPage from '@/pages/field/field-scanner-page'
 
+import DriverLoginPage from '@/pages/driver/driver-login-page'
 import DriverHomePage from '@/pages/driver/driver-home-page'
 import DriverShipmentsPage from '@/pages/driver/driver-shipments-page'
 import DriverShipmentDetailPage from '@/pages/driver/driver-shipment-detail-page'
@@ -50,17 +51,19 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
   const currentUser = useAuthStore((s) => s.currentUser)
   if (!isAuthenticated || !currentUser) return <Navigate to="/login" replace />
-  if (currentUser.role === 'DRIVER') return <Navigate to="/driver" replace />
+  if (currentUser.role === 'DRIVER') return <Navigate to="/driver/dashboard" replace />
   return <>{children}</>
 }
 
-// Driver Portal: drivers only. Staff are sent back to the dashboard.
-function RequireDriver({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  const currentUser = useAuthStore((s) => s.currentUser)
-  if (!isAuthenticated || !currentUser) return <Navigate to="/login" replace />
-  if (currentUser.role !== 'DRIVER') return <Navigate to="/dashboard" replace />
-  return <>{children}</>
+// Driver Portal entry and guard. /driver is the driver login; everything below it needs a driver session.
+// Staff sessions never reach the Driver Portal, and drivers never reach the main app (AppShell).
+function DriverPortalLayout() {
+  const { pathname } = useLocation()
+  const isDriver = useAuthStore((s) => s.isAuthenticated && s.currentUser?.role === 'DRIVER')
+  const atEntry = pathname === '/driver' || pathname === '/driver/'
+  if (atEntry) return isDriver ? <Navigate to="/driver/dashboard" replace /> : <Outlet />
+  if (!isDriver) return <Navigate to="/driver" replace />
+  return <DriverShell />
 }
 
 // Route-level permission check (not just a hidden menu item).
@@ -122,15 +125,9 @@ export default function App() {
           <Route path="/admin/drivers/:id" element={<RequirePermission permission="driver.view_all"><DriverDetailPage /></RequirePermission>} />
         </Route>
 
-        <Route
-          path="/driver"
-          element={
-            <RequireDriver>
-              <DriverShell />
-            </RequireDriver>
-          }
-        >
-          <Route index element={<DriverHomePage />} />
+        <Route path="/driver" element={<DriverPortalLayout />}>
+          <Route index element={<DriverLoginPage />} />
+          <Route path="dashboard" element={<DriverHomePage />} />
           <Route path="shipments" element={<DriverShipmentsPage />} />
           <Route path="shipments/:id" element={<DriverShipmentDetailPage />} />
           <Route path="scan" element={<DriverScanPage />} />

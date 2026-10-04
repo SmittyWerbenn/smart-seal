@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Radar, Warehouse, Truck, Building2, ShieldCheck, Anchor, Radio, ScanLine } from 'lucide-react'
+import { Radar, Warehouse, Building2, ShieldCheck, Anchor, Radio, ScanLine } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { DEMO_USERS } from '@/mock/users'
-import { driverService } from '@/services/driverService'
 import { Button } from '@/components/ui/button'
 import { Input, Label } from '@/components/ui/input'
 import { AppLogo } from '@/components/shared/logo'
@@ -14,7 +13,6 @@ import { translate } from '@/i18n'
 const SHORTCUTS: { role: Role; label: string; icon: typeof Radar }[] = [
   { role: 'CONTROL_TOWER', get label() { return translate('ui.controlTower') }, icon: Radar },
   { role: 'WAREHOUSE', get label() { return translate('ui.warehouseOperator') }, icon: Warehouse },
-  { role: 'DRIVER', get label() { return translate('ui.driver') }, icon: Truck },
   { role: 'CLIENT', get label() { return translate('ui.client') }, icon: Building2 },
 ]
 
@@ -24,29 +22,9 @@ export default function LoginPage() {
   const [email, setEmail] = useState('control.tower@smartseal.demo')
   const [password, setPassword] = useState('demo1234')
 
-  const loginDriver = useAuthStore((s) => s.loginDriver)
-  const [driverUser, setDriverUser] = useState('')
-  const [driverPass, setDriverPass] = useState('')
-  const [driverError, setDriverError] = useState<string | null>(null)
-  const [driverBusy, setDriverBusy] = useState(false)
-
   const doLogin = (role: Role) => {
     login(role)
-    navigate(role === 'DRIVER' ? '/driver' : '/dashboard')
-  }
-
-  const doDriverLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setDriverBusy(true)
-    setDriverError(null)
-    const result = await driverService.authenticate(driverUser, driverPass)
-    setDriverBusy(false)
-    if (!result.ok || !result.value) {
-      setDriverError(result.error ?? 'Login gagal.')
-      return
-    }
-    loginDriver(result.value)
-    navigate('/driver')
+    navigate('/dashboard')
   }
 
   return (
@@ -98,31 +76,6 @@ export default function LoginPage() {
             <Button type="submit" className="w-full" size="lg">
               {translate('ui.signIn')}
             </Button>
-          </form>
-
-          <div className="my-6 flex items-center gap-3 text-xs text-slate-400">
-            <span className="h-px flex-1 bg-slate-200" />
-            {translate('ui.orSignInAsA')}
-            <span className="h-px flex-1 bg-slate-200" />
-          </div>
-
-          <form onSubmit={doDriverLogin} className="space-y-3 rounded-lg border border-slate-200 bg-slate-50/60 p-4">
-            <p className="flex items-center gap-2 text-sm font-semibold text-navy-900">
-              <Truck size={16} className="text-brand-600" /> {translate('ui.driverLogin')}
-            </p>
-            <div>
-              <Label htmlFor="driver-username">{translate('ui.username')}</Label>
-              <Input id="driver-username" autoComplete="username" placeholder={translate('ui.driver01')} value={driverUser} onChange={(e) => setDriverUser(e.target.value)} />
-            </div>
-            <div>
-              <Label htmlFor="driver-password">{translate('ui.password')}</Label>
-              <Input id="driver-password" type="password" autoComplete="current-password" placeholder={translate('ui.driver123')} value={driverPass} onChange={(e) => setDriverPass(e.target.value)} />
-            </div>
-            {driverError && <p className="text-sm text-red-700">{driverError}</p>}
-            <Button type="submit" variant="secondary" className="w-full" disabled={driverBusy || !driverUser || !driverPass}>
-              {driverBusy ? translate('misc.checking') : translate('misc.signInAsDriver')}
-            </Button>
-            <p className="text-[11px] text-slate-500">{translate('ui.demoDriver01Driver05PasswordDriver123')}</p>
           </form>
 
           <div className="my-6 flex items-center gap-3 text-xs text-slate-400">

@@ -79,7 +79,7 @@ export default function DriverProfilePage() {
         className="min-h-11 w-full"
         onClick={() => {
           logout()
-          navigate('/login')
+          navigate('/driver')
         }}
       >
         <LogOut size={16} /> {translate('ui.logout')}

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
-import { ALL_ROLES } from '@/mock/users'
+import { STAFF_ROLES } from '@/mock/users'
 import { PageHeader } from '@/components/shared/page-header'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,7 @@ export default function UsersRolesPage() {
     <div className="pb-10">
       <PageHeader title={translate('ui.usersRoles')} description={translate('ui.frontendOnlyDemoRoleManagement')} />
       <div className="grid grid-cols-1 gap-3 px-4 md:grid-cols-2 md:px-6 lg:grid-cols-3">
-        {ALL_ROLES.map((r) => (
+        {STAFF_ROLES.map((r) => (
           <Card key={r.role} className={cn(currentUser?.role === r.role && 'ring-2 ring-brand-500')}>
             <CardContent className="flex flex-col gap-3 py-4">
               <div>
@@ -27,7 +27,7 @@ export default function UsersRolesPage() {
                 variant={currentUser?.role === r.role ? 'secondary' : 'primary'}
                 onClick={() => {
                   switchRole(r.role)
-                  navigate(r.role === 'DRIVER' ? '/driver' : '/dashboard')
+                  navigate('/dashboard')
                 }}
               >
                 {currentUser?.role === r.role ? translate('misc.currentRole') : translate('misc.switchToRole')}

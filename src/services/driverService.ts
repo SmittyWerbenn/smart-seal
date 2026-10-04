@@ -1,7 +1,7 @@
 import { useDataStore } from '@/store/dataStore'
 import { useAuthStore } from '@/store/authStore'
 import { delay } from './delay'
-import { actorName, fail, ok, requirePermission, type ServiceResult } from './common'
+import { actorName, fail, failWith, ok, requirePermission, type ServiceResult } from './common'
 import type { Driver, DriverStatus, Vehicle } from '@/types'
 import { translate } from '@/i18n'
 
@@ -65,8 +65,9 @@ export const driverService = {
   /** Demo login: username + password against the Driver records. Suspended drivers cannot sign in. */
   async authenticate(username: string, password: string): Promise<ServiceResult<Driver>> {
     const driver = useDataStore.getState().drivers.find((d) => d.username === username.trim().toLowerCase())
-    if (!driver || driver.password !== password) return delay(fail<Driver>(translate('ui.usernameOrPasswordIsIncorrect')), 500)
-    if (driver.status === 'SUSPENDED') return delay(fail<Driver>(translate('ui.accountSuspendedContactControlTower')), 500)
+    // OFFLINE is an operational status and does not block login; only SUSPENDED (account access) does.
+    if (!driver || driver.password !== password) return delay(failWith<Driver>(translate('driverLogin.invalid'), 'INVALID_CREDENTIALS'), 500)
+    if (driver.status === 'SUSPENDED') return delay(failWith<Driver>(translate('driverLogin.suspended'), 'SUSPENDED'), 500)
     useDataStore.getState().addAuditLogEntry({ user: driver.name, action: 'DRIVER_LOGIN', entity: driver.driverId, description: `${driver.driverId} signed in to Driver Portal` })
     return delay(ok(driver), 500)
   },

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { Menu, ChevronDown, LogOut } from 'lucide-react'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
-import { ALL_ROLES } from '@/mock/users'
+import { ALL_ROLES, STAFF_ROLES } from '@/mock/users'
 import { useT } from '@/i18n'
 import { NotificationBell } from './notification-bell'
 import { GlobalSearch } from './global-search'
@@ -53,13 +53,13 @@ export function Topbar({ title }: { title?: string }) {
               <div className="fixed inset-0 z-30" onClick={() => setRoleMenuOpen(false)} />
               <div className="absolute right-0 z-40 mt-2 w-64 rounded-lg border border-slate-200 bg-white p-1.5 shadow-lg">
                 <p className="px-2 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wide text-slate-400">{t('header.switchDemoRole')}</p>
-                {ALL_ROLES.map((r) => (
+                {STAFF_ROLES.map((r) => (
                   <button
                     key={r.role}
                     onClick={() => {
                       switchRole(r.role)
                       setRoleMenuOpen(false)
-                      navigate(r.role === 'DRIVER' ? '/driver' : '/dashboard')
+                      navigate('/dashboard')
                     }}
                     className={cn(
                       'flex w-full flex-col items-start rounded-md px-2 py-1.5 text-left hover:bg-slate-50',

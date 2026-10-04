@@ -1075,5 +1075,22 @@ export const id: Dict = {
     progressPct: '{pct}%',
     idleNote: 'Berhenti di posisi ini.',
   },
+  driverLogin: {
+    brand: 'Smart Seal',
+    portal: 'Portal Driver',
+    subtitle: 'Masuk untuk mengelola pengiriman dan memperbarui checkpoint perjalanan.',
+    username: 'Username',
+    usernamePlaceholder: 'Masukkan username',
+    password: 'Password',
+    passwordPlaceholder: 'Masukkan password',
+    showPassword: 'Tampilkan password',
+    hidePassword: 'Sembunyikan password',
+    submit: 'Masuk sebagai Driver',
+    submitting: 'Memeriksa…',
+    invalid: 'Username atau password tidak valid.',
+    suspended: 'Akun driver Anda sedang ditangguhkan. Silakan hubungi administrator.',
+    backToMain: 'Staf? Masuk ke aplikasi utama →',
+    signInStaff: 'Masuk ke aplikasi utama',
+  },
 
 }

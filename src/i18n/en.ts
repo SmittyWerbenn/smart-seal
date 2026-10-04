@@ -1074,5 +1074,22 @@ export const en = {
     progressPct: '{pct}%',
     idleNote: 'Stopped at this position.',
   },
+  driverLogin: {
+    brand: 'Smart Seal',
+    portal: 'Driver Portal',
+    subtitle: 'Sign in to manage shipments and update your journey checkpoints.',
+    username: 'Username',
+    usernamePlaceholder: 'Enter your username',
+    password: 'Password',
+    passwordPlaceholder: 'Enter your password',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    submit: 'Sign in as Driver',
+    submitting: 'Signing in…',
+    invalid: 'Username or password is not valid.',
+    suspended: 'Your driver account is suspended. Please contact the administrator.',
+    backToMain: 'Staff? Sign in to the main app →',
+    signInStaff: 'Sign in to the main app',
+  },
 
 }

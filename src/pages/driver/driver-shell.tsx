@@ -9,7 +9,7 @@ import { LanguageToggle } from '@/components/shared/language-toggle'
 import { translate } from '@/i18n'
 
 const TABS = [
-  { path: '/driver', get label() { return translate('ui.home') }, icon: Home, end: true },
+  { path: '/driver/dashboard', get label() { return translate('ui.home') }, icon: Home, end: true },
   { path: '/driver/shipments', get label() { return translate('ui.shipment') }, icon: Package },
   { path: '/driver/scan', get label() { return translate('ui.scan') }, icon: ScanLine },
   { path: '/driver/alerts', get label() { return translate('ui.alerts') }, icon: BellRing },
@@ -39,7 +39,7 @@ export function DriverShell() {
           <button
             onClick={() => {
               logout()
-              navigate('/login')
+              navigate('/driver')
             }}
             className="flex h-10 w-10 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100"
             aria-label={translate('ui.logout')}

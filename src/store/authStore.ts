@@ -28,6 +28,7 @@ export const useAuthStore = create<AuthState>()(
             email: driver.email ?? driver.username,
             role: 'DRIVER',
             driverId: driver.id,
+            username: driver.username,
             avatarColor: '#16a34a',
           },
         }),

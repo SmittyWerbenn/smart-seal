@@ -28,7 +28,7 @@ export function FieldShell() {
           <button
             onClick={() => {
               logout()
-              navigate('/login')
+              navigate(currentUser?.role === 'DRIVER' ? '/driver' : '/login')
             }}
             className="rounded-md p-1.5 text-slate-400 hover:bg-slate-100"
           >
