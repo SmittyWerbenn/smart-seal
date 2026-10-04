@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Download, Maximize2, Minimize2, Plus, ScanLine, X } from 'lucide-react'
 import { useDataStore } from '@/store/dataStore'
+import { useSimulationStore } from '@/store/simulationStore'
+import { ContainerTrackLayer } from '@/components/map/container-track-layer'
+import { ContainerTrackPanel } from '@/components/map/container-track-panel'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 import { PageHeader } from '@/components/shared/page-header'
@@ -35,8 +38,21 @@ export default function ContainersListPage() {
   const cargo = useDataStore((s) => s.cargo)
   const vessels = useDataStore((s) => s.vessels)
   const geofences = useDataStore((s) => s.geofences)
+  const routes = useDataStore((s) => s.routes)
   const currentUser = useAuthStore((s) => s.currentUser)
   const { selectedContainerId, setSelectedContainer } = useUiStore()
+  const followContainer = useUiStore((s) => s.followContainer)
+  const setActiveContainer = useSimulationStore((s) => s.setActiveContainer)
+  const setFollowContainer = useUiStore((s) => s.setFollowContainer)
+  // Set when this page starts playback, so leaving the page only stops what it started.
+  const playedHere = useRef(false)
+  const selectedContainer = containers.find((c) => c.id === selectedContainerId)
+  const selectedRoute = routes.find((r) => r.id === selectedContainer?.routeId)
+  useEffect(() => {
+    return () => {
+      if (playedHere.current && useSimulationStore.getState().isPlaying) useSimulationStore.getState().pause()
+    }
+  }, [])
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const [query, setQuery] = useState(params.get('q') ?? '')
@@ -211,15 +227,34 @@ export default function ContainersListPage() {
               geofences={geofences}
               selectedContainerId={selectedContainerId}
               onSelectContainer={(id) => {
+                // Clicking a marker opens its tracking panel on the map; the detail page is one click away.
                 setSelectedContainer(id)
-                navigate(`/containers/${id}`)
+                setActiveContainer(id)
               }}
               center={[-3.5, 108]}
               zoom={5}
-            />
+              hideContainerId={selectedContainer?.id ?? null}
+            >
+              {selectedContainer && (
+                <ContainerTrackLayer
+                  container={selectedContainer}
+                  route={selectedRoute}
+                  follow={followContainer}
+                  onUserMove={() => setFollowContainer(false)}
+                />
+              )}
+            </TrackingMap>
           </div>
         </CardContent>
       </Card>
+
+      <div className="mx-4 mb-4 md:mx-6">
+        {selectedContainer ? (
+          <ContainerTrackPanel container={selectedContainer} onPlayed={() => { playedHere.current = true }} />
+        ) : (
+          <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">{translate('track.selectOnMap')}</p>
+        )}
+      </div>
 
       <Card className="mx-4 mb-4 md:mx-6">
         <div className="flex flex-wrap items-center gap-2 border-b border-slate-100 p-3">

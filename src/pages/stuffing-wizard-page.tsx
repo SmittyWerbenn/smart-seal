@@ -14,8 +14,9 @@ import { EmptyState } from '@/components/shared/states'
 import { cn } from '@/lib/utils'
 import type { SecurityMode } from '@/types'
 import { translate } from '@/i18n'
+import { AssignDriverStep } from '@/components/container/assign-driver-step'
 
-type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'confirm' | 'success'
+type Step = 'container' | 'security' | 'photo-before' | 'scan' | 'battery' | 'photo-after' | 'assign' | 'confirm' | 'success'
 
 export default function StuffingWizardPage() {
   const { id } = useParams()
@@ -104,6 +105,7 @@ export default function StuffingWizardPage() {
     { key: 'scan', get label() { return translate('ui.scanSeals') } },
     ...(securityMode === 'BASIC_SEAL' ? [] : [{ key: 'battery' as Step, get label() { return translate('ui.batteryCheck') } }]),
     { key: 'photo-after', get label() { return translate('ui.containerPhoto') } },
+    { key: 'assign', get label() { return translate('misc.assignDriver') } },
     { key: 'confirm', get label() { return translate('ui.armContainer2') } },
   ]
   const no = (key: Step) => steps.findIndex((s) => s.key === key) + 1
@@ -234,7 +236,7 @@ export default function StuffingWizardPage() {
                 <button type="button" onClick={() => setIssueOpen(true)} className="flex items-center gap-1.5 text-xs font-medium text-amber-700 hover:underline">
                   <AlertTriangle size={13} /> {translate('ui.issueReported')}
                 </button>
-                <Button disabled={!photoAfter} onClick={() => setStep('confirm')}>
+                <Button disabled={!photoAfter} onClick={() => setStep('assign')}>
                   {translate('ui.continueToArmContainer')}
                 </Button>
               </div>
@@ -308,6 +310,17 @@ export default function StuffingWizardPage() {
               <Button className="w-full" disabled={!batteryOk} onClick={() => setStep('photo-after')}>
                 {translate('ui.continueToContainerPhoto')}
               </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {step === 'assign' && container && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Step {no('assign')} — {translate('misc.assignDriver')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <AssignDriverStep container={container} onDone={() => setStep('confirm')} />
             </CardContent>
           </Card>
         )}

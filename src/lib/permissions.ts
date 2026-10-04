@@ -17,7 +17,7 @@ const MATRIX: Record<Role, Permission[]> = {
   SUPERVISOR: ['driver.view_all', 'driver.assign', 'driver.approve_exception'],
   CONTROL_TOWER: [],
   DRIVER: ['driver.portal', 'driver.checkpoint'],
-  WAREHOUSE: [],
+  WAREHOUSE: ['driver.assign'], // stuffing wizard assigns the driver after sealing
   CLIENT: [],
   AUDITOR: [],
 }

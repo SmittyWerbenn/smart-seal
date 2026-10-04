@@ -192,6 +192,9 @@ export interface Shipment {
   driverId?: string // Driver.id of the active assignment (cleared when delivered or unassigned)
   vehicleId?: string
   exceptionApproved?: boolean // supervisor override for a blocked checkpoint (e.g. tamper)
+  driverRemark?: 'ON_TIME' | 'DELAYED' | 'ISSUE' // latest status the driver reported for this shipment
+  driverNote?: string
+  driverUpdatedAt?: string
 }
 
 export type VesselType = 'Container Ship' | 'RoRo' | 'Bulk Carrier' | 'Feeder'

@@ -14,6 +14,8 @@ interface UiState {
   toggleSidebar: () => void
   setMobileNavOpen: (open: boolean) => void
   setLang: (lang: Lang) => void
+  followContainer: boolean // monitoring map keeps the tracked container centred
+  setFollowContainer: (follow: boolean) => void
 }
 
 export const useUiStore = create<UiState>()(
@@ -29,6 +31,8 @@ export const useUiStore = create<UiState>()(
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setMobileNavOpen: (open) => set({ mobileNavOpen: open }),
       setLang: (lang) => set({ lang }),
+      followContainer: false,
+      setFollowContainer: (follow) => set({ followContainer: follow }),
     }),
     { name: 'smartseal-ui-v1', partialize: (s) => ({ selectedContainerId: s.selectedContainerId, sidebarCollapsed: s.sidebarCollapsed, lang: s.lang }) },
   ),

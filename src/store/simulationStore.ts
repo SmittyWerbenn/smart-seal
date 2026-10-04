@@ -43,6 +43,8 @@ interface SimulationState {
   setActiveContainer: (id: string) => void
   setSpeed: (speed: 1 | 5 | 20) => void
   pause: () => void
+  playRoute: () => void // run the active container along its whole route (used by the monitoring map)
+  resetRoute: () => void // move the active container back to the start of its route
   tick: (deltaMs: number) => void
 
   startJourney: () => void
@@ -110,6 +112,20 @@ export const useSimulationStore = create<SimulationState>()((set, get) => ({
   setActiveContainer: (id) => set({ activeContainerId: id, isPlaying: false, movementTarget: null, arrivalAction: null }),
   setSpeed: (speed) => set({ speed }),
   pause: () => set({ isPlaying: false }),
+
+  playRoute: () => {
+    if (!activeContainer() || !activeRoute()) return
+    set({ isPlaying: true, movementTarget: 1, arrivalAction: null })
+  },
+
+  resetRoute: () => {
+    const container = activeContainer()
+    const route = activeRoute()
+    if (!container || !route) return
+    const { point } = pointOnRoute(route.waypoints, 0)
+    set({ isPlaying: false, movementTarget: null, arrivalAction: null })
+    useDataStore.getState().updateContainer(container.id, { routeProgress: 0, currentLocation: point, lastUpdate: new Date().toISOString() })
+  },
 
   tick: (deltaMs) => {
     const state = get()

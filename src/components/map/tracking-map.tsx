@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, type ReactNode } from 'react'
 import { MapContainer, TileLayer, Marker, Popup, Polyline, Circle, useMap } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
 import { buildMarkerIcon, buildDotIcon } from './marker-icon'
@@ -17,6 +17,8 @@ interface TrackingMapProps {
   zoom?: number
   height?: string
   className?: string
+  children?: ReactNode // extra map layers (e.g. ContainerTrackLayer)
+  hideContainerId?: string | null // skip the static marker for a container drawn by an overlay
 }
 
 function FitToRoute({ waypoints }: { waypoints?: LatLngExpression[] }) {
@@ -42,6 +44,8 @@ export function TrackingMap({
   zoom = 5,
   height = '100%',
   className,
+  children,
+  hideContainerId,
 }: TrackingMapProps) {
   const mapRef = useRef(null)
 
@@ -74,7 +78,7 @@ export function TrackingMap({
 
         {routeLine && <Polyline positions={routeLine} pathOptions={{ color: '#2563eb', weight: 3, opacity: 0.6, dashArray: '1 8' }} />}
 
-        {containers.map((c) => (
+        {containers.filter((c) => c.id !== hideContainerId).map((c) => (
           <Marker
             key={c.id}
             position={[c.currentLocation.lat, c.currentLocation.lng]}
@@ -112,6 +116,7 @@ export function TrackingMap({
         ))}
 
         {routeLine && <FitToRoute waypoints={routeLine} />}
+        {children}
       </MapContainer>
     </div>
   )

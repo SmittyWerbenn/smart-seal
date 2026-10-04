@@ -12,6 +12,7 @@ import { CategoryBadge } from '@/components/shared/category-badge'
 import { EmptyState } from '@/components/shared/states'
 import { TrackingMap } from '@/components/map/tracking-map'
 import { JourneySteps } from '@/components/driver/journey-steps'
+import { ShipmentUpdateForm } from '@/components/driver/shipment-update-form'
 import { CheckpointWizard } from '@/components/driver/checkpoint-wizard'
 import { SealVerificationPanel } from '@/components/driver/seal-verification-panel'
 import { CHECKPOINT_META, completedCheckpointTypes, nextCheckpoint, requiresSealVerification } from '@/lib/driver-workflow'
@@ -122,6 +123,10 @@ export default function DriverShipmentDetailPage() {
             <Info label={translate('ui.progress')} value={`${completed.length}/10 checkpoint`} />
           </CardContent>
         </Card>
+      )}
+
+      {tab === 'overview' && assignment.status === 'ACTIVE' && (
+        <ShipmentUpdateForm assignment={assignment} shipment={shipment} container={container} />
       )}
 
       {tab === 'journey' && (
