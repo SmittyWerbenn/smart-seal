@@ -66,6 +66,19 @@ export default function ContainersListPage() {
   const [groupFilter, setGroupFilter] = useState(params.get('statuses'))
   const [scanOpen, setScanOpen] = useState(false)
   const [mapExpanded, setMapExpanded] = useState(false)
+  // Full-screen map: Escape closes it and page scrolling is locked while it is open.
+  useEffect(() => {
+    if (!mapExpanded) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMapExpanded(false)
+    }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [mapExpanded])
 
   const scoped = useMemo(() => {
     // Once a seal is unlocked its journey is done — Seal Monitoring is for
@@ -205,7 +218,9 @@ export default function ContainersListPage() {
         />
       </Modal>
 
-      <Card className="mx-4 mb-4 md:mx-6">
+      {/* Full Map: the map card becomes a full-screen view; the panel floats over the bottom of it. */}
+      <div className={mapExpanded ? 'fixed inset-0 z-[1100] flex flex-col overflow-hidden bg-white' : 'contents'}>
+      <Card className={cn('mx-4 mb-4 md:mx-6', mapExpanded && 'm-0 flex min-h-0 flex-1 flex-col rounded-none border-0 shadow-none')}>
         <CardHeader>
           <CardTitle>{translate('ui.liveMap')}</CardTitle>
           <Button variant="secondary" size="sm" onClick={() => setMapExpanded((v) => !v)}>
@@ -221,7 +236,7 @@ export default function ContainersListPage() {
           </Button>
         </CardHeader>
         <CardContent className="p-0">
-          <div className={cn('relative w-full', mapExpanded ? 'h-[70vh]' : 'h-64')}>
+          <div className={cn('relative w-full', mapExpanded ? 'h-[calc(100dvh-3.5rem)]' : 'h-64')}>
             <TrackingMap
               containers={filtered}
               vessels={vessels}
@@ -238,6 +253,7 @@ export default function ContainersListPage() {
               center={[-3.5, 108]}
               zoom={5}
               hideContainerId={selectedContainer?.id ?? null}
+              resizeKey={mapExpanded}
             >
               {selectedContainer && (
                 <ContainerTrackLayer
@@ -252,12 +268,13 @@ export default function ContainersListPage() {
         </CardContent>
       </Card>
 
-      <div className="mx-4 mb-4 md:mx-6">
+      <div className={mapExpanded ? 'absolute inset-x-0 bottom-0 z-[1000] max-h-[42dvh] overflow-y-auto border-t border-slate-200 bg-white/95 p-3 shadow-xl backdrop-blur md:inset-x-auto md:bottom-4 md:right-4 md:top-16 md:max-h-[calc(100dvh-5rem)] md:w-96 md:rounded-xl md:border' : 'mx-4 mb-4 md:mx-6'}>
         {selectedContainer ? (
           <ContainerTrackPanel container={selectedContainer} onPlayed={() => { playedHere.current = true }} />
         ) : (
           <p className="rounded-lg border border-dashed border-slate-300 bg-white p-4 text-center text-sm text-slate-500">{translate('track.selectOnMap')}</p>
         )}
+      </div>
       </div>
 
       <Card className="mx-4 mb-4 md:mx-6">

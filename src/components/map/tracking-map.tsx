@@ -18,7 +18,18 @@ interface TrackingMapProps {
   height?: string
   className?: string
   children?: ReactNode // extra map layers (e.g. ContainerTrackLayer)
+  resizeKey?: unknown // change this when the map's container changes size
   hideContainerId?: string | null // skip the static marker for a container drawn by an overlay
+}
+
+// Leaflet must re-measure its container after the map is resized (e.g. Full Map toggled).
+function InvalidateOnChange({ dep }: { dep: unknown }) {
+  const map = useMap()
+  useEffect(() => {
+    const id = window.setTimeout(() => map.invalidateSize(), 60)
+    return () => window.clearTimeout(id)
+  }, [map, dep])
+  return null
 }
 
 function FitToRoute({ waypoints }: { waypoints?: LatLngExpression[] }) {
@@ -46,6 +57,7 @@ export function TrackingMap({
   className,
   children,
   hideContainerId,
+  resizeKey,
 }: TrackingMapProps) {
   const mapRef = useRef(null)
 
@@ -116,6 +128,7 @@ export function TrackingMap({
         ))}
 
         {routeLine && <FitToRoute waypoints={routeLine} />}
+        <InvalidateOnChange dep={resizeKey} />
         {children}
       </MapContainer>
     </div>
