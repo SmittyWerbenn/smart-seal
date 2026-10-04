@@ -5,6 +5,7 @@ import { useDataStore } from '@/store/dataStore'
 import { useSimulationStore } from '@/store/simulationStore'
 import { ContainerTrackLayer } from '@/components/map/container-track-layer'
 import { ContainerTrackPanel } from '@/components/map/container-track-panel'
+import { RecenterButton } from '@/components/map/recenter-button'
 import { useAuthStore } from '@/store/authStore'
 import { useUiStore } from '@/store/uiStore'
 import { PageHeader } from '@/components/shared/page-header'
@@ -255,6 +256,9 @@ export default function ContainersListPage() {
               hideContainerId={selectedContainer?.id ?? null}
               resizeKey={mapExpanded}
             >
+              {selectedContainer && !followContainer && (
+                <RecenterButton onClick={() => setFollowContainer(true)} />
+              )}
               {selectedContainer && (
                 <ContainerTrackLayer
                   container={selectedContainer}

@@ -1075,6 +1075,7 @@ export const id: Dict = {
     progressPct: '{pct}%',
     idleNote: 'Berhenti di posisi ini.',
     remainingDistance: 'Sisa jarak',
+    recenter: 'Pusatkan',
   },
   driverLogin: {
     brand: 'Smart Seal',

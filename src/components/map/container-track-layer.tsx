@@ -121,12 +121,16 @@ export function ContainerTrackLayer({ container, route, follow, onUserMove }: Co
   }, [map, route])
 
   // Dragging or zooming manually turns Follow off.
+  // Camera moves started by the app (fly-to, follow) must never count as the user moving the map.
   useEffect(() => {
-    map.on('dragstart', onUserMove)
-    map.on('zoomstart', onUserMove)
+    const onMove = () => {
+      if (!flying.current) onUserMove()
+    }
+    map.on('dragstart', onMove)
+    map.on('zoomstart', onMove)
     return () => {
-      map.off('dragstart', onUserMove)
-      map.off('zoomstart', onUserMove)
+      map.off('dragstart', onMove)
+      map.off('zoomstart', onMove)
     }
   }, [map, onUserMove])
 

@@ -1074,6 +1074,7 @@ export const en = {
     progressPct: '{pct}%',
     idleNote: 'Stopped at this position.',
     remainingDistance: 'Remaining distance',
+    recenter: 'Recenter',
   },
   driverLogin: {
     brand: 'Smart Seal',
